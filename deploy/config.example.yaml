@@ -1134,3 +1134,9 @@ update:
   # Leave empty for direct connection (recommended for overseas servers)
   # 留空表示直连（适用于海外服务器）
   proxy_url: ""
+  # Disable GitHub version checks. Default false keeps current behavior.
+  # 是否禁用 GitHub 版本检测。默认 false，保持当前行为。
+  check_disabled: false
+  # Disable applying online binary updates. Default false keeps current behavior.
+  # 是否禁用在线二进制更新。默认 false，保持当前行为。
+  apply_disabled: false

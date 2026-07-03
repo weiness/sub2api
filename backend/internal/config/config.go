@@ -153,7 +153,9 @@ type UpdateConfig struct {
 	// ProxyURL 用于访问 GitHub 的代理地址
 	// 支持 http/https/socks5/socks5h 协议
 	// 例如: "http://127.0.0.1:7890", "socks5://127.0.0.1:1080"
-	ProxyURL string `mapstructure:"proxy_url"`
+	ProxyURL      string `mapstructure:"proxy_url"`
+	CheckDisabled bool   `mapstructure:"check_disabled"`
+	ApplyDisabled bool   `mapstructure:"apply_disabled"`
 }
 
 type IdempotencyConfig struct {
@@ -1976,6 +1978,9 @@ func setDefaults() {
 	viper.SetDefault("token_refresh.refresh_before_expiry_hours", 0.5) // 提前30分钟刷新（适配Google 1小时token）
 	viper.SetDefault("token_refresh.max_retries", 3)                   // 最多重试3次
 	viper.SetDefault("token_refresh.retry_backoff_seconds", 2)         // 重试退避基础2秒
+
+	viper.SetDefault("update.check_disabled", false)
+	viper.SetDefault("update.apply_disabled", false)
 
 	// Gemini OAuth - configure via environment variables or config file
 	// GEMINI_OAUTH_CLIENT_ID and GEMINI_OAUTH_CLIENT_SECRET

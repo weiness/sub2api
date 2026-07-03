@@ -22,7 +22,9 @@ import (
 )
 
 var (
-	ErrNoUpdateAvailable = infraerrors.Conflict("ALREADY_UP_TO_DATE", "no update available; current version is latest")
+	ErrNoUpdateAvailable   = infraerrors.Conflict("ALREADY_UP_TO_DATE", "no update available; current version is latest")
+	ErrUpdateCheckDisabled = infraerrors.Forbidden("UPDATE_CHECK_DISABLED", "update check is disabled")
+	ErrUpdateApplyDisabled = infraerrors.Forbidden("UPDATE_APPLY_DISABLED", "online update is disabled")
 )
 
 const (
@@ -57,15 +59,28 @@ type UpdateService struct {
 	githubClient   GitHubReleaseClient
 	currentVersion string
 	buildType      string // "source" for manual builds, "release" for CI builds
+	checkDisabled  bool
+	applyDisabled  bool
 }
 
 // NewUpdateService creates a new UpdateService
 func NewUpdateService(cache UpdateCache, githubClient GitHubReleaseClient, version, buildType string) *UpdateService {
+	return NewUpdateServiceWithOptions(cache, githubClient, version, buildType, UpdateServiceOptions{})
+}
+
+type UpdateServiceOptions struct {
+	CheckDisabled bool
+	ApplyDisabled bool
+}
+
+func NewUpdateServiceWithOptions(cache UpdateCache, githubClient GitHubReleaseClient, version, buildType string, opts UpdateServiceOptions) *UpdateService {
 	return &UpdateService{
 		cache:          cache,
 		githubClient:   githubClient,
 		currentVersion: version,
 		buildType:      buildType,
+		checkDisabled:  opts.CheckDisabled,
+		applyDisabled:  opts.ApplyDisabled,
 	}
 }
 
@@ -114,6 +129,16 @@ type GitHubAsset struct {
 
 // CheckUpdate checks for available updates
 func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInfo, error) {
+	if s.checkDisabled {
+		return &UpdateInfo{
+			CurrentVersion: s.currentVersion,
+			LatestVersion:  s.currentVersion,
+			HasUpdate:      false,
+			Warning:        ErrUpdateCheckDisabled.Error(),
+			BuildType:      s.buildType,
+		}, nil
+	}
+
 	// Try cache first
 	if !force {
 		if cached, err := s.getFromCache(ctx); err == nil && cached != nil {
@@ -146,6 +171,10 @@ func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInf
 // PerformUpdate downloads and applies the update
 // Uses atomic file replacement pattern for safe in-place updates
 func (s *UpdateService) PerformUpdate(ctx context.Context) error {
+	if s.applyDisabled {
+		return ErrUpdateApplyDisabled
+	}
+
 	info, err := s.CheckUpdate(ctx, true)
 	if err != nil {
 		return err
