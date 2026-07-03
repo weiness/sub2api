@@ -315,7 +315,8 @@
                 <!-- Update button -->
                 <button
                   @click="handleUpdate"
-                  :disabled="updating"
+                  :disabled="updateButtonDisabled"
+                  :title="!onlineUpdateEnabled ? t('version.onlineUpdateDisabled') : undefined"
                   class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <svg v-if="updating" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -408,6 +409,7 @@ const latestVersion = computed(() => appStore.latestVersion)
 const hasUpdate = computed(() => appStore.hasUpdate)
 const releaseInfo = computed(() => appStore.releaseInfo)
 const buildType = computed(() => appStore.buildType)
+const onlineUpdateEnabled = computed(() => appStore.onlineUpdateEnabled)
 
 // Update process states (local to this component)
 const updating = ref(false)
@@ -419,6 +421,7 @@ const restartCountdown = ref(0)
 
 // Only show update check for release builds (binary/docker deployment)
 const isReleaseBuild = computed(() => buildType.value === 'release')
+const updateButtonDisabled = computed(() => updating.value || !onlineUpdateEnabled.value)
 
 function toggleDropdown() {
   dropdownOpen.value = !dropdownOpen.value
@@ -440,7 +443,7 @@ async function refreshVersion(force = true) {
 }
 
 async function handleUpdate() {
-  if (updating.value) return
+  if (updateButtonDisabled.value) return
 
   updating.value = true
   updateError.value = ''

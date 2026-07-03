@@ -89,13 +89,15 @@ func NewUpdateServiceWithOptions(cache UpdateCache, githubClient GitHubReleaseCl
 
 // UpdateInfo contains update information
 type UpdateInfo struct {
-	CurrentVersion string       `json:"current_version"`
-	LatestVersion  string       `json:"latest_version"`
-	HasUpdate      bool         `json:"has_update"`
-	ReleaseInfo    *ReleaseInfo `json:"release_info,omitempty"`
-	Cached         bool         `json:"cached"`
-	Warning        string       `json:"warning,omitempty"`
-	BuildType      string       `json:"build_type"` // "source" or "release"
+	CurrentVersion      string       `json:"current_version"`
+	LatestVersion       string       `json:"latest_version"`
+	HasUpdate           bool         `json:"has_update"`
+	ReleaseInfo         *ReleaseInfo `json:"release_info,omitempty"`
+	Cached              bool         `json:"cached"`
+	Warning             string       `json:"warning,omitempty"`
+	BuildType           string       `json:"build_type"` // "source" or "release"
+	UpdateCheckEnabled  bool         `json:"update_check_enabled"`
+	OnlineUpdateEnabled bool         `json:"online_update_enabled"`
 }
 
 // ReleaseInfo contains GitHub release details
@@ -134,11 +136,13 @@ type GitHubAsset struct {
 func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInfo, error) {
 	if !s.checkEnabled {
 		return &UpdateInfo{
-			CurrentVersion: s.currentVersion,
-			LatestVersion:  s.currentVersion,
-			HasUpdate:      false,
-			Warning:        ErrUpdateCheckDisabled.Error(),
-			BuildType:      s.buildType,
+			CurrentVersion:      s.currentVersion,
+			LatestVersion:       s.currentVersion,
+			HasUpdate:           false,
+			Warning:             ErrUpdateCheckDisabled.Error(),
+			BuildType:           s.buildType,
+			UpdateCheckEnabled:  s.checkEnabled,
+			OnlineUpdateEnabled: s.onlineUpdateEnabled,
 		}, nil
 	}
 
@@ -158,11 +162,13 @@ func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInf
 			return cached, nil
 		}
 		return &UpdateInfo{
-			CurrentVersion: s.currentVersion,
-			LatestVersion:  s.currentVersion,
-			HasUpdate:      false,
-			Warning:        err.Error(),
-			BuildType:      s.buildType,
+			CurrentVersion:      s.currentVersion,
+			LatestVersion:       s.currentVersion,
+			HasUpdate:           false,
+			Warning:             err.Error(),
+			BuildType:           s.buildType,
+			UpdateCheckEnabled:  s.checkEnabled,
+			OnlineUpdateEnabled: s.onlineUpdateEnabled,
 		}, nil
 	}
 
@@ -339,8 +345,10 @@ func (s *UpdateService) fetchLatestRelease(ctx context.Context) (*UpdateInfo, er
 			HTMLURL:     release.HTMLURL,
 			Assets:      assets,
 		},
-		Cached:    false,
-		BuildType: s.buildType,
+		Cached:              false,
+		BuildType:           s.buildType,
+		UpdateCheckEnabled:  s.checkEnabled,
+		OnlineUpdateEnabled: s.onlineUpdateEnabled,
 	}, nil
 }
 
@@ -525,12 +533,14 @@ func (s *UpdateService) getFromCache(ctx context.Context) (*UpdateInfo, error) {
 	}
 
 	return &UpdateInfo{
-		CurrentVersion: s.currentVersion,
-		LatestVersion:  cached.Latest,
-		HasUpdate:      compareVersions(s.currentVersion, cached.Latest) < 0,
-		ReleaseInfo:    cached.ReleaseInfo,
-		Cached:         true,
-		BuildType:      s.buildType,
+		CurrentVersion:      s.currentVersion,
+		LatestVersion:       cached.Latest,
+		HasUpdate:           compareVersions(s.currentVersion, cached.Latest) < 0,
+		ReleaseInfo:         cached.ReleaseInfo,
+		Cached:              true,
+		BuildType:           s.buildType,
+		UpdateCheckEnabled:  s.checkEnabled,
+		OnlineUpdateEnabled: s.onlineUpdateEnabled,
 	}, nil
 }
 
