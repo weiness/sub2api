@@ -153,9 +153,9 @@ type UpdateConfig struct {
 	// ProxyURL 用于访问 GitHub 的代理地址
 	// 支持 http/https/socks5/socks5h 协议
 	// 例如: "http://127.0.0.1:7890", "socks5://127.0.0.1:1080"
-	ProxyURL      string `mapstructure:"proxy_url"`
-	CheckDisabled bool   `mapstructure:"check_disabled"`
-	ApplyDisabled bool   `mapstructure:"apply_disabled"`
+	ProxyURL            string `mapstructure:"proxy_url"`
+	CheckEnabled        bool   `mapstructure:"check_enabled"`
+	OnlineUpdateEnabled bool   `mapstructure:"online_update_enabled"`
 }
 
 type IdempotencyConfig struct {
@@ -1401,6 +1401,8 @@ func load(allowMissingJWTSecret bool) (*Config, error) {
 	// 环境变量支持
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	_ = viper.BindEnv("update.check_enabled", "SYSTEM_UPDATE_CHECK_ENABLED")
+	_ = viper.BindEnv("update.online_update_enabled", "SYSTEM_ONLINE_UPDATE_ENABLED")
 
 	// 默认值
 	setDefaults()
@@ -1979,8 +1981,8 @@ func setDefaults() {
 	viper.SetDefault("token_refresh.max_retries", 3)                   // 最多重试3次
 	viper.SetDefault("token_refresh.retry_backoff_seconds", 2)         // 重试退避基础2秒
 
-	viper.SetDefault("update.check_disabled", false)
-	viper.SetDefault("update.apply_disabled", false)
+	viper.SetDefault("update.check_enabled", true)
+	viper.SetDefault("update.online_update_enabled", true)
 
 	// Gemini OAuth - configure via environment variables or config file
 	// GEMINI_OAUTH_CLIENT_ID and GEMINI_OAUTH_CLIENT_SECRET

@@ -77,7 +77,7 @@ func TestUpdateServiceCheckUpdateDisabledDoesNotFetchRelease(t *testing.T) {
 		client,
 		"0.1.132",
 		"release",
-		UpdateServiceOptions{CheckDisabled: true},
+		UpdateServiceOptions{CheckEnabled: false, OnlineUpdateEnabled: true},
 	)
 
 	info, err := svc.CheckUpdate(context.Background(), true)
@@ -96,10 +96,10 @@ func TestUpdateServicePerformUpdateDisabledReturnsSentinel(t *testing.T) {
 		&updateServiceGitHubClientStub{},
 		"0.1.132",
 		"release",
-		UpdateServiceOptions{ApplyDisabled: true},
+		UpdateServiceOptions{CheckEnabled: true, OnlineUpdateEnabled: false},
 	)
 
 	err := svc.PerformUpdate(context.Background())
 
-	require.ErrorIs(t, err, ErrUpdateApplyDisabled)
+	require.ErrorIs(t, err, ErrOnlineUpdateDisabled)
 }

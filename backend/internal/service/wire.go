@@ -33,8 +33,8 @@ func ProvidePricingService(cfg *config.Config, remoteClient PricingRemoteClient)
 // ProvideUpdateService creates UpdateService with BuildInfo
 func ProvideUpdateService(cfg *config.Config, cache UpdateCache, githubClient GitHubReleaseClient, buildInfo BuildInfo) *UpdateService {
 	return NewUpdateServiceWithOptions(cache, githubClient, buildInfo.Version, buildInfo.BuildType, UpdateServiceOptions{
-		CheckDisabled: cfg.Update.CheckDisabled,
-		ApplyDisabled: cfg.Update.ApplyDisabled,
+		CheckEnabled:        cfg.Update.CheckEnabled,
+		OnlineUpdateEnabled: cfg.Update.OnlineUpdateEnabled,
 	})
 }
 

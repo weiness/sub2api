@@ -104,8 +104,8 @@ services:
       # Update Configuration (在线更新配置)
       # =======================================================================
       - UPDATE_PROXY_URL=${UPDATE_PROXY_URL:-}
-      - UPDATE_CHECK_DISABLED=${UPDATE_CHECK_DISABLED:-false}
-      - UPDATE_APPLY_DISABLED=${UPDATE_APPLY_DISABLED:-false}
+      - SYSTEM_UPDATE_CHECK_ENABLED=${SYSTEM_UPDATE_CHECK_ENABLED:-true}
+      - SYSTEM_ONLINE_UPDATE_ENABLED=${SYSTEM_ONLINE_UPDATE_ENABLED:-true}
 
       # =======================================================================
       # Image Generation Stream & Concurrency

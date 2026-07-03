@@ -22,9 +22,9 @@ import (
 )
 
 var (
-	ErrNoUpdateAvailable   = infraerrors.Conflict("ALREADY_UP_TO_DATE", "no update available; current version is latest")
-	ErrUpdateCheckDisabled = infraerrors.Forbidden("UPDATE_CHECK_DISABLED", "update check is disabled")
-	ErrUpdateApplyDisabled = infraerrors.Forbidden("UPDATE_APPLY_DISABLED", "online update is disabled")
+	ErrNoUpdateAvailable    = infraerrors.Conflict("ALREADY_UP_TO_DATE", "no update available; current version is latest")
+	ErrUpdateCheckDisabled  = infraerrors.Forbidden("SYSTEM_UPDATE_CHECK_DISABLED", "system update check is disabled")
+	ErrOnlineUpdateDisabled = infraerrors.Forbidden("SYSTEM_ONLINE_UPDATE_DISABLED", "system online update is disabled")
 )
 
 const (
@@ -55,32 +55,35 @@ type GitHubReleaseClient interface {
 
 // UpdateService handles software updates
 type UpdateService struct {
-	cache          UpdateCache
-	githubClient   GitHubReleaseClient
-	currentVersion string
-	buildType      string // "source" for manual builds, "release" for CI builds
-	checkDisabled  bool
-	applyDisabled  bool
+	cache               UpdateCache
+	githubClient        GitHubReleaseClient
+	currentVersion      string
+	buildType           string // "source" for manual builds, "release" for CI builds
+	checkEnabled        bool
+	onlineUpdateEnabled bool
 }
 
 // NewUpdateService creates a new UpdateService
 func NewUpdateService(cache UpdateCache, githubClient GitHubReleaseClient, version, buildType string) *UpdateService {
-	return NewUpdateServiceWithOptions(cache, githubClient, version, buildType, UpdateServiceOptions{})
+	return NewUpdateServiceWithOptions(cache, githubClient, version, buildType, UpdateServiceOptions{
+		CheckEnabled:        true,
+		OnlineUpdateEnabled: true,
+	})
 }
 
 type UpdateServiceOptions struct {
-	CheckDisabled bool
-	ApplyDisabled bool
+	CheckEnabled        bool
+	OnlineUpdateEnabled bool
 }
 
 func NewUpdateServiceWithOptions(cache UpdateCache, githubClient GitHubReleaseClient, version, buildType string, opts UpdateServiceOptions) *UpdateService {
 	return &UpdateService{
-		cache:          cache,
-		githubClient:   githubClient,
-		currentVersion: version,
-		buildType:      buildType,
-		checkDisabled:  opts.CheckDisabled,
-		applyDisabled:  opts.ApplyDisabled,
+		cache:               cache,
+		githubClient:        githubClient,
+		currentVersion:      version,
+		buildType:           buildType,
+		checkEnabled:        opts.CheckEnabled,
+		onlineUpdateEnabled: opts.OnlineUpdateEnabled,
 	}
 }
 
@@ -129,7 +132,7 @@ type GitHubAsset struct {
 
 // CheckUpdate checks for available updates
 func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInfo, error) {
-	if s.checkDisabled {
+	if !s.checkEnabled {
 		return &UpdateInfo{
 			CurrentVersion: s.currentVersion,
 			LatestVersion:  s.currentVersion,
@@ -171,8 +174,8 @@ func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInf
 // PerformUpdate downloads and applies the update
 // Uses atomic file replacement pattern for safe in-place updates
 func (s *UpdateService) PerformUpdate(ctx context.Context) error {
-	if s.applyDisabled {
-		return ErrUpdateApplyDisabled
+	if !s.onlineUpdateEnabled {
+		return ErrOnlineUpdateDisabled
 	}
 
 	info, err := s.CheckUpdate(ctx, true)
