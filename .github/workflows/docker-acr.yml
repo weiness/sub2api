@@ -50,6 +50,8 @@ jobs:
           push: true
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
           tags: |
             ${{ secrets.ACR_REGISTRY }}/${{ secrets.ACR_NAMESPACE }}/${{ secrets.ACR_REPOSITORY }}:${{ steps.version.outputs.version }}
-            ghcr.io/${{ steps.ghcr.outputs.owner }}/sub2api:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.ghcr.outputs.owner }}/sub2api-private:${{ steps.version.outputs.version }}
