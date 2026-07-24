@@ -340,13 +340,38 @@ describe('PaymentView subscription confirmation amounts', () => {
     expect(order.exists()).toBe(true)
     expect(method.exists()).toBe(true)
     expect(actions.exists()).toBe(true)
-    expect(plan.text()).toContain('CNY')
     expect(order.text()).toContain('payment.planFee')
     expect(plan.element.compareDocumentPosition(order.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(order.element.compareDocumentPosition(method.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(method.element.compareDocumentPosition(actions.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(actions.find('.btn-purchase').exists()).toBe(true)
     expect(actions.find('.btn-alipay').exists()).toBe(false)
+  })
+
+  it('uses the v0.1.164.4 confirmation card with a neutral rate value', async () => {
+    const wrapper = await mountSubscriptionConfirm({
+      plan: {
+        description: 'Plan description',
+        rate_multiplier: 1,
+        daily_limit_usd: 10,
+        weekly_limit_usd: 50,
+        monthly_limit_usd: 100,
+      },
+    })
+
+    const plan = wrapper.find('[data-test="subscription-plan-info"]')
+    const rate = wrapper.find('[data-test="subscription-rate"]')
+    const title = plan.find('h3')
+    const description = plan.find('[data-test="subscription-plan-description"]')
+    const price = plan.find('[data-test="subscription-plan-price"]')
+
+    expect(plan.classes()).toContain('border-l-4')
+    expect(plan.find('.sm\\:grid-cols-4').exists()).toBe(true)
+    expect(title.element.compareDocumentPosition(description.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(description.element.compareDocumentPosition(price.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(rate.text()).toBe('×1')
+    expect(rate.classes()).toContain('text-gray-800')
+    expect(rate.classes()).not.toContain('text-emerald-400')
   })
 })
 

@@ -98,50 +98,50 @@
           <template v-else-if="activeTab === 'subscription'">
             <!-- Subscription confirm (inline, replaces plan list) -->
             <template v-if="selectedPlan">
-              <div class="card p-6" data-test="subscription-plan-info">
-                <p class="mb-4 border-l-[3px] border-l-[#0fad76] pl-2.5 text-base font-semibold text-gray-900 dark:text-white">{{ t('payment.planInfo') }}</p>
+              <div class="card border-l-4 border-l-primary-500 p-6" data-test="subscription-plan-info">
+                <p class="mb-4 text-base font-semibold text-gray-900 dark:text-white">{{ t('payment.planInfo') }}</p>
                 <div class="mb-3 flex flex-wrap items-center gap-2">
-                  <h3 class="text-[22px] font-bold text-gray-900 dark:text-white">{{ selectedPlan.name }}</h3>
                   <span :class="['rounded-md border px-2 py-0.5 text-xs font-medium', planBadgeClass]">
                     {{ platformLabel(selectedPlan.group_platform || '') }}
                   </span>
-                </div>
-                <!-- Price -->
-                <div class="flex items-baseline gap-2">
-                  <span :class="['text-[34px] font-bold', planTextClass]">{{ formatSelectedSubscriptionPaymentAmount(selectedPlan.price) }}</span>
-                  <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ selectedCurrency }}</span>
-                  <span class="text-sm text-gray-500 dark:text-gray-400">/ {{ planValiditySuffix }}</span>
+                  <h3 class="text-[22px] font-bold text-gray-900 dark:text-white">{{ selectedPlan.name }}</h3>
                 </div>
                 <!-- Description -->
-                <p v-if="selectedPlan.description" class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+                <p v-if="selectedPlan.description" data-test="subscription-plan-description" class="mb-3 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
                   {{ selectedPlan.description }}
                 </p>
-                <div class="mt-4 divide-y divide-gray-100 border-t border-gray-100 text-sm dark:divide-dark-700 dark:border-dark-700">
-                  <div v-if="selectedPlan.monthly_limit_usd != null" class="flex min-h-[46px] items-center justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">{{ t('payment.planCard.monthlyLimit') }}</span>
-                    <strong class="font-semibold text-gray-900 dark:text-white">${{ selectedPlan.monthly_limit_usd }}</strong>
-                  </div>
-                  <div v-if="selectedPlan.daily_limit_usd != null" class="flex min-h-[46px] items-center justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">{{ t('payment.planCard.dailyLimit') }}</span>
-                    <strong class="font-semibold text-gray-900 dark:text-white">${{ selectedPlan.daily_limit_usd }}</strong>
-                  </div>
-                  <div v-if="selectedPlan.weekly_limit_usd != null" class="flex min-h-[46px] items-center justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">{{ t('payment.planCard.weeklyLimit') }}</span>
-                    <strong class="font-semibold text-gray-900 dark:text-white">${{ selectedPlan.weekly_limit_usd }}</strong>
-                  </div>
-                  <div v-if="selectedPlan.daily_limit_usd == null && selectedPlan.weekly_limit_usd == null && selectedPlan.monthly_limit_usd == null" class="flex min-h-[46px] items-center justify-between">
-                    <span class="text-gray-500 dark:text-gray-400">{{ t('payment.planCard.quota') }}</span>
-                    <strong class="font-semibold text-gray-900 dark:text-white">{{ t('payment.planCard.unlimited') }}</strong>
-                  </div>
-                  <div class="flex min-h-[46px] items-center justify-between">
-                    <span class="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                      {{ t('payment.planCard.rate') }}
+                <!-- Price -->
+                <div class="flex items-baseline gap-2">
+                  <span data-test="subscription-plan-price" :class="['text-[34px] font-bold', planTextClass]">{{ formatSelectedSubscriptionPaymentAmount(selectedPlan.price) }}</span>
+                  <span class="text-sm text-gray-500 dark:text-gray-400">/ {{ planValiditySuffix }}</span>
+                </div>
+                <!-- Rate + Limits grid -->
+                <div class="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                  <div>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.rate') }}</span>
+                    <div class="flex items-center gap-1">
+                      <span data-test="subscription-rate" class="text-lg font-bold text-gray-800 dark:text-gray-200">×{{ selectedPlan.rate_multiplier ?? 1 }}</span>
                       <HelpTooltip v-if="planHasPeakRate(selectedPlan)" width-class="w-auto max-w-xs">
                         <template #trigger><Icon name="clock" size="sm" class="cursor-help text-amber-500 dark:text-amber-400" /></template>
                         <div class="whitespace-nowrap"><p class="font-semibold text-white">{{ t('payment.planCard.peakRate') }}</p><p class="mt-1 text-gray-200">{{ planPeakRateLabel(selectedPlan) }}</p></div>
                       </HelpTooltip>
-                    </span>
-                    <strong class="font-semibold text-gray-900 dark:text-white">×{{ selectedPlan.rate_multiplier ?? 1 }}</strong>
+                    </div>
+                  </div>
+                  <div v-if="selectedPlan.daily_limit_usd != null">
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.dailyLimit') }}</span>
+                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">${{ selectedPlan.daily_limit_usd }}</div>
+                  </div>
+                  <div v-if="selectedPlan.weekly_limit_usd != null">
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.weeklyLimit') }}</span>
+                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">${{ selectedPlan.weekly_limit_usd }}</div>
+                  </div>
+                  <div v-if="selectedPlan.monthly_limit_usd != null">
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.monthlyLimit') }}</span>
+                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">${{ selectedPlan.monthly_limit_usd }}</div>
+                  </div>
+                  <div v-if="selectedPlan.daily_limit_usd == null && selectedPlan.weekly_limit_usd == null && selectedPlan.monthly_limit_usd == null">
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.quota') }}</span>
+                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ t('payment.planCard.unlimited') }}</div>
                   </div>
                 </div>
               </div>
