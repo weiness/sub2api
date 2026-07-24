@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>公告操作图标预览</title>
+  <link rel="stylesheet" href="../themes/default.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding-top: 58px; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); }
+    button { font: inherit; }
+    .tabs { position: fixed; inset: 0 0 auto; z-index: 20; display: flex; gap: 8px; padding: 10px 18px; border-bottom: 1px solid var(--color-border); background: rgba(255,255,255,.96); backdrop-filter: blur(8px); }
+    .tab { border: 1px solid var(--color-border); border-radius: 9px; background: white; padding: 8px 13px; color: #4b5563; cursor: pointer; transition: all .15s ease; }
+    .tab:hover, .tab.active { border-color: #bfdbfe; background: #eff6ff; color: var(--color-primary); }
+    .page { max-width: 1180px; margin: 0 auto; padding: 40px 24px; transition: max-width .2s ease; }
+    .intro { margin-bottom: 22px; }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    .intro p { margin: 0; color: var(--color-text-muted); font-size: 14px; }
+    .card { overflow: hidden; border: 1px solid var(--color-border); border-radius: 14px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--color-border); }
+    .toolbar strong { font-size: 15px; }
+    .new { border: 0; border-radius: 10px; background: var(--color-primary); padding: 9px 14px; color: white; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f9fafb; color: #6b7280; font-size: 12px; font-weight: 600; text-align: left; }
+    th, td { padding: 14px 18px; border-bottom: 1px solid #f0f2f5; }
+    td { font-size: 14px; }
+    .title-cell strong { display: block; margin-bottom: 4px; }
+    .meta { color: #9ca3af; font-size: 12px; }
+    .badge { display: inline-flex; border-radius: 999px; padding: 4px 9px; background: #dcfce7; color: #15803d; font-size: 12px; }
+    .badge.popup { background: #fef3c7; color: #a16207; }
+    .actions { display: flex; gap: 3px; justify-content: flex-end; }
+    .icon-btn { position: relative; display: grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 9px; background: transparent; color: #6b7280; cursor: pointer; transition: all .15s ease; }
+    .icon-btn:hover { background: #eff6ff; color: var(--color-primary); transform: translateY(-1px); }
+    .icon-btn.edit:hover { background: #f3f4f6; color: #374151; }
+    .icon-btn.delete:hover { background: #fef2f2; color: var(--color-danger); }
+    .icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-btn::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 7px); left: 50%; z-index: 5; transform: translate(-50%,4px); pointer-events: none; opacity: 0; white-space: nowrap; border-radius: 6px; background: #111827; padding: 5px 8px; color: white; font-size: 11px; transition: all .15s ease; }
+    .icon-btn:hover::after { opacity: 1; transform: translate(-50%,0); }
+    .variant-note { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; border: 1px solid #dbeafe; border-radius: 12px; background: #eff6ff; padding: 14px 16px; color: #1e40af; font-size: 13px; }
+    .variant-note b { white-space: nowrap; }
+    .overlay { position: fixed; inset: 0; z-index: 40; display: none; align-items: flex-start; justify-content: center; padding: 9vh 20px 30px; background: rgba(0,0,0,.58); backdrop-filter: blur(4px); }
+    .overlay.show { display: flex; animation: fade .16s ease; }
+    .modal { width: min(680px, 100%); overflow: hidden; border-radius: 20px; background: white; box-shadow: var(--shadow-md); animation: rise .2s ease; }
+    .modal-head { display: flex; align-items: flex-start; justify-content: space-between; padding: 22px 24px; border-bottom: 1px solid #f3f4f6; background: linear-gradient(135deg,#eff6ff,#eef2ff); }
+    .modal-head h2 { margin: 0 0 6px; font-size: 20px; }
+    .modal-head p { margin: 0; color: #6b7280; font-size: 13px; }
+    .close { border: 0; border-radius: 8px; background: rgba(255,255,255,.7); padding: 7px 10px; cursor: pointer; }
+    .modal-body { padding: 24px; color: #374151; line-height: 1.7; }
+    .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+    .stat { border: 1px solid var(--color-border); border-radius: 10px; padding: 13px; }
+    .stat b { display: block; font-size: 20px; }
+    .stat span { color: #6b7280; font-size: 12px; }
+    .user-row { display: flex; justify-content: space-between; padding: 11px 4px; border-bottom: 1px solid #f3f4f6; }
+    .read { color: var(--color-success); }
+    .unread { color: #9ca3af; }
+    #sketch-tools { position: fixed; right: 12px; bottom: 12px; z-index: 99; border-radius: 8px; background: rgba(0,0,0,.75); padding: 8px 10px; color: white; font: 12px system-ui; opacity: .45; transition: opacity .2s; }
+    #sketch-tools:hover { opacity: 1; }
+    #sketch-tools button { border: 0; border-radius: 4px; margin-left: 4px; padding: 3px 6px; cursor: pointer; }
+    @keyframes fade { from { opacity: 0 } }
+    @keyframes rise { from { opacity: 0; transform: translateY(-8px) scale(.98) } }
+    @media (max-width: 760px) { th:nth-child(3),td:nth-child(3),th:nth-child(4),td:nth-child(4){display:none}.page{padding:24px 12px}.tabs{overflow:auto}.stats{grid-template-columns:1fr}.icon-btn{width:32px}.toolbar{padding:13px} }
+  </style>
+</head>
+<body>
+  <nav class="tabs">
+    <button class="tab active" data-variant="users">A：Users（推荐）</button>
+    <button class="tab" data-variant="chart">B：Chart Bar</button>
+    <button class="tab" data-variant="check">C：Check Circle</button>
+  </nav>
+  <main class="page" id="viewport">
+    <div class="intro"><h1>公告操作图标预览</h1><p>眼睛用于公告预览；第二个按钮用于查看已读/未读用户。请悬停并点击体验。</p></div>
+    <section class="card">
+      <div class="toolbar"><strong>公告管理</strong><button class="new">＋ 创建公告</button></div>
+      <table>
+        <thead><tr><th>标题</th><th>状态</th><th>通知方式</th><th>创建时间</th><th style="text-align:right">操作</th></tr></thead>
+        <tbody><tr>
+          <td class="title-cell"><strong>服务升级与使用说明</strong><span class="meta">#128 · 面向全部用户</span></td>
+          <td><span class="badge">生效中</span></td><td><span class="badge popup">弹窗</span></td><td class="meta">2026/07/24 15:30</td>
+          <td><div class="actions">
+            <button class="icon-btn" data-tip="预览公告" onclick="openPreview()"><svg viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></button>
+            <button id="status-button" class="icon-btn" data-tip="查看阅读状态" onclick="openStatus()"><svg viewBox="0 0 24 24"><path id="status-path" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></button>
+            <button class="icon-btn edit" data-tip="编辑公告"><svg viewBox="0 0 24 24"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685 10.062-10.828z"/></svg></button>
+            <button class="icon-btn delete" data-tip="删除公告"><svg viewBox="0 0 24 24"><path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0H4.772m3.478-.397V4.477A2.25 2.25 0 0110.5 2.25h3A2.25 2.25 0 0115.75 4.5v.893"/></svg></button>
+          </div></td>
+        </tr></tbody>
+      </table>
+    </section>
+    <div class="variant-note"><b id="variant-name">A · Users</b><span id="variant-copy">最贴近“查看具体用户”的含义，与眼睛预览也容易区分。</span></div>
+  </main>
+  <div class="overlay" id="preview-modal" onclick="backdropClose(event)"><section class="modal"><header class="modal-head"><div><h2>服务升级与使用说明</h2><p>公告预览 · 不会产生已读记录</p></div><button class="close" onclick="closeModals()">关闭</button></header><div class="modal-body"><h3>本次更新内容</h3><p>我们完成了网关服务升级，请留意请求稳定性与控制台用量统计的变化。</p><blockquote style="margin:18px 0;border-left:4px solid #3b82f6;background:#eff6ff;padding:12px 16px">预览使用与用户端相同的内容渲染方式。</blockquote></div></section></div>
+  <div class="overlay" id="status-modal" onclick="backdropClose(event)"><section class="modal"><header class="modal-head"><div><h2>公告阅读状态</h2><p>服务升级与使用说明</p></div><button class="close" onclick="closeModals()">关闭</button></header><div class="modal-body"><div class="stats"><div class="stat"><b>128</b><span>投放用户</span></div><div class="stat"><b class="read">93</b><span>已读</span></div><div class="stat"><b>35</b><span>未读</span></div></div><div class="user-row"><span>alice@example.com</span><span class="read">已读</span></div><div class="user-row"><span>bob@example.com</span><span class="unread">未读</span></div></div></section></div>
+  <div id="sketch-tools">视口 <button onclick="setWidth('375px')">手机</button><button onclick="setWidth('768px')">平板</button><button onclick="setWidth('1180px')">桌面</button></div>
+  <script>
+    const variants = {
+      users: { name:'A · Users', copy:'最贴近“查看具体用户”的含义，与眼睛预览也容易区分。', path:'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+      chart: { name:'B · Chart Bar', copy:'更像汇总数据分析，适合未来加入阅读率趋势时使用。', path:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14' },
+      check: { name:'C · Check Circle', copy:'能表达“已读”，但容易被误解为公告已启用、审核通过或操作成功。', path:'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }
+    };
+    document.querySelectorAll('.tab').forEach(tab => tab.onclick = () => { document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); tab.classList.add('active'); const v=variants[tab.dataset.variant]; document.getElementById('status-path').setAttribute('d',v.path); document.getElementById('variant-name').textContent=v.name; document.getElementById('variant-copy').textContent=v.copy; });
+    function openPreview(){ document.getElementById('preview-modal').classList.add('show'); }
+    function openStatus(){ document.getElementById('status-modal').classList.add('show'); }
+    function closeModals(){ document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('show')); }
+    function backdropClose(e){ if(e.target.classList.contains('overlay')) closeModals(); }
+    function setWidth(w){ document.getElementById('viewport').style.maxWidth=w; }
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModals()});
+  </script>
+</body>
+</html>
