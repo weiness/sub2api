@@ -99,7 +99,6 @@
             <!-- Subscription confirm (inline, replaces plan list) -->
             <template v-if="selectedPlan">
               <div class="card border-l-4 border-l-primary-500 p-6" data-test="subscription-plan-info">
-                <p class="mb-4 text-base font-semibold text-gray-900 dark:text-white">{{ t('payment.planInfo') }}</p>
                 <div class="mb-3 flex flex-wrap items-center gap-2">
                   <span :class="['rounded-md border px-2 py-0.5 text-xs font-medium', planBadgeClass]">
                     {{ platformLabel(selectedPlan.group_platform || '') }}

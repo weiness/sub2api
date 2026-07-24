@@ -367,6 +367,7 @@ describe('PaymentView subscription confirmation amounts', () => {
 
     expect(plan.classes()).toContain('border-l-4')
     expect(plan.find('.sm\\:grid-cols-4').exists()).toBe(true)
+    expect(plan.text()).not.toContain('payment.planInfo')
     expect(title.element.compareDocumentPosition(description.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(description.element.compareDocumentPosition(price.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(rate.text()).toBe('×1')
