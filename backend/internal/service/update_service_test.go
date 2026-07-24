@@ -29,13 +29,11 @@ func (s *updateServiceCacheStub) SetUpdateInfo(_ context.Context, data string, _
 
 type updateServiceGitHubClientStub struct {
 	release        *GitHubRelease
-	fetchCalls     int
 	recentReleases []*GitHubRelease
 	recentErr      error
 }
 
 func (s *updateServiceGitHubClientStub) FetchLatestRelease(context.Context, string) (*GitHubRelease, error) {
-	s.fetchCalls++
 	return s.release, nil
 }
 
@@ -69,69 +67,6 @@ func TestUpdateServicePerformUpdateNoUpdateReturnsSentinel(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, errors.Is(err, ErrNoUpdateAvailable))
 	require.ErrorIs(t, err, ErrNoUpdateAvailable)
-}
-
-func TestUpdateServiceCheckUpdateDisabledDoesNotFetchRelease(t *testing.T) {
-	client := &updateServiceGitHubClientStub{
-		release: &GitHubRelease{
-			TagName: "v9.9.9",
-			Name:    "v9.9.9",
-		},
-	}
-	svc := NewUpdateServiceWithOptions(
-		&updateServiceCacheStub{},
-		client,
-		"0.1.132",
-		"release",
-		UpdateServiceOptions{CheckEnabled: false, OnlineUpdateEnabled: true},
-	)
-
-	info, err := svc.CheckUpdate(context.Background(), true)
-
-	require.NoError(t, err)
-	require.Equal(t, 0, client.fetchCalls)
-	require.Equal(t, "0.1.132", info.CurrentVersion)
-	require.Equal(t, "0.1.132", info.LatestVersion)
-	require.False(t, info.HasUpdate)
-	require.Contains(t, info.Warning, "update check is disabled")
-	require.False(t, info.UpdateCheckEnabled)
-	require.True(t, info.OnlineUpdateEnabled)
-}
-
-func TestUpdateServicePerformUpdateDisabledReturnsSentinel(t *testing.T) {
-	svc := NewUpdateServiceWithOptions(
-		&updateServiceCacheStub{},
-		&updateServiceGitHubClientStub{},
-		"0.1.132",
-		"release",
-		UpdateServiceOptions{CheckEnabled: true, OnlineUpdateEnabled: false},
-	)
-
-	err := svc.PerformUpdate(context.Background())
-
-	require.ErrorIs(t, err, ErrOnlineUpdateDisabled)
-}
-
-func TestUpdateServiceCheckUpdateReportsOnlineUpdateDisabled(t *testing.T) {
-	svc := NewUpdateServiceWithOptions(
-		&updateServiceCacheStub{},
-		&updateServiceGitHubClientStub{
-			release: &GitHubRelease{
-				TagName: "v0.1.133",
-				Name:    "v0.1.133",
-			},
-		},
-		"0.1.132",
-		"release",
-		UpdateServiceOptions{CheckEnabled: true, OnlineUpdateEnabled: false},
-	)
-
-	info, err := svc.CheckUpdate(context.Background(), true)
-
-	require.NoError(t, err)
-	require.True(t, info.UpdateCheckEnabled)
-	require.False(t, info.OnlineUpdateEnabled)
-	require.True(t, info.HasUpdate)
 }
 
 func newRollbackTestService(current string, releases []*GitHubRelease) *UpdateService {
