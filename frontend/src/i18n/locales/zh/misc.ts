@@ -485,9 +485,8 @@ export default {
     renewNow: '续费',
     selectPlan: '选择套餐',
     planFeatures: '功能特性',
-    planCard: {
-      recommended: '推荐',
-      rate: '倍率',
+	planCard: {
+		rate: '倍率',
       peakRate: '高峰倍率',
       dailyLimit: '日限额',
       weeklyLimit: '周限额',
@@ -504,9 +503,8 @@ export default {
     oneYear: '1 年',
     perMonth: '月',
     perYear: '年',
-    admin: {
-      recommended: '推荐',
-      tabs: {
+	admin: {
+		tabs: {
         overview: '概览',
         orders: '订单管理',
         channels: '支付渠道',

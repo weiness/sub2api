@@ -52,21 +52,6 @@
             ]" />
           </button>
         </template>
-        <template #cell-recommended="{ value, row }">
-          <button
-            type="button"
-            :class="[
-              'relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-              value ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-600'
-            ]"
-            @click="toggleRecommended(row)"
-          >
-            <span :class="[
-              'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-              value ? 'translate-x-4' : 'translate-x-0'
-            ]" />
-          </button>
-        </template>
         <template #cell-actions="{ row }">
           <div class="flex items-center gap-2">
             <button @click="openPlanEdit(row)" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400">
@@ -164,7 +149,6 @@ const planColumns = computed((): Column[] => [
   { key: 'price', label: t('payment.admin.price') },
   { key: 'validity_days', label: t('payment.admin.validity') },
   { key: 'for_sale', label: t('payment.admin.forSale') },
-  { key: 'recommended', label: t('payment.admin.recommended') },
   { key: 'sort_order', label: t('payment.admin.sortOrder') },
   { key: 'actions', label: t('common.actions') },
 ])
@@ -196,15 +180,6 @@ async function toggleForSale(plan: SubscriptionPlan) {
   try {
     await adminPaymentAPI.updatePlan(plan.id, { for_sale: !plan.for_sale })
     plan.for_sale = !plan.for_sale
-  } catch (err: unknown) {
-    appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))
-  }
-}
-
-async function toggleRecommended(plan: SubscriptionPlan) {
-  try {
-    await adminPaymentAPI.updatePlan(plan.id, { recommended: !plan.recommended })
-    plan.recommended = !plan.recommended
   } catch (err: unknown) {
     appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))
   }

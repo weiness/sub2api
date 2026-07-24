@@ -104,9 +104,8 @@
                   <span :class="['rounded-md border px-2 py-0.5 text-xs font-medium', planBadgeClass]">
                     {{ platformLabel(selectedPlan.group_platform || '') }}
                   </span>
-                  <h3 class="text-[22px] font-bold text-gray-900 dark:text-white">{{ selectedPlan.name }}</h3>
-                  <span v-if="selectedPlan.recommended" class="rounded-md bg-primary-500 px-2.5 py-1 text-xs font-bold text-white">{{ t('payment.planCard.recommended') }}</span>
-                </div>
+					<h3 class="text-[22px] font-bold text-gray-900 dark:text-white">{{ selectedPlan.name }}</h3>
+				</div>
                 <!-- Price -->
                 <div class="flex items-baseline gap-2">
                   <span :class="['text-[34px] font-bold', planTextClass]">{{ formatSelectedSubscriptionPaymentAmount(selectedPlan.price) }}</span>

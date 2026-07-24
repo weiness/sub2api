@@ -461,9 +461,8 @@ export default {
     renewNow: 'Renew',
     selectPlan: 'Select Plan',
     planFeatures: 'Features',
-    planCard: {
-      recommended: 'Recommended',
-      rate: 'Rate',
+	planCard: {
+		rate: 'Rate',
       peakRate: 'Peak Rate',
       dailyLimit: 'Daily',
       weeklyLimit: 'Weekly',
@@ -480,9 +479,8 @@ export default {
     oneYear: '1 Year',
     perMonth: 'month',
     perYear: 'year',
-    admin: {
-      recommended: 'Recommended',
-      tabs: {
+	admin: {
+		tabs: {
         overview: 'Overview',
         orders: 'Orders',
         channels: 'Channels',
