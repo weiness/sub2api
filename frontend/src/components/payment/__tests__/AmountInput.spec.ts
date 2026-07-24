@@ -34,6 +34,8 @@ describe('AmountInput', () => {
 
     await wrapper.setProps({ modelValue: 20 })
     const matchingButton = wrapper.findAll('button').find(button => button.text().includes('¥20'))
-    expect(matchingButton?.classes()).toContain('border-primary-500')
+    expect(matchingButton?.classes()).toContain('border-[#0fad76]')
+    expect(matchingButton?.find('[data-testid="amount-selected-indicator"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="amount-selected-indicator"]')).toHaveLength(1)
   })
 })

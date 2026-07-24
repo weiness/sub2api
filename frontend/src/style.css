@@ -81,6 +81,12 @@
     @apply dark:shadow-primary-500/20;
   }
 
+  .btn-purchase {
+    @apply bg-[#0fad76] text-white shadow-md shadow-emerald-500/20;
+    @apply hover:bg-[#07885b] hover:shadow-lg hover:shadow-emerald-500/25;
+    @apply active:bg-[#06754f] dark:bg-[#0fad76] dark:hover:bg-[#07885b];
+  }
+
   .btn-secondary {
     @apply bg-white dark:bg-dark-800;
     @apply text-gray-700 dark:text-gray-200;

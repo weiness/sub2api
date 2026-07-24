@@ -287,6 +287,7 @@ export default {
   payment: {
     title: 'Recharge / Subscription',
     amountLabel: 'Amount',
+    planFee: 'Plan fee',
     paymentAmount: 'Payment Amount',
     creditedBalance: 'Credited Balance',
     quickAmounts: 'Quick Amounts',

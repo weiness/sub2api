@@ -311,6 +311,7 @@ export default {
   payment: {
     title: '充值/订阅',
     amountLabel: '充值金额',
+    planFee: '套餐费用',
     paymentAmount: '支付金额',
     creditedBalance: '到账余额',
     quickAmounts: '快捷金额',

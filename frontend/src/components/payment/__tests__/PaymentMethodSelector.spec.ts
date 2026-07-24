@@ -31,7 +31,8 @@ describe('PaymentMethodSelector', () => {
     })
 
     const button = wrapper.get('button')
-    expect(button.classes()).toContain('border-primary-500')
+    expect(button.classes()).toContain('border-[#0fad76]')
     expect(button.classes()).not.toContain('border-[#02A9F1]')
+    expect(wrapper.find('[data-testid="payment-method-selected-indicator"]').exists()).toBe(true)
   })
 })

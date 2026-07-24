@@ -324,6 +324,30 @@ describe('PaymentView subscription confirmation amounts', () => {
     expect(text).toContain(total)
     expect(wrapper.findAll('button').some(button => button.text().includes(total))).toBe(true)
   })
+
+  it('keeps the subscription confirmation sections in the preview order', async () => {
+    const wrapper = await mountSubscriptionConfirm({
+      method: { currency: 'CNY' },
+      plan: { price: 39 },
+    })
+
+    const plan = wrapper.find('[data-test="subscription-plan-info"]')
+    const order = wrapper.find('[data-test="subscription-order-info"]')
+    const method = wrapper.find('[data-test="subscription-payment-method"]')
+    const actions = wrapper.find('[data-test="subscription-actions"]')
+
+    expect(plan.exists()).toBe(true)
+    expect(order.exists()).toBe(true)
+    expect(method.exists()).toBe(true)
+    expect(actions.exists()).toBe(true)
+    expect(plan.text()).toContain('CNY')
+    expect(order.text()).toContain('payment.planFee')
+    expect(plan.element.compareDocumentPosition(order.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(order.element.compareDocumentPosition(method.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(method.element.compareDocumentPosition(actions.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(actions.find('.btn-purchase').exists()).toBe(true)
+    expect(actions.find('.btn-alipay').exists()).toBe(false)
+  })
 })
 
 describe('PaymentView payment recovery', () => {
