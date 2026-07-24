@@ -6,10 +6,7 @@
       borderClass,
     ]"
   >
-    <div v-if="plan.recommended" class="bg-primary-500 px-3 py-1.5 text-center text-xs font-bold text-white">
-      {{ t('payment.planCard.recommended') }}
-    </div>
-    <div v-else :class="['h-1', accentClass]" />
+    <div :class="['h-1', accentClass]" />
 
     <div class="flex flex-1 flex-col p-4">
       <div class="mb-2 flex items-start justify-between gap-2">

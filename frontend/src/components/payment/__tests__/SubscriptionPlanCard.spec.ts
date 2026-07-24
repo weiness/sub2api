@@ -23,7 +23,6 @@ const i18n = createI18n({
           quota: "Quota",
           rate: "Rate",
           peakRate: "Peak Rate",
-          recommended: "Recommended",
           unlimited: "Unlimited",
         },
         subscribeNow: "Subscribe now",
@@ -90,16 +89,14 @@ describe("SubscriptionPlanCard", () => {
     expect(mountPlanCard("openai", { currency: "" }).text()).toContain("$10");
   });
 
-  it("shows recommendation and keeps peak-rate details in the system tooltip", () => {
+  it("keeps peak-rate details in the system tooltip", () => {
     const wrapper = mountPlanCard("openai", {
-      recommended: true,
       peak_rate_enabled: true,
       peak_start: "14:00",
       peak_end: "17:00",
       peak_rate_multiplier: 1.5,
     });
 
-    expect(wrapper.text()).toContain("payment.planCard.recommended");
     expect(wrapper.findComponent(HelpTooltip).exists()).toBe(true);
     expect(document.body.textContent).toContain("14:00-17:00 ×1.5");
   });

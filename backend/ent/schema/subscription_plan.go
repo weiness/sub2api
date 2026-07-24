@@ -59,8 +59,6 @@ func (SubscriptionPlan) Fields() []ent.Field {
 			Default(""),
 		field.Bool("for_sale").
 			Default(true),
-		field.Bool("recommended").
-			Default(false),
 		field.Int("sort_order").
 			Default(0),
 		field.Time("created_at").
