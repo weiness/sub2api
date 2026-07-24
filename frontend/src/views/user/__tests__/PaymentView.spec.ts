@@ -257,7 +257,7 @@ describe('PaymentView subscription confirmation amounts', () => {
     const convertedOriginalPrice = formatPaymentAmount(92.88, 'CNY')
 
     expect(text).toContain(convertedPrice)
-    expect(text).toContain(convertedOriginalPrice)
+    expect(text).not.toContain(convertedOriginalPrice)
     expect(text).not.toContain(formatPaymentAmount(9.99, 'CNY'))
     // 换算必须使用订阅汇率（×7.15），而不是余额倍率（÷0.14 = 71.36）
     expect(text).not.toContain(formatPaymentAmount(71.36, 'CNY'))
@@ -297,7 +297,7 @@ describe('PaymentView subscription confirmation amounts', () => {
     })
 
     expect(usdWrapper.text()).toContain(formatPaymentAmount(7.99, 'USD'))
-    expect(usdWrapper.text()).toContain(formatPaymentAmount(9.99, 'USD'))
+    expect(usdWrapper.text()).not.toContain(formatPaymentAmount(9.99, 'USD'))
   })
 
   it('adds fee rate after CNY rate conversion to match backend pay_amount', async () => {

@@ -315,6 +315,9 @@ export default {
     creditedBalance: '到账余额',
     quickAmounts: '快捷金额',
     customAmount: '自定义金额',
+    selectPaymentAmount: '选择付款金额',
+    customPaymentAmount: '自定义付款金额',
+    currentRechargeRate: '当前汇率 1 {currency} = ${usd} 额度',
     enterAmount: '输入金额',
     paymentMethod: '支付方式',
     fee: '手续费',
@@ -410,6 +413,8 @@ export default {
     noPlans: '暂无可用订阅套餐',
     notAvailable: '充值功能暂未开放',
     confirmSubscription: '确认订阅',
+    planInfo: '套餐信息',
+    orderInfo: '订单信息',
     confirmCancel: '确定要取消此订单吗？',
     amountTooLow: '最低金额为 {min}',
     amountTooHigh: '最高金额为 {max}',
@@ -481,6 +486,7 @@ export default {
     selectPlan: '选择套餐',
     planFeatures: '功能特性',
     planCard: {
+      recommended: '推荐',
       rate: '倍率',
       peakRate: '高峰倍率',
       dailyLimit: '日限额',
@@ -499,6 +505,7 @@ export default {
     perMonth: '月',
     perYear: '年',
     admin: {
+      recommended: '推荐',
       tabs: {
         overview: '概览',
         orders: '订单管理',

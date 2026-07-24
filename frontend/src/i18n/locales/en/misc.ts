@@ -291,6 +291,9 @@ export default {
     creditedBalance: 'Credited Balance',
     quickAmounts: 'Quick Amounts',
     customAmount: 'Custom Amount',
+    selectPaymentAmount: 'Select payment amount',
+    customPaymentAmount: 'Custom payment amount',
+    currentRechargeRate: 'Current rate: 1 {currency} = ${usd} credit',
     enterAmount: 'Enter amount',
     paymentMethod: 'Payment Method',
     fee: 'Fee',
@@ -386,6 +389,8 @@ export default {
     noPlans: 'No subscription plans available',
     notAvailable: 'Top-up is currently unavailable',
     confirmSubscription: 'Confirm Subscription',
+    planInfo: 'Plan Information',
+    orderInfo: 'Order Information',
     confirmCancel: 'Are you sure you want to cancel this order?',
     amountTooLow: 'Minimum amount is {min}',
     amountTooHigh: 'Maximum amount is {max}',
@@ -457,6 +462,7 @@ export default {
     selectPlan: 'Select Plan',
     planFeatures: 'Features',
     planCard: {
+      recommended: 'Recommended',
       rate: 'Rate',
       peakRate: 'Peak Rate',
       dailyLimit: 'Daily',
@@ -475,6 +481,7 @@ export default {
     perMonth: 'month',
     perYear: 'year',
     admin: {
+      recommended: 'Recommended',
       tabs: {
         overview: 'Overview',
         orders: 'Orders',

@@ -4,6 +4,7 @@ import { createPinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import type { SubscriptionPlan } from "@/types/payment";
 import SubscriptionPlanCard from "../SubscriptionPlanCard.vue";
+import HelpTooltip from "@/components/common/HelpTooltip.vue";
 
 const i18n = createI18n({
   legacy: false,
@@ -21,6 +22,8 @@ const i18n = createI18n({
         planCard: {
           quota: "Quota",
           rate: "Rate",
+          peakRate: "Peak Rate",
+          recommended: "Recommended",
           unlimited: "Unlimited",
         },
         subscribeNow: "Subscribe now",
@@ -85,5 +88,19 @@ describe("SubscriptionPlanCard", () => {
     expect(cnyPlan).toContain("¥20CNY");
     expect(mountPlanCard("openai", { currency: "USD" }).text()).toContain("$10USD");
     expect(mountPlanCard("openai", { currency: "" }).text()).toContain("$10");
+  });
+
+  it("shows recommendation and keeps peak-rate details in the system tooltip", () => {
+    const wrapper = mountPlanCard("openai", {
+      recommended: true,
+      peak_rate_enabled: true,
+      peak_start: "14:00",
+      peak_end: "17:00",
+      peak_rate_multiplier: 1.5,
+    });
+
+    expect(wrapper.text()).toContain("payment.planCard.recommended");
+    expect(wrapper.findComponent(HelpTooltip).exists()).toBe(true);
+    expect(document.body.textContent).toContain("14:00-17:00 ×1.5");
   });
 });
