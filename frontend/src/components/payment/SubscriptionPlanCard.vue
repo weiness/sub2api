@@ -1,8 +1,9 @@
 <template>
   <div
+    data-test="subscription-plan-card"
     :class="[
-      'group relative flex min-h-[330px] flex-col overflow-hidden rounded-lg border bg-white transition-all dark:bg-dark-800',
-      'hover:-translate-y-0.5 hover:shadow-lg',
+      'group relative flex min-h-[330px] flex-col overflow-hidden rounded-lg border bg-white transition-all duration-200 dark:bg-dark-800',
+      'hover:-translate-y-1 hover:shadow-xl hover:shadow-gray-900/10 hover:ring-2 hover:ring-[#0fad76]/20 dark:hover:shadow-black/30 dark:hover:ring-[#2fd398]/25',
       borderClass,
     ]"
   >
@@ -16,6 +17,10 @@
         </span>
       </div>
 
+      <p v-if="plan.description" data-test="plan-description" class="mb-3 min-h-[36px] text-xs leading-relaxed text-gray-500 line-clamp-2 dark:text-dark-400">
+        {{ plan.description }}
+      </p>
+
       <div class="mb-1 flex items-baseline gap-1">
         <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ planCurrencySymbol }}</span>
         <span :class="['text-3xl font-extrabold', textClass]">{{ plan.price }}</span>
@@ -25,10 +30,6 @@
       <div v-if="plan.original_price" class="mb-2 text-xs text-gray-400 line-through dark:text-dark-500">
         {{ planCurrencySymbol }}{{ plan.original_price }}<template v-if="plan.currency"> {{ plan.currency }}</template>
       </div>
-
-      <p v-if="plan.description" class="mb-3 min-h-[36px] text-xs leading-relaxed text-gray-500 line-clamp-2 dark:text-dark-400">
-        {{ plan.description }}
-      </p>
 
       <div class="mb-3 space-y-1.5 border-y border-gray-100 py-2.5 text-xs dark:border-dark-700">
         <div class="flex items-center justify-between">
