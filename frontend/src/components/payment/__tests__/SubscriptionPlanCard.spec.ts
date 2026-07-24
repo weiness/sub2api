@@ -100,4 +100,18 @@ describe("SubscriptionPlanCard", () => {
     expect(wrapper.findComponent(HelpTooltip).exists()).toBe(true);
     expect(document.body.textContent).toContain("14:00-17:00 ×1.5");
   });
+
+  it("places the description below the title and exposes a distinct hover state", () => {
+    const wrapper = mountPlanCard("openai", { description: "Best for production workloads" });
+    const card = wrapper.find('[data-test="subscription-plan-card"]');
+    const title = card.find("h3");
+    const description = card.find('[data-test="plan-description"]');
+    const price = card.find(".text-3xl");
+
+    expect(title.element.compareDocumentPosition(description.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(description.element.compareDocumentPosition(price.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(card.classes()).toContain("hover:-translate-y-1");
+    expect(card.classes()).toContain("hover:shadow-xl");
+    expect(card.classes()).toContain("hover:ring-2");
+  });
 });
