@@ -471,6 +471,7 @@ export default {
       monthlyLimit: 'Monthly',
       quota: 'Quota',
       unlimited: 'Unlimited',
+      savePercent: 'Save {percent}%',
       models: 'Models',
     },
     days: 'days',

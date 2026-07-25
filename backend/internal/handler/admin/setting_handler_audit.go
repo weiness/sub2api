@@ -284,6 +284,12 @@ func diffSettings(before *service.SystemSettings, after *service.SystemSettings,
 	if before.SiteSubtitle != after.SiteSubtitle {
 		changed = append(changed, "site_subtitle")
 	}
+	if before.HomeTitle != after.HomeTitle {
+		changed = append(changed, "home_title")
+	}
+	if before.HomeTitleHighlight != after.HomeTitleHighlight {
+		changed = append(changed, "home_title_highlight")
+	}
 	if before.APIBaseURL != after.APIBaseURL {
 		changed = append(changed, "api_base_url")
 	}

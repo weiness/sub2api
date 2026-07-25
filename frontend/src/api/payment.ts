@@ -23,7 +23,39 @@ export interface PublicOrderVerifyResult {
   expires_at: string
 }
 
+export interface LandingPlan {
+  id: number
+  name: string
+  description: string
+  price: number
+  original_price?: number
+  currency?: string
+  validity_days: number
+  validity_unit: string
+  features: string
+  recommended: boolean
+  rate_multiplier?: number
+  daily_limit_usd?: number | null
+  weekly_limit_usd?: number | null
+  monthly_limit_usd?: number | null
+}
+
+export interface LandingPaymentData {
+  payment_enabled: boolean
+  balance_disabled: boolean
+  balance_recharge_multiplier: number
+  minimum_group_rate_multiplier: number
+  recharge_currency: string
+  credited_currency?: string
+  example_amount: number
+  example_credited_amount: number
+  plans: LandingPlan[]
+}
+
 export const paymentAPI = {
+  getLandingData() {
+    return apiClient.get<LandingPaymentData>('/payment/public/landing')
+  },
   /** Get payment configuration (enabled types, limits, etc.) */
   getConfig() {
     return apiClient.get<PaymentConfig>('/payment/config')

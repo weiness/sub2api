@@ -9,6 +9,32 @@ type SanitizeOptions = {
   allowDataUrl?: boolean
 }
 
+const MAX_REDIRECT_PATH_LENGTH = 2048
+
+/** Only allow same-origin application paths for post-authentication redirects. */
+export function sanitizeRedirectPath(value: unknown, fallback = '/dashboard'): string {
+  if (typeof value !== 'string') return fallback
+
+  const path = value.trim()
+  const hasControlCharacter = Array.from(path).some((character) => {
+    const code = character.charCodeAt(0)
+    return code <= 31 || code === 127
+  })
+  if (
+    !path ||
+    path.length > MAX_REDIRECT_PATH_LENGTH ||
+    !path.startsWith('/') ||
+    path.startsWith('//') ||
+    path.includes('://') ||
+    path.includes('\\') ||
+    hasControlCharacter
+  ) {
+    return fallback
+  }
+
+  return path
+}
+
 export function sanitizeUrl(value: string, options: SanitizeOptions = {}): string {
   const trimmed = value.trim()
   if (!trimmed) {

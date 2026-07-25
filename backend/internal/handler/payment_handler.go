@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -89,6 +90,98 @@ func (h *PaymentHandler) GetPlans(c *gin.Context) {
 		})
 	}
 	response.Success(c, result)
+}
+
+// GetLandingData returns the anonymous-safe subset used by the marketing home page.
+// GET /api/v1/payment/public/landing
+func (h *PaymentHandler) GetLandingData(c *gin.Context) {
+	ctx := c.Request.Context()
+	cfg, err := h.configService.GetPaymentConfig(ctx)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	limits, err := h.configService.GetAvailableMethodLimits(ctx)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	plans, err := h.configService.ListPlansForSale(ctx)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	minimumGroupRateMultiplier, err := h.configService.GetMinimumActiveGroupRateMultiplier(ctx)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	currency := ""
+	methodNames := make([]string, 0, len(limits.Methods))
+	for name := range limits.Methods {
+		methodNames = append(methodNames, name)
+	}
+	sort.Strings(methodNames)
+	for _, name := range methodNames {
+		if limits.Methods[name].Currency == "CNY" {
+			currency = "CNY"
+			break
+		}
+		if currency == "" {
+			currency = limits.Methods[name].Currency
+		}
+	}
+
+	exampleAmount := 10.0
+	if limits.GlobalMin > exampleAmount {
+		exampleAmount = limits.GlobalMin
+	}
+	if limits.GlobalMax > 0 && exampleAmount > limits.GlobalMax {
+		exampleAmount = limits.GlobalMax
+	}
+
+	type publicPlan struct {
+		ID              int64    `json:"id"`
+		Name            string   `json:"name"`
+		Description     string   `json:"description"`
+		Price           float64  `json:"price"`
+		OriginalPrice   *float64 `json:"original_price,omitempty"`
+		Currency        string   `json:"currency,omitempty"`
+		ValidityDays    int      `json:"validity_days"`
+		ValidityUnit    string   `json:"validity_unit"`
+		Features        string   `json:"features"`
+		Recommended     bool     `json:"recommended"`
+		RateMultiplier  float64  `json:"rate_multiplier"`
+		DailyLimitUSD   *float64 `json:"daily_limit_usd"`
+		WeeklyLimitUSD  *float64 `json:"weekly_limit_usd"`
+		MonthlyLimitUSD *float64 `json:"monthly_limit_usd"`
+	}
+	groupInfo := h.configService.GetGroupInfoMap(ctx, plans)
+	publicPlans := make([]publicPlan, 0, len(plans))
+	for _, plan := range plans {
+		gi := groupInfo[plan.GroupID]
+		publicPlans = append(publicPlans, publicPlan{
+			ID: int64(plan.ID), Name: plan.Name, Description: plan.Description,
+			Price: plan.Price, OriginalPrice: plan.OriginalPrice, Currency: plan.Currency,
+			ValidityDays: plan.ValidityDays, ValidityUnit: plan.ValidityUnit,
+			Features: plan.Features, Recommended: plan.Recommended,
+			RateMultiplier: gi.RateMultiplier, DailyLimitUSD: gi.DailyLimitUSD,
+			WeeklyLimitUSD: gi.WeeklyLimitUSD, MonthlyLimitUSD: gi.MonthlyLimitUSD,
+		})
+	}
+
+	response.Success(c, gin.H{
+		"payment_enabled":               cfg.Enabled,
+		"balance_disabled":              cfg.BalanceDisabled,
+		"balance_recharge_multiplier":   cfg.BalanceRechargeMultiplier,
+		"minimum_group_rate_multiplier": minimumGroupRateMultiplier,
+		"recharge_currency":             currency,
+		"credited_currency":             "USD",
+		"example_amount":                exampleAmount,
+		"example_credited_amount":       exampleAmount * cfg.BalanceRechargeMultiplier,
+		"plans":                         publicPlans,
+	})
 }
 
 // GetCheckoutInfo returns all data the payment page needs in a single call:

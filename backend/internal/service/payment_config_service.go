@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
+	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/paymentproviderinstance"
 	"github.com/Wei-Shaw/sub2api/internal/payment"
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
@@ -214,6 +215,28 @@ func (s *PaymentConfigService) IsPaymentEnabled(ctx context.Context) bool {
 		return false
 	}
 	return val == "true"
+}
+
+// GetMinimumActiveGroupRateMultiplier returns the lowest billing multiplier
+// among active groups without exposing the group configuration publicly.
+func (s *PaymentConfigService) GetMinimumActiveGroupRateMultiplier(ctx context.Context) (float64, error) {
+	if s.entClient == nil {
+		return 1, nil
+	}
+	item, err := s.entClient.Group.Query().
+		Where(group.StatusEQ(StatusActive)).
+		Order(dbent.Asc(group.FieldRateMultiplier)).
+		First(ctx)
+	if dbent.IsNotFound(err) {
+		return 1, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	if math.IsNaN(item.RateMultiplier) || math.IsInf(item.RateMultiplier, 0) || item.RateMultiplier < 0 {
+		return 1, nil
+	}
+	return item.RateMultiplier, nil
 }
 
 // GetPaymentConfig returns the full payment configuration.

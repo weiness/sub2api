@@ -21,6 +21,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/channelmonitorrequesttemplate"
 	"github.com/Wei-Shaw/sub2api/ent/compositemodelroute"
 	"github.com/Wei-Shaw/sub2api/ent/errorpassthroughrule"
+	"github.com/Wei-Shaw/sub2api/ent/faq"
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/idempotencyrecord"
 	"github.com/Wei-Shaw/sub2api/ent/identityadoptiondecision"
@@ -994,6 +995,48 @@ func init() {
 	errorpassthroughruleDescSkipMonitoring := errorpassthroughruleFields[11].Descriptor()
 	// errorpassthroughrule.DefaultSkipMonitoring holds the default value on creation for the skip_monitoring field.
 	errorpassthroughrule.DefaultSkipMonitoring = errorpassthroughruleDescSkipMonitoring.Default.(bool)
+	faqFields := schema.FAQ{}.Fields()
+	_ = faqFields
+	// faqDescTitle is the schema descriptor for title field.
+	faqDescTitle := faqFields[0].Descriptor()
+	// faq.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	faq.TitleValidator = func() func(string) error {
+		validators := faqDescTitle.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(title string) error {
+			for _, fn := range fns {
+				if err := fn(title); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// faqDescAnswer is the schema descriptor for answer field.
+	faqDescAnswer := faqFields[1].Descriptor()
+	// faq.AnswerValidator is a validator for the "answer" field. It is called by the builders before save.
+	faq.AnswerValidator = faqDescAnswer.Validators[0].(func(string) error)
+	// faqDescEnabled is the schema descriptor for enabled field.
+	faqDescEnabled := faqFields[2].Descriptor()
+	// faq.DefaultEnabled holds the default value on creation for the enabled field.
+	faq.DefaultEnabled = faqDescEnabled.Default.(bool)
+	// faqDescSortOrder is the schema descriptor for sort_order field.
+	faqDescSortOrder := faqFields[3].Descriptor()
+	// faq.DefaultSortOrder holds the default value on creation for the sort_order field.
+	faq.DefaultSortOrder = faqDescSortOrder.Default.(int)
+	// faqDescCreatedAt is the schema descriptor for created_at field.
+	faqDescCreatedAt := faqFields[4].Descriptor()
+	// faq.DefaultCreatedAt holds the default value on creation for the created_at field.
+	faq.DefaultCreatedAt = faqDescCreatedAt.Default.(func() time.Time)
+	// faqDescUpdatedAt is the schema descriptor for updated_at field.
+	faqDescUpdatedAt := faqFields[5].Descriptor()
+	// faq.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	faq.DefaultUpdatedAt = faqDescUpdatedAt.Default.(func() time.Time)
+	// faq.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	faq.UpdateDefaultUpdatedAt = faqDescUpdatedAt.UpdateDefault.(func() time.Time)
 	groupMixin := schema.Group{}.Mixin()
 	groupMixinHooks1 := groupMixin[1].Hooks()
 	group.Hooks[0] = groupMixinHooks1[0]

@@ -372,6 +372,32 @@ export default {
     },
 
     // Announcements
+    faqs: {
+      title: 'FAQ Management',
+      description: 'Manage frequently asked questions shown on the marketing home page',
+      create: 'Add FAQ',
+      edit: 'Edit FAQ',
+      delete: 'Delete FAQ',
+      deleteConfirm: 'Delete this FAQ?',
+      titleField: 'Question',
+      answerField: 'Answer',
+      answerMarkdownHint: 'Markdown links are supported: [Text](https://example.com)',
+      enabledField: 'Show on home page',
+      sortOrderField: 'Sort order',
+      searchPlaceholder: 'Search by title...',
+      allStatuses: 'All statuses',
+      enabledStatus: 'Enabled',
+      disabledStatus: 'Disabled',
+      columns: { title: 'Question and answer', enabled: 'Status', sortOrder: 'Sort order', actions: 'Actions' },
+      loadFailed: 'Failed to load FAQs',
+      saveFailed: 'Failed to save FAQ',
+      deleteFailed: 'Failed to delete FAQ',
+      saveSuccess: 'FAQ saved',
+      deleteSuccess: 'FAQ deleted',
+      toggleSuccess: 'FAQ status updated',
+      toggleFailed: 'Failed to update FAQ status'
+    },
+
     announcements: {
       title: 'Announcements',
       description: 'Create announcements and target by conditions',

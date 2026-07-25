@@ -38,6 +38,42 @@
           <span class="hidden sm:inline">{{ t('nav.docs') }}</span>
         </a>
 
+        <!-- Contact Support -->
+        <div
+          v-if="contactInfo"
+          class="group relative hidden md:block"
+        >
+          <button
+            type="button"
+            class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            :aria-label="t('common.contactSupport')"
+          >
+            <Icon name="chat" size="sm" />
+            <span>{{ t('common.contactSupport') }}</span>
+          </button>
+          <div
+            class="pointer-events-none invisible absolute right-0 top-full z-50 w-72 pt-2 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:opacity-100"
+          >
+            <div class="rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-dark-700 dark:bg-dark-800">
+              <div class="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+                <Icon name="chat" size="sm" class="text-primary-500" />
+                <span>{{ t('common.contactSupport') }}</span>
+              </div>
+              <p class="whitespace-pre-line break-words text-sm leading-6 text-gray-600 dark:text-dark-300">
+                {{ contactInfo }}
+              </p>
+              <button
+                type="button"
+                class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                @click="copyContactInfo"
+              >
+                <Icon name="copy" size="sm" />
+                {{ t('common.copy') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Language Switcher -->
         <LocaleSwitcher />
 
@@ -155,32 +191,6 @@
 
               </div>
 
-              <!-- Contact Support (only show if configured) -->
-              <div
-                v-if="contactInfo"
-                class="border-t border-gray-100 px-4 py-2.5 dark:border-dark-700"
-              >
-                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <svg
-                    class="h-3.5 w-3.5 flex-shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"
-                    />
-                  </svg>
-                  <span>{{ t('common.contactSupport') }}:</span>
-                  <span class="font-medium text-gray-700 dark:text-gray-300">{{
-                    contactInfo
-                  }}</span>
-                </div>
-              </div>
-
               <div v-if="showOnboardingButton" class="border-t border-gray-100 py-1 dark:border-dark-700">
                 <button @click="handleReplayGuide" class="dropdown-item w-full">
                   <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -244,7 +254,7 @@ const onboardingStore = useOnboardingStore()
 const user = computed(() => authStore.user)
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
-const contactInfo = computed(() => appStore.contactInfo)
+const contactInfo = computed(() => appStore.contactInfo.trim())
 const docUrl = computed(() => sanitizeUrl(appStore.docUrl))
 const avatarUrl = computed(() => user.value?.avatar_url?.trim() || '')
 const availableBalance = computed(() => Number(user.value?.balance || 0))
@@ -329,6 +339,15 @@ async function handleLogout() {
 function handleReplayGuide() {
   closeDropdown()
   onboardingStore.replay()
+}
+
+async function copyContactInfo() {
+  try {
+    await navigator.clipboard.writeText(contactInfo.value)
+    appStore.showSuccess(t('common.copiedToClipboard'))
+  } catch {
+    appStore.showError(t('common.copyFailed'))
+  }
 }
 
 function formatHeaderMoney(value: number) {

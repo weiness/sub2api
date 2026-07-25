@@ -320,6 +320,8 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, "Sub2API"),
 		SiteLogo:                         settings[SettingKeySiteLogo],
 		SiteSubtitle:                     s.getStringOrDefault(settings, SettingKeySiteSubtitle, "Subscription to API Conversion Platform"),
+		HomeTitle:                        s.getStringOrDefault(settings, SettingKeyHomeTitle, "把预算花在"),
+		HomeTitleHighlight:               s.getStringOrDefault(settings, SettingKeyHomeTitleHighlight, "真正好用的模型。"),
 		APIBaseURL:                       settings[SettingKeyAPIBaseURL],
 		ContactInfo:                      settings[SettingKeyContactInfo],
 		DocURL:                           settings[SettingKeyDocURL],

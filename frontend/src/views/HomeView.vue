@@ -1,634 +1,402 @@
 <template>
-  <!-- Custom Home Content: Full Page Mode -->
   <div v-if="homeContent" class="min-h-screen">
-    <!-- iframe mode -->
-    <iframe
-      v-if="isHomeContentUrl"
-      :src="homeContent.trim()"
-      class="h-screen w-full border-0"
-      allowfullscreen
-    ></iframe>
-    <!-- HTML mode - SECURITY: homeContent is admin-only setting, XSS risk is acceptable -->
+    <iframe v-if="isHomeContentUrl" :src="homeContent.trim()" class="h-screen w-full border-0" allowfullscreen></iframe>
     <div v-else v-html="homeContent"></div>
   </div>
 
-  <!-- Default Home Page -->
-  <div
-    v-else
-    class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-100 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950"
-  >
-    <!-- Background Decorations -->
-    <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div
-        class="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-primary-400/20 blur-3xl"
-      ></div>
-      <div
-        class="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary-500/15 blur-3xl"
-      ></div>
-      <div
-        class="absolute left-1/3 top-1/4 h-72 w-72 rounded-full bg-primary-300/10 blur-3xl"
-      ></div>
-      <div
-        class="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-primary-400/10 blur-3xl"
-      ></div>
-      <div
-        class="absolute inset-0 bg-[linear-gradient(rgba(20,184,166,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(20,184,166,0.03)_1px,transparent_1px)] bg-[size:64px_64px]"
-      ></div>
-    </div>
-
-    <!-- Header -->
-    <header class="relative z-20 px-6 py-4">
-      <nav class="mx-auto flex max-w-6xl items-center justify-between">
-        <!-- Logo -->
-        <div class="flex items-center">
-          <div class="h-10 w-10 overflow-hidden rounded-xl shadow-md">
-            <img :src="siteLogo || '/logo.svg'" alt="Logo" class="h-full w-full object-contain" />
+  <div v-else class="marketing-home">
+    <header class="site-header">
+      <div class="shell nav-row">
+        <router-link to="/" class="brand">
+          <img :src="siteLogo || '/logo.svg'" :alt="siteName" />
+          <span>{{ siteName }}</span>
+        </router-link>
+        <nav class="nav-links" aria-label="首页导航">
+          <a href="#offers">购买方式</a>
+          <a href="#access">快速接入</a>
+          <a v-if="faqs.length" href="#faq">常见问题</a>
+          <div
+            v-if="contactInfo"
+            ref="contactWrap"
+            class="contact-wrap nav-contact-wrap"
+            :class="{ 'is-open': contactOpen }"
+            @keydown.esc="contactOpen = false"
+          >
+            <button
+              type="button"
+              class="contact-trigger"
+              :aria-expanded="contactOpen"
+              aria-controls="home-contact-popover"
+              @click="contactOpen = !contactOpen"
+            >
+              联系我们
+            </button>
+            <div id="home-contact-popover" class="contact-popover" role="dialog" aria-label="客服联系方式">
+              <div class="contact-popover-head">
+                <strong>客服联系方式</strong>
+                <span>联系我们获取帮助</span>
+              </div>
+              <p>{{ contactInfo }}</p>
+              <button type="button" class="contact-copy" @click.stop="copyContactInfo">
+                <Icon name="copy" size="sm" aria-hidden="true" />
+                复制联系方式
+              </button>
+            </div>
           </div>
-        </div>
-
-        <!-- Nav Actions -->
-        <div class="flex items-center gap-3">
-          <!-- Language Switcher -->
-          <LocaleSwitcher />
-
-          <!-- Doc Link -->
-          <a
-            v-if="docUrl"
-            :href="docUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
-            :title="t('home.viewDocs')"
-          >
-            <Icon name="book" size="md" />
-          </a>
-
-          <!-- Theme Toggle -->
-          <button
-            @click="toggleTheme"
-            class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
-            :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
-          >
-            <Icon v-if="isDark" name="sun" size="md" />
-            <Icon v-else name="moon" size="md" />
-          </button>
-
-          <!-- Login / Dashboard Button -->
-          <router-link
-            v-if="isAuthenticated"
-            :to="dashboardPath"
-            class="inline-flex items-center gap-1.5 rounded-full bg-gray-900 py-1 pl-1 pr-2.5 transition-colors hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
-          >
-            <span
-              class="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-[10px] font-semibold text-white"
-            >
-              {{ userInitial }}
-            </span>
-            <span class="text-xs font-medium text-white">{{ t('home.dashboard') }}</span>
-            <svg
-              class="h-3 w-3 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
-              />
-            </svg>
-          </router-link>
-          <router-link
-            v-else
-            to="/login"
-            class="inline-flex items-center rounded-full bg-gray-900 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
-          >
-            {{ t('home.login') }}
-          </router-link>
-        </div>
-      </nav>
+        </nav>
+        <router-link
+          v-if="!isAuthenticated"
+          to="/login"
+          class="button button-primary button-small start-button"
+          aria-label="开始"
+        >
+          <span class="start-label" aria-hidden="true"><span>开</span><span>始</span></span>
+          <Icon name="arrowRight" size="sm" aria-hidden="true" />
+        </router-link>
+        <router-link
+          v-else
+          :to="dashboardPath"
+          class="account-entry"
+          :aria-label="`${displayName}，进入控制台`"
+        >
+          <span class="account-avatar">
+            <img v-if="avatarUrl" :src="avatarUrl" :alt="displayName" />
+            <span v-else>{{ userInitials }}</span>
+          </span>
+          <strong>控制台</strong>
+          <Icon name="arrowRight" size="sm" class="account-arrow" />
+        </router-link>
+      </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="relative z-10 flex-1 px-6 py-16">
-      <div class="mx-auto max-w-6xl">
-        <!-- Hero Section - Left/Right Layout -->
-        <div class="mb-12 flex flex-col items-center justify-between gap-12 lg:flex-row lg:gap-16">
-          <!-- Left: Text Content -->
-          <div class="flex-1 text-center lg:text-left">
-            <h1
-              class="mb-4 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl lg:text-6xl"
-            >
-              {{ siteName }}
-            </h1>
-            <p class="mb-8 text-lg text-gray-600 dark:text-dark-300 md:text-xl">
-              {{ siteSubtitle }}
-            </p>
-
-            <!-- CTA Button -->
-            <div>
-              <router-link
-                :to="isAuthenticated ? dashboardPath : '/login'"
-                class="btn btn-primary px-8 py-3 text-base shadow-lg shadow-primary-500/30"
-              >
-                {{ isAuthenticated ? t('home.goToDashboard') : t('home.getStarted') }}
-                <Icon name="arrowRight" size="md" class="ml-2" :stroke-width="2" />
-              </router-link>
+    <main>
+      <section class="hero">
+        <div class="shell hero-inner">
+          <div class="hero-copy">
+            <div class="eyebrow"><span></span>高级模型持续上新</div>
+            <h1>{{ homeTitle }}<strong>{{ homeTitleHighlight }}</strong></h1>
+            <p>{{ siteSubtitle }}</p>
+            <div class="hero-actions">
+              <router-link to="/purchase" class="button button-primary">立即充值</router-link>
+              <a v-if="docUrl" :href="docUrl" target="_blank" rel="noopener noreferrer" class="button button-ghost">查看帮助文档</a>
             </div>
           </div>
 
-          <!-- Right: Terminal Animation -->
-          <div class="flex flex-1 justify-center lg:justify-end">
-            <div class="terminal-container">
-              <div class="terminal-window">
-                <!-- Window header -->
-                <div class="terminal-header">
-                  <div class="terminal-buttons">
-                    <span class="btn-close"></span>
-                    <span class="btn-minimize"></span>
-                    <span class="btn-maximize"></span>
-                  </div>
-                  <span class="terminal-title">terminal</span>
+          <aside
+            class="recharge-ticket"
+            :class="{ 'ticket-generic': !hasRechargeOffer, 'is-entering': ticketEntering }"
+            @animationend="handleTicketAnimationEnd"
+          >
+            <span class="ticket-pin" aria-hidden="true"></span>
+            <div class="ticket-heading">
+              <div class="ticket-label">当前充值策略</div>
+              <span class="ticket-discount">
+                <span v-if="rechargeDiscountValue">低至</span>
+                <strong>{{ rechargeDiscountValue ? `${rechargeDiscountValue}折` : '实时优惠' }}</strong>
+              </span>
+            </div>
+            <template v-if="hasRechargeOffer">
+              <div class="ticket-value"><b>{{ formatNumber(landing!.balance_recharge_multiplier) }}</b> 倍到账</div>
+              <div class="ticket-example">
+                <div class="ticket-example-item">
+                  <span>充值金额</span>
+                  <strong>{{ formatMoney(landing!.example_amount, landing!.recharge_currency) }}</strong>
                 </div>
-                <!-- Terminal content -->
-                <div class="terminal-body">
-                  <div class="code-line line-1">
-                    <span class="code-prompt">$</span>
-                    <span class="code-cmd">curl</span>
-                    <span class="code-flag">-X POST</span>
-                    <span class="code-url">/v1/messages</span>
-                  </div>
-                  <div class="code-line line-2">
-                    <span class="code-comment"># Routing to upstream...</span>
-                  </div>
-                  <div class="code-line line-3">
-                    <span class="code-success">200 OK</span>
-                    <span class="code-response">{ "content": "Hello!" }</span>
-                  </div>
-                  <div class="code-line line-4">
-                    <span class="code-prompt">$</span>
-                    <span class="cursor"></span>
-                  </div>
+                <Icon name="arrowRight" size="sm" class="ticket-example-arrow" aria-hidden="true" />
+                <div class="ticket-example-item ticket-example-result">
+                  <span>可用额度</span>
+                  <strong>{{ formatMoney(landing!.example_credited_amount, landing!.credited_currency || 'USD') }}</strong>
                 </div>
               </div>
-            </div>
-          </div>
+            </template>
+            <template v-else>
+              <div class="ticket-value ticket-value-generic">灵活充值，按量使用</div>
+              <div class="ticket-foot">登录后查看当前充值规则与实时到账额度</div>
+            </template>
+          </aside>
         </div>
+      </section>
 
-        <!-- Feature Tags - Centered -->
-        <div class="mb-12 flex flex-wrap items-center justify-center gap-4 md:gap-6">
-          <div
-            class="inline-flex items-center gap-2.5 rounded-full border border-gray-200/50 bg-white/80 px-5 py-2.5 shadow-sm backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/80"
-          >
-            <Icon name="swap" size="sm" class="text-primary-500" />
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{
-              t('home.tags.subscriptionToApi')
-            }}</span>
-          </div>
-          <div
-            class="inline-flex items-center gap-2.5 rounded-full border border-gray-200/50 bg-white/80 px-5 py-2.5 shadow-sm backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/80"
-          >
-            <Icon name="shield" size="sm" class="text-primary-500" />
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{
-              t('home.tags.stickySession')
-            }}</span>
-          </div>
-          <div
-            class="inline-flex items-center gap-2.5 rounded-full border border-gray-200/50 bg-white/80 px-5 py-2.5 shadow-sm backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/80"
-          >
-            <Icon name="chart" size="sm" class="text-primary-500" />
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{
-              t('home.tags.realtimeBilling')
-            }}</span>
-          </div>
-        </div>
-
-        <!-- Features Grid -->
-        <div class="mb-12 grid gap-6 md:grid-cols-3">
-          <!-- Feature 1: Unified Gateway -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
-            <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-110"
-            >
-              <Icon name="server" size="lg" class="text-white" />
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('home.features.unifiedGateway') }}
-            </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
-              {{ t('home.features.unifiedGatewayDesc') }}
-            </p>
-          </div>
-
-          <!-- Feature 2: Account Pool -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
-            <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30 transition-transform group-hover:scale-110"
-            >
-              <svg
-                class="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                />
-              </svg>
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('home.features.multiAccount') }}
-            </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
-              {{ t('home.features.multiAccountDesc') }}
-            </p>
-          </div>
-
-          <!-- Feature 3: Billing & Quota -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
-            <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/30 transition-transform group-hover:scale-110"
-            >
-              <svg
-                class="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"
-                />
-              </svg>
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('home.features.balanceQuota') }}
-            </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
-              {{ t('home.features.balanceQuotaDesc') }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Supported Providers -->
-        <div class="mb-8 text-center">
-          <h2 class="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
-            {{ t('home.providers.title') }}
-          </h2>
-          <p class="text-sm text-gray-600 dark:text-dark-400">
-            {{ t('home.providers.description') }}
-          </p>
-        </div>
-
-        <div class="mb-16 flex flex-wrap items-center justify-center gap-4">
-          <!-- Claude - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-400 to-orange-500"
-            >
-              <span class="text-xs font-bold text-white">C</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.claude') }}</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
-          </div>
-          <!-- GPT - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-green-600"
-            >
-              <span class="text-xs font-bold text-white">G</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">GPT</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
-          </div>
-          <!-- Gemini - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600"
-            >
-              <span class="text-xs font-bold text-white">G</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.gemini') }}</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
-          </div>
-          <!-- Antigravity - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-pink-600"
-            >
-              <span class="text-xs font-bold text-white">A</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.antigravity') }}</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
-          </div>
-          <!-- More - Coming Soon -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-gray-200/50 bg-white/40 px-5 py-3 opacity-60 backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/40"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-gray-500 to-gray-600"
-            >
-              <span class="text-xs font-bold text-white">+</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.more') }}</span>
-            <span
-              class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-dark-700 dark:text-dark-400"
-              >{{ t('home.providers.soon') }}</span
-            >
-          </div>
-        </div>
+      <div class="shell proof-strip">
+        <div><strong>{{ hasRechargeOffer ? `${formatNumber(landing!.balance_recharge_multiplier)}× 到账` : '灵活充值' }}</strong><span>按量使用，随用随充</span></div>
+        <div><strong>订阅更省</strong><span>高频使用优先选择</span></div>
+        <div><strong>持续更新</strong><span>跟进最新高级模型</span></div>
       </div>
+
+      <section id="offers" class="section offers-section">
+        <div class="shell">
+          <div class="section-heading">
+            <div class="eyebrow">TWO WAYS TO START</div>
+            <h2>一种是灵活，<br />一种是更划算。</h2>
+            <p>按使用频率选择充值或订阅，购买路径简单清楚。</p>
+          </div>
+
+          <div class="offer-grid">
+            <article class="offer-card">
+              <span v-if="rechargeDiscountValue" class="balance-promo-badge">
+                <small>低至</small><strong>{{ rechargeDiscountValue }}折</strong>
+              </span>
+              <span class="offer-label">按量充值 · 随用随充</span>
+              <h3>余额充值</h3>
+              <p>适合偶尔调用、项目测试和用量波动较大的用户。</p>
+              <div v-if="hasRechargeOffer" class="offer-price"><b>{{ formatNumber(landing!.balance_recharge_multiplier) }}</b><span>倍到账</span></div>
+              <div v-else class="offer-price offer-price-text">实时规则以充值页为准</div>
+              <div class="benefit-list">
+                <span>用多少扣多少</span>
+                <span>余额明细实时可查</span>
+                <span>高级模型持续更新</span>
+              </div>
+              <router-link to="/purchase" class="button button-dark">立即充值</router-link>
+            </article>
+
+            <article class="offer-card subscription-card">
+              <span v-if="selectedPlan?.recommended" class="recommend-burst">推荐</span>
+              <span class="offer-label">订阅套餐 · 高频更省</span>
+              <template v-if="selectedPlan">
+                <h3>{{ selectedPlan.name }}</h3>
+                <p>{{ selectedPlan.description || '适合高频调用和稳定使用高级模型的用户。' }}</p>
+                <div class="plan-price-row">
+                  <div class="plan-price-main">
+                    <div class="offer-price">
+                      <span>{{ currencySymbol(selectedPlan.currency) }}</span><b>{{ formatNumber(selectedPlan.price) }}</b><span>/ {{ validityLabel(selectedPlan) }}</span>
+                    </div>
+                    <div v-if="selectedPlan.original_price && planDiscount" class="plan-saving">
+                      <span>原价 {{ currencySymbol(selectedPlan.currency) }}{{ formatNumber(selectedPlan.original_price) }}</span>
+                      <strong>立省 {{ planDiscount }}%</strong>
+                    </div>
+                  </div>
+                  <div class="plan-monthly-quota">
+                    <span>月总额度</span><strong>{{ planMonthlyQuotaLabel }}</strong>
+                  </div>
+                </div>
+                <div class="benefit-list">
+                  <span v-for="benefit in planMarketingBenefits" :key="benefit">{{ benefit }}</span>
+                </div>
+                <router-link to="/purchase#subscription" class="button button-primary">立即订阅</router-link>
+              </template>
+              <template v-else>
+                <h3>登录查看实时套餐</h3>
+                <p>套餐价格和推荐状态以购买页当前信息为准。</p>
+                <div class="benefit-list benefit-list-spaced">
+                  <span>高频使用更划算</span>
+                  <span>套餐权益后台实时更新</span>
+                  <span>没有虚构价格和折扣</span>
+                </div>
+                <router-link to="/purchase#subscription" class="button button-primary">查看订阅套餐</router-link>
+              </template>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="access" class="access-section">
+        <div class="shell access-grid">
+          <div class="access-copy">
+            <div class="eyebrow eyebrow-light">ONE ENDPOINT, ALWAYS READY</div>
+            <h2>模型持续更新，<br />接入方式始终不变。</h2>
+            <p>一个 API Key，持续使用平台开放的高级模型。无需更换接口，也无需重复适配。</p>
+            <div class="access-actions">
+              <router-link to="/keys" class="button button-access-primary">
+                <Icon name="key" size="sm" aria-hidden="true" />
+                创建 API Key
+              </router-link>
+              <a
+                v-if="docUrl"
+                :href="docUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="button button-access-secondary"
+              >
+                <Icon name="book" size="sm" aria-hidden="true" />
+                查看帮助文档
+              </a>
+            </div>
+          </div>
+          <div class="code-panel">
+            <div class="code-head"><span>curl · POST /v1/responses</span><button type="button" title="复制 curl 请求" aria-label="复制 curl 请求" @click="copyCurl"><Icon name="copy" size="sm" /></button></div>
+            <pre><code>{{ curlExample }}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section v-if="faqs.length" id="faq" class="section faq-section">
+        <div class="shell faq-shell">
+          <div class="section-heading">
+            <div class="eyebrow">FAQ</div>
+            <h2>常见疑问，<br />一次说清。</h2>
+          </div>
+          <div class="faq-list">
+            <article v-for="item in faqs" :key="item.id" class="faq-item">
+              <button type="button" :aria-expanded="openFAQ === item.id" @click="openFAQ = openFAQ === item.id ? null : item.id">
+                <span>{{ item.title }}</span><Icon name="plus" size="md" :class="{ 'rotate-45': openFAQ === item.id }" />
+              </button>
+              <div v-show="openFAQ === item.id" class="faq-answer" v-html="faqAnswerHtml.get(item.id)"></div>
+            </article>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="relative z-10 border-t border-gray-200/50 px-6 py-8 dark:border-dark-800/50">
-      <div
-        class="mx-auto flex max-w-6xl flex-col items-center justify-center gap-4 text-center sm:flex-row sm:text-left"
-      >
-        <p class="text-sm text-gray-500 dark:text-dark-400">
-          &copy; {{ currentYear }} {{ siteName }}. {{ t('home.footer.allRightsReserved') }}
-        </p>
-        <div class="flex items-center gap-4">
-          <a
-            v-if="docUrl"
-            :href="docUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
-          >
-            {{ t('home.docs') }}
-          </a>
-        </div>
+    <footer>
+      <div class="shell footer-row">
+        <span>© {{ currentYear }} {{ siteName }}</span>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useAuthStore, useAppStore } from '@/stores'
-import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
+import { paymentAPI, type LandingPaymentData, type LandingPlan } from '@/api/payment'
+import { listPublicFAQs } from '@/api/faqs'
+import type { FAQ } from '@/types'
 import Icon from '@/components/icons/Icon.vue'
+import { renderFAQMarkdown } from '@/utils/faqMarkdown'
 import { sanitizeUrl } from '@/utils/url'
 
-const { t } = useI18n()
-
-const authStore = useAuthStore()
 const appStore = useAppStore()
+const authStore = useAuthStore()
+const landing = ref<LandingPaymentData | null>(null)
+const faqs = ref<FAQ[]>([])
+const openFAQ = ref<number | null>(null)
+const contactOpen = ref(false)
+const contactWrap = ref<HTMLElement | null>(null)
+const ticketEntering = ref(true)
 
-// Site settings - directly from appStore (already initialized from injected config)
-const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Sub2API')
-const siteLogo = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.site_logo || appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))
-const siteSubtitle = computed(() => appStore.cachedPublicSettings?.site_subtitle || 'AI API Gateway Platform')
-const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.doc_url || appStore.docUrl || ''))
-const homeContent = computed(() => appStore.cachedPublicSettings?.home_content || '')
-
-// Check if homeContent is a URL (for iframe display)
-const isHomeContentUrl = computed(() => {
-  const content = homeContent.value.trim()
-  return content.startsWith('http://') || content.startsWith('https://')
-})
-
-// Theme
-const isDark = ref(document.documentElement.classList.contains('dark'))
-
-// Auth state
+const settings = computed(() => appStore.cachedPublicSettings)
+const siteName = computed(() => settings.value?.site_name || appStore.siteName || 'Sub2API')
+const siteLogo = computed(() => sanitizeUrl(settings.value?.site_logo || appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))
+const siteSubtitle = computed(() => settings.value?.site_subtitle || '充值更耐用，订阅更划算。一个 API Key，持续使用不断更新的高级模型。')
+const homeTitle = computed(() => settings.value?.home_title || '把预算花在')
+const homeTitleHighlight = computed(() => settings.value?.home_title_highlight || '真正好用的模型。')
+const docUrl = computed(() => sanitizeUrl(settings.value?.doc_url || appStore.docUrl || ''))
+const contactInfo = computed(() => (settings.value?.contact_info || appStore.contactInfo || '').trim())
+const homeContent = computed(() => settings.value?.home_content || '')
+const isHomeContentUrl = computed(() => /^https?:\/\//i.test(homeContent.value.trim()))
+const currentYear = new Date().getFullYear()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const isAdmin = computed(() => authStore.isAdmin)
-const dashboardPath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
-const userInitial = computed(() => {
-  const user = authStore.user
-  if (!user || !user.email) return ''
-  return user.email.charAt(0).toUpperCase()
+const dashboardPath = computed(() => authStore.isAdmin ? '/admin/dashboard' : '/dashboard')
+const displayName = computed(() => authStore.user?.username?.trim() || authStore.user?.email?.split('@')[0] || '用户')
+const avatarUrl = computed(() => sanitizeUrl(authStore.user?.avatar_url?.trim() || '', { allowDataUrl: true }))
+const userInitials = computed(() => displayName.value.slice(0, 2).toUpperCase())
+const faqAnswerHtml = computed(() => new Map(faqs.value.map((item) => [item.id, renderFAQMarkdown(item.answer)])))
+
+const hasRechargeOffer = computed(() => Boolean(
+  landing.value?.payment_enabled &&
+  !landing.value.balance_disabled &&
+  landing.value.balance_recharge_multiplier > 0 &&
+  landing.value.recharge_currency
+))
+const rechargeDiscountValue = computed(() => {
+  const rechargeMultiplier = landing.value?.balance_recharge_multiplier
+  const minimumGroupRate = landing.value?.minimum_group_rate_multiplier ?? 1
+  if (!Number.isFinite(rechargeMultiplier) || !rechargeMultiplier || rechargeMultiplier <= 0) return ''
+  if (!Number.isFinite(minimumGroupRate) || minimumGroupRate < 0) return ''
+  return formatNumber((10 / rechargeMultiplier) * minimumGroupRate)
 })
+const selectedPlan = computed(() => {
+  const plans = landing.value?.plans || []
+  return plans.find((plan) => plan.recommended) || plans[0] || null
+})
+const planDiscount = computed(() => {
+  const plan = selectedPlan.value
+  if (!plan?.original_price || plan.original_price <= plan.price) return 0
+  return Math.round((1 - plan.price / plan.original_price) * 100)
+})
+const planMarketingBenefits = computed(() => {
+  const plan = selectedPlan.value
+  if (!plan) return []
+  const configured = (plan.features || '').split(/[\n,，]/).map((item) => item.trim()).filter(Boolean)
+  const defaults = ['套餐专属调用通道', '高频调用更省预算', '高性价比订阅方案']
+  return [...new Set([...configured, ...defaults])].slice(0, 3)
+})
+const planMonthlyQuotaLabel = computed(() => {
+  const value = selectedPlan.value?.monthly_limit_usd
+  if (value === null) return '不限'
+  if (typeof value === 'number' && Number.isFinite(value)) return `$${formatNumber(value)}`
+  return '实时更新'
+})
+const apiBaseURL = computed(() => (settings.value?.api_base_url || window.location.origin).replace(/\/$/, ''))
+const curlExample = computed(() => `curl ${apiBaseURL.value}/v1/responses \\
+  -H "Authorization: Bearer $SUB2API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "gpt-5.6-sol",
+    "input": "帮我分析这个项目"
+  }'`)
 
-// Current year for footer
-const currentYear = computed(() => new Date().getFullYear())
-
-// Toggle theme
-function toggleTheme() {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(value)
+}
+function currencySymbol(currency = '') {
+  const code = currency.toUpperCase()
+  if (code === 'CNY') return '¥'
+  if (code === 'USD') return '$'
+  if (code === 'EUR') return '€'
+  if (code === 'GBP') return '£'
+  return code ? `${code} ` : ''
+}
+function formatMoney(value: number, currency: string) {
+  return `${currencySymbol(currency)}${formatNumber(value)}`
+}
+function validityLabel(plan: LandingPlan) {
+  if (plan.validity_unit === 'month') return `${plan.validity_days} 月`
+  if (plan.validity_unit === 'year') return `${plan.validity_days} 年`
+  return plan.validity_days === 30 ? '月' : `${plan.validity_days} 天`
+}
+async function copyCurl() {
+  try { await navigator.clipboard.writeText(curlExample.value); appStore.showSuccess('curl 请求已复制') }
+  catch { appStore.showError('复制失败，请手动复制') }
+}
+async function copyContactInfo() {
+  try { await navigator.clipboard.writeText(contactInfo.value); appStore.showSuccess('联系方式已复制') }
+  catch { appStore.showError('复制失败，请手动复制') }
+}
+function handleContactOutside(event: PointerEvent) {
+  if (contactWrap.value && !contactWrap.value.contains(event.target as Node)) contactOpen.value = false
+}
+function handleTicketAnimationEnd(event: AnimationEvent) {
+  if (event.target === event.currentTarget && event.animationName.startsWith('ticket-entry-swing')) ticketEntering.value = false
 }
 
-// Initialize theme
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme')
-  if (
-    savedTheme === 'dark' ||
-    (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  ) {
-    isDark.value = true
-    document.documentElement.classList.add('dark')
-  }
-}
-
-onMounted(() => {
-  initTheme()
-
-  // Check auth state
+onMounted(async () => {
+  document.addEventListener('pointerdown', handleContactOutside)
   authStore.checkAuth()
-
-  // Ensure public settings are loaded (will use cache if already loaded from injected config)
-  if (!appStore.publicSettingsLoaded) {
-    appStore.fetchPublicSettings()
-  }
+  if (!appStore.publicSettingsLoaded) await appStore.fetchPublicSettings()
+  if (homeContent.value) return
+  const [landingResult, faqResult] = await Promise.allSettled([paymentAPI.getLandingData(), listPublicFAQs()])
+  if (landingResult.status === 'fulfilled') landing.value = landingResult.value.data
+  if (faqResult.status === 'fulfilled') faqs.value = faqResult.value
 })
+
+onBeforeUnmount(() => document.removeEventListener('pointerdown', handleContactOutside))
 </script>
 
 <style scoped>
-/* Terminal Container */
-.terminal-container {
-  position: relative;
-  display: inline-block;
-}
-
-/* Terminal Window */
-.terminal-window {
-  width: 420px;
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-  border-radius: 14px;
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg);
-  transition: transform 0.3s ease;
-}
-
-.terminal-window:hover {
-  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(-4px);
-}
-
-/* Terminal Header */
-.terminal-header {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background: rgba(30, 41, 59, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.terminal-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.terminal-buttons span {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.btn-close {
-  background: #ef4444;
-}
-.btn-minimize {
-  background: #eab308;
-}
-.btn-maximize {
-  background: #22c55e;
-}
-
-.terminal-title {
-  flex: 1;
-  text-align: center;
-  font-size: 12px;
-  font-family: ui-monospace, monospace;
-  color: #64748b;
-  margin-right: 52px;
-}
-
-/* Terminal Body */
-.terminal-body {
-  padding: 20px 24px;
-  font-family: ui-monospace, 'Fira Code', monospace;
-  font-size: 14px;
-  line-height: 2;
-}
-
-.code-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  opacity: 0;
-  animation: line-appear 0.5s ease forwards;
-}
-
-.line-1 {
-  animation-delay: 0.3s;
-}
-.line-2 {
-  animation-delay: 1s;
-}
-.line-3 {
-  animation-delay: 1.8s;
-}
-.line-4 {
-  animation-delay: 2.5s;
-}
-
-@keyframes line-appear {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.code-prompt {
-  color: #22c55e;
-  font-weight: bold;
-}
-.code-cmd {
-  color: #38bdf8;
-}
-.code-flag {
-  color: #a78bfa;
-}
-.code-url {
-  color: #14b8a6;
-}
-.code-comment {
-  color: #64748b;
-  font-style: italic;
-}
-.code-success {
-  color: #22c55e;
-  background: rgba(34, 197, 94, 0.15);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-.code-response {
-  color: #fbbf24;
-}
-
-/* Blinking Cursor */
-.cursor {
-  display: inline-block;
-  width: 8px;
-  height: 16px;
-  background: #22c55e;
-  animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  51%,
-  100% {
-    opacity: 0;
-  }
-}
-
-/* Dark mode adjustments */
-:deep(.dark) .terminal-window {
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(20, 184, 166, 0.2),
-    0 0 40px rgba(20, 184, 166, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
+.button.start-button{width:104px;min-height:40px;padding:0 14px;justify-content:center;gap:16px;color:#fff;background:#0d915e;box-shadow:none;font-size:15px}.button.start-button:hover{color:#fff;background:#0a7e51}.start-label{display:inline-flex;gap:2px}.start-button svg{width:17px;height:17px;stroke-width:2}.account-entry{height:42px;padding:3px 14px 3px 3px;border:0;border-radius:999px;display:flex;align-items:center;gap:10px;color:#244b38;background:rgba(13,145,94,.08);transition:background-color .18s ease,transform .18s ease}.account-entry:hover{color:#183e2c;background:rgba(13,145,94,.14);transform:translateY(-1px)}.account-entry>strong{font-size:14px;font-weight:800}.account-avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;overflow:hidden;flex:0 0 auto;color:#fff;background:#0d915e;font-size:12px;font-weight:900}.account-avatar img{width:100%;height:100%;object-fit:cover}.account-arrow{width:14px;height:14px;margin-left:2px;flex:0 0 auto;color:#5c7969;transform:rotate(-45deg)}
+.marketing-home{min-height:100vh;color:#152019;background:#f4f6ef;letter-spacing:0}.shell{width:min(1160px,calc(100% - 48px));margin:0 auto}.site-header{background:#f4f6ef}.nav-row{height:74px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:10px;color:#152019;font-size:18px;font-weight:900}.brand img{width:34px;height:34px;border-radius:7px}.nav-links{height:100%;display:flex;align-items:center;gap:2px;color:#46534b;font-size:14px;font-weight:700}.nav-links a{position:relative;height:58px;padding:0 17px;display:flex;align-items:center;transition:color .2s ease}.nav-links a:after{position:absolute;left:50%;bottom:7px;width:20px;height:2px;border-radius:999px;background:linear-gradient(90deg,#0d915e,#55b985);content:'';opacity:0;transform:translateX(-50%) scaleX(.4);transition:opacity .2s ease,transform .2s ease}.nav-links a:hover{color:#086f49}.nav-links a:hover:after{opacity:1;transform:translateX(-50%) scaleX(1)}.nav-links a:focus-visible{outline:2px solid rgba(13,145,94,.42);outline-offset:1px;color:#086f49}.nav-links a:focus-visible:after{opacity:1;transform:translateX(-50%) scaleX(1)}.button{min-height:46px;padding:0 20px;border:1px solid transparent;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;transition:transform .18s ease,background-color .18s ease}.button:hover{transform:translateY(-2px)}.button-small{min-height:40px;padding:0 17px}.button-primary{color:#fff;background:#0d915e;box-shadow:0 10px 28px rgba(13,145,94,.18)}.button-primary:hover{background:#0a7e51}.button-ghost{color:#25332b;border-color:#b9c5bc;background:transparent}.button-dark{width:100%;color:#fff;background:#142019}.hero{position:relative;min-height:690px;border-bottom:1px solid #ccd5cd;overflow:hidden}.hero:before{position:absolute;inset:0;background-image:linear-gradient(rgba(14,121,79,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(14,121,79,.045) 1px,transparent 1px);background-size:72px 72px;content:''}.hero-inner{position:relative;min-height:610px;padding:78px 0;display:flex;align-items:center}.hero-copy{max-width:700px}.eyebrow{margin-bottom:18px;display:flex;align-items:center;gap:8px;color:#ef4c24;font-size:12px;font-weight:900}.eyebrow span{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 5px rgba(239,76,36,.12)}h1,h2,h3,p{margin-top:0}h1{max-width:760px;margin-bottom:22px;font-size:80px;line-height:.98;font-weight:950}h1 strong{display:block;color:#0d915e}h2{margin-bottom:14px;font-size:52px;line-height:1.07}h3{font-size:27px}.hero-copy>p{max-width:630px;margin-bottom:30px;color:#657169;font-size:18px;line-height:1.72}.hero-actions{display:flex;flex-wrap:wrap;gap:11px}.recharge-ticket{position:absolute;right:1%;top:168px;width:455px;padding:31px 30px 28px;border:1px solid #aebfb1;border-radius:8px;background:rgba(255,255,255,.95);box-shadow:0 32px 74px rgba(24,68,45,.16);transform-origin:50% -24px;animation:ticket-in 1.35s ease-out both,ticket-sway 5.6s ease-in-out 1.6s infinite;backdrop-filter:blur(10px)}.ticket-pin{position:absolute;left:50%;top:-30px;width:23px;height:23px;border:3px solid #bd321d;border-radius:50%;background:#f05a2b;box-shadow:0 5px 8px rgba(111,33,17,.28),inset -3px -3px 0 rgba(170,45,24,.35);transform:translateX(-50%)}.ticket-pin:after{position:absolute;left:8px;top:17px;width:2px;height:15px;background:#8e7768;content:''}.ticket-label{font-size:13px;font-weight:800}.ticket-value{margin:13px 0 5px;color:#0d915e;font-size:38px;font-weight:950}.ticket-value b{font-size:76px}.ticket-value-generic{max-width:320px;font-size:34px;line-height:1.15}.ticket-foot{color:#727d75;font-size:13px}.proof-strip{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #cbd4cc}.proof-strip div{padding:27px;text-align:center;border-right:1px solid #cbd4cc}.proof-strip div:last-child{border-right:0}.proof-strip strong{display:block;margin-bottom:6px;font-size:21px}.proof-strip span{color:#78827b;font-size:12px}.section{padding:102px 0}.section-heading{max-width:710px;margin-bottom:42px}.section-heading p{color:#6d776f;font-size:17px;line-height:1.72}.offer-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.offer-card{position:relative;min-height:430px;padding:34px;border:1px solid #cbd6cd;border-radius:8px;display:flex;flex-direction:column;background:#fff;box-shadow:0 12px 32px rgba(24,68,45,.06)}.subscription-card{border:2px solid #0d915e}.offer-label{color:#707b73;font-size:12px;font-weight:900}.offer-card h3{margin:18px 0 9px}.offer-card>p{max-width:430px;color:#6c756e;line-height:1.7}.offer-price{min-height:76px;margin:22px 0 8px;display:flex;align-items:baseline;gap:7px}.offer-price b{font-size:64px;line-height:1}.offer-price span{font-size:17px;font-weight:800}.offer-price-text{align-items:center;color:#4e5d54;font-size:21px;font-weight:800}.benefit-list{margin:18px 0 27px;padding:18px 0;border-block:1px solid #e1e6e2;display:grid;gap:9px;color:#4f5c54;font-size:13px}.benefit-list span:before{margin-right:8px;color:#0d915e;font-weight:900;content:'✓'}.benefit-list-spaced{margin-top:auto}.offer-card>.button{width:100%;margin-top:auto}.recommend-burst{position:absolute;right:-8px;top:-20px;width:94px;height:84px;display:grid;place-items:center;clip-path:polygon(50% 0,59% 16%,74% 5%,78% 23%,96% 18%,89% 38%,100% 50%,84% 61%,95% 79%,75% 76%,70% 97%,55% 82%,43% 100%,34% 81%,14% 92%,17% 69%,0 61%,15% 47%,2% 31%,24% 30%,25% 8%,42% 20%);color:#fff9d8;background:#f05a24;transform:rotate(7deg);font-size:22px;font-weight:950;text-shadow:2px 2px #a9180c}.access-section{padding:90px 0;color:#eaf3ed;background:#13231a}.access-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:70px;align-items:center}.eyebrow-light{color:#55d89a}.access-copy p{color:#a8b6ad;line-height:1.75}.access-actions{margin-top:28px;display:flex;flex-wrap:wrap;gap:10px}.access-actions .button{gap:8px}.button-access-primary{color:#10271b;background:#55d89a}.button-access-primary:hover{color:#0a1d13;background:#6fe3aa}.button-access-secondary{color:#dce8e0;border-color:#4a6254;background:rgba(255,255,255,.03)}.button-access-secondary:hover{color:#fff;border-color:#6f8879;background:rgba(255,255,255,.08)}.code-panel{overflow:hidden;border:1px solid #3f5447;border-radius:8px;background:#0a110d}.code-head{height:45px;padding:0 16px;border-bottom:1px solid #2b3a30;display:flex;align-items:center;justify-content:space-between;color:#8fa097;font:12px ui-monospace,monospace}.code-head button{width:30px;height:30px;border:1px solid #405248;border-radius:5px;display:grid;place-items:center;color:#b7c8be;background:#132019}.code-panel pre{margin:0;padding:24px;overflow:auto;color:#c5ead2;font:13px/1.75 ui-monospace,monospace;white-space:pre}.faq-shell{max-width:850px}.faq-list{border-top:1px solid #d2d9d3}.faq-item{border-bottom:1px solid #d2d9d3}.faq-item button{width:100%;padding:22px 0;border:0;display:flex;align-items:center;justify-content:space-between;gap:24px;color:#19241d;background:transparent;text-align:left;font-weight:800}.faq-item button svg{flex:0 0 auto;transition:transform .18s ease}.faq-answer{padding:0 42px 22px 0;color:#68736b;line-height:1.75;white-space:pre-line}footer{position:relative;padding:30px 0;border-top:1px solid #d1d8d2;color:#737d76;font-size:12px}.footer-row{display:flex;align-items:center;justify-content:space-between}.contact-wrap{position:relative}.contact-trigger{padding:7px 9px;border:0;border-radius:5px;display:flex;align-items:center;gap:7px;color:#536259;background:transparent;font-size:12px;font-weight:800;transition:color .18s ease,background-color .18s ease}.contact-trigger:hover,.contact-wrap:focus-within .contact-trigger,.contact-wrap.is-open .contact-trigger{color:#176d4a;background:#e5eee7}.contact-popover{position:absolute;z-index:30;right:0;bottom:calc(100% + 12px);width:min(320px,calc(100vw - 28px));padding:18px;border:1px solid #c8d4cb;border-radius:7px;color:#243129;background:#fff;box-shadow:0 18px 44px rgba(20,54,37,.16);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(6px);transition:opacity .16s ease,visibility .16s ease,transform .16s ease}.contact-wrap:hover .contact-popover,.contact-wrap:focus-within .contact-popover,.contact-wrap.is-open .contact-popover{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}.contact-popover:after{position:absolute;right:21px;bottom:-7px;width:12px;height:12px;border-right:1px solid #c8d4cb;border-bottom:1px solid #c8d4cb;background:#fff;transform:rotate(45deg);content:''}.contact-popover-head{margin-bottom:13px;display:flex;align-items:flex-start;flex-direction:column;gap:4px}.contact-popover-head strong{color:#18251d;font-size:15px}.contact-popover-head span{color:#869087;font-size:11px}.contact-popover p{margin-bottom:15px;padding:12px;border-radius:5px;color:#34443a;background:#f3f6f3;font-size:13px;line-height:1.7;white-space:pre-line;overflow-wrap:anywhere}.contact-copy{width:100%;min-height:38px;border:0;border-radius:5px;display:flex;align-items:center;justify-content:center;gap:7px;color:#fff;background:#0d915e;font-size:12px;font-weight:800;transition:background-color .18s ease}.contact-copy:hover{background:#0a7e51}@keyframes ticket-in{0%{transform:rotate(-7deg) translateY(-12px);opacity:0}32%{transform:rotate(4deg);opacity:1}55%{transform:rotate(-2.5deg)}75%{transform:rotate(1.2deg)}100%{transform:rotate(-1.5deg)}}@keyframes ticket-sway{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1deg)}}@media(prefers-reduced-motion:reduce){.recharge-ticket{animation:none;transform:rotate(-1.5deg)}}
+@media(max-width:1050px){h1{font-size:64px}.recharge-ticket{width:390px;right:-50px}.hero-copy{max-width:590px}}
+@media(max-width:820px){.shell{width:min(100% - 28px,680px)}.nav-links{display:none}.nav-row{height:66px}h1{font-size:42px;line-height:1.04}h2{font-size:38px}.hero{min-height:760px}.hero-inner{min-height:690px;padding:48px 0 300px;align-items:flex-start}.hero-copy>p{font-size:16px}.recharge-ticket{right:14px;top:auto;bottom:55px;width:calc(100% - 28px);padding:25px}.ticket-value b{font-size:62px}.proof-strip,.offer-grid,.access-grid{grid-template-columns:1fr}.proof-strip div{border-right:0;border-bottom:1px solid #cbd4cc}.proof-strip div:last-child{border-bottom:0}.section,.access-section{padding:72px 0}.offer-grid{gap:28px}.offer-card{min-height:390px;padding:25px}.access-grid{gap:38px}.code-panel pre{font-size:11px}.footer-row{align-items:flex-start;flex-direction:column;gap:10px}.contact-popover{right:auto;left:0}.contact-popover:after{right:auto;left:20px}}
+@media(max-width:520px){.brand span{display:none}.account-entry{height:40px;padding:3px 11px 3px 3px;gap:8px}.account-avatar{width:34px;height:34px}.account-entry>strong{font-size:13px}.account-arrow{width:12px;height:12px}.button.start-button{width:104px;min-height:40px;padding:0 14px;gap:14px}}
+.nav-contact-wrap{height:100%;display:flex;align-items:center}.nav-contact-wrap:before{position:absolute;z-index:29;top:100%;left:50%;width:320px;height:12px;transform:translateX(-50%);content:''}.nav-contact-wrap .contact-trigger{position:relative;height:58px;padding:0 17px;border-radius:0;color:#46534b;background:transparent;font-size:14px;font-weight:700;transition:color .2s ease}.nav-contact-wrap .contact-trigger:after{position:absolute;left:50%;bottom:7px;width:20px;height:2px;border-radius:999px;background:linear-gradient(90deg,#0d915e,#55b985);content:'';opacity:0;transform:translateX(-50%) scaleX(.4);transition:opacity .2s ease,transform .2s ease}.nav-contact-wrap .contact-trigger:hover,.nav-contact-wrap:focus-within .contact-trigger,.nav-contact-wrap.is-open .contact-trigger{color:#086f49;background:transparent}.nav-contact-wrap .contact-trigger:hover:after,.nav-contact-wrap:focus-within .contact-trigger:after,.nav-contact-wrap.is-open .contact-trigger:after{opacity:1;transform:translateX(-50%) scaleX(1)}.nav-contact-wrap .contact-trigger:focus-visible{outline:none}.nav-contact-wrap .contact-popover{top:calc(100% + 8px);bottom:auto;left:50%;right:auto;font-weight:400;text-align:left;transform:translate(-50%,-6px)}.nav-contact-wrap:hover .contact-popover,.nav-contact-wrap:focus-within .contact-popover,.nav-contact-wrap.is-open .contact-popover{transform:translate(-50%,0)}.nav-contact-wrap .contact-popover:after{top:-7px;bottom:auto;left:50%;right:auto;border:0;border-top:1px solid #c8d4cb;border-left:1px solid #c8d4cb;transform:translateX(-50%) rotate(45deg)}
+.recharge-ticket{width:455px;padding:31px 30px 28px;border-color:#a7b8aa;border-right-width:2px;border-bottom:2px solid #8fa394;background:linear-gradient(145deg,rgba(255,255,255,.99) 0%,rgba(255,255,255,.97) 58%,rgba(241,247,243,.97) 100%);box-shadow:0 16px 24px rgba(18,53,35,.1),18px 34px 68px rgba(18,63,40,.2),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(88,118,99,.12);transform-origin:62% 0;transform-style:preserve-3d;will-change:transform,box-shadow;animation:none;transform:perspective(1100px) rotateZ(-2.2deg) rotateX(1.2deg) rotateY(-1.2deg);transition:box-shadow .35s ease,border-color .35s ease}
+.recharge-ticket.is-entering{animation:ticket-entry-swing 1.75s linear .35s 1 both}.recharge-ticket:not(.is-entering):hover{animation:ticket-hit-swing 1.75s linear 1 both}
+.ticket-pin{z-index:2;left:62%;top:-17px}
+.ticket-pin:after{top:16px;height:11px}
+.ticket-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.ticket-discount{position:relative;margin:-12px -6px 0 0;padding:8px 13px 9px;border:2px solid #c9361b;border-radius:6px;display:flex;align-items:baseline;gap:5px;color:#fff7e8;background:#ef542b;box-shadow:4px 5px 0 #a92816,0 10px 22px rgba(176,45,22,.18);transform:rotate(3deg);line-height:1;white-space:nowrap}.ticket-discount:after{position:absolute;right:8px;bottom:-7px;width:12px;height:12px;border-right:2px solid #c9361b;border-bottom:2px solid #c9361b;background:#ef542b;transform:rotate(45deg);content:''}.ticket-discount span{font-size:12px;font-weight:900}.ticket-discount strong{position:relative;z-index:1;font-size:22px;font-weight:950}
+.ticket-value{margin:10px 0 4px;font-size:38px;line-height:1}.ticket-value b{font-size:76px}.ticket-foot{line-height:1.55}.ticket-example{margin-top:10px;padding-top:12px;border-top:1px solid #d9e2db;display:grid;grid-template-columns:1fr 30px 1fr;align-items:center;gap:10px}.ticket-example-item{display:grid;gap:3px}.ticket-example-item span{color:#7a867e;font-size:11px;font-weight:700}.ticket-example-item strong{color:#26382d;font-size:17px;font-weight:900}.ticket-example-result{text-align:right}.ticket-example-result strong{color:#0d8457}.ticket-example-arrow{width:18px;height:18px;justify-self:center;color:#e6532c;stroke-width:2.4}
+.plan-price-row{display:flex;align-items:center;justify-content:space-between;gap:18px}.plan-price-main{min-width:0}.plan-price-row .offer-price{margin:22px 0 5px}.plan-saving{display:flex;align-items:center;gap:8px;white-space:nowrap}.plan-saving span{color:#8a948d;font-size:12px;text-decoration:line-through}.plan-saving strong{padding:5px 8px;border-radius:4px;color:#b5361d;background:#fff0e9;font-size:13px;font-weight:900}.plan-monthly-quota{min-width:112px;padding-left:20px;border-left:1px solid #d8e0da;color:#285440;text-align:right;white-space:nowrap}.plan-monthly-quota span,.plan-monthly-quota strong{display:block}.plan-monthly-quota span{margin-bottom:7px;color:#7b8780;font-size:11px;font-weight:700}.plan-monthly-quota strong{font-size:21px;font-weight:950}.subscription-card .benefit-list{margin-top:18px}
+.balance-promo-badge{position:absolute;right:24px;top:23px;padding:7px 10px 8px;border:2px solid #d74724;border-radius:5px;display:flex;align-items:baseline;gap:4px;color:#b8321b;background:#fff1e9;box-shadow:3px 3px 0 #efb19d;transform:rotate(2deg);line-height:1;white-space:nowrap}.balance-promo-badge small{font-size:10px;font-weight:900}.balance-promo-badge strong{font-size:18px;font-weight:950}
+@keyframes ticket-hit-swing{0%{transform:perspective(1100px) rotateZ(-2.2deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.18,.72,.35,1)}10%{transform:perspective(1100px) rotateZ(-6.8deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}29%{transform:perspective(1100px) rotateZ(.9deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}48%{transform:perspective(1100px) rotateZ(-4.35deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}67%{transform:perspective(1100px) rotateZ(-.8deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}85%{transform:perspective(1100px) rotateZ(-3.05deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}100%{transform:perspective(1100px) rotateZ(-2.2deg) rotateX(1.2deg) rotateY(-1.2deg)}}
+@keyframes ticket-entry-swing{0%{transform:perspective(1100px) rotateZ(-2.2deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.18,.72,.35,1)}10%{transform:perspective(1100px) rotateZ(-6.8deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}29%{transform:perspective(1100px) rotateZ(.9deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}48%{transform:perspective(1100px) rotateZ(-4.35deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}67%{transform:perspective(1100px) rotateZ(-.8deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}85%{transform:perspective(1100px) rotateZ(-3.05deg) rotateX(1.2deg) rotateY(-1.2deg);animation-timing-function:cubic-bezier(.37,0,.63,1)}100%{transform:perspective(1100px) rotateZ(-2.2deg) rotateX(1.2deg) rotateY(-1.2deg)}}
+@media(prefers-reduced-motion:reduce){.recharge-ticket,.recharge-ticket:hover{animation:none;transform:perspective(1100px) rotateZ(-2.2deg) rotateX(1.2deg) rotateY(-1.2deg)}}
+@media(max-width:1050px){.recharge-ticket{width:410px}}
+@media(max-width:820px){.recharge-ticket{width:calc(100% - 28px);padding:25px}.ticket-pin{left:64%}.recharge-ticket{transform-origin:64% 0}.ticket-value b{font-size:62px}.ticket-discount{margin-top:-8px;padding:7px 10px 8px}.ticket-discount strong{font-size:19px}.plan-price-row{gap:12px}.plan-monthly-quota{min-width:100px;padding-left:12px}.balance-promo-badge{right:20px;top:20px}}
+@media(max-width:420px){.subscription-card .offer-price b{font-size:54px}.subscription-card .offer-price span{font-size:14px}.plan-saving{gap:5px}.plan-saving strong{padding:4px 6px;font-size:12px}.plan-monthly-quota strong{font-size:18px}}
+.eyebrow span{animation:model-update-glow 1.9s ease-in-out infinite}
+@keyframes model-update-glow{0%,100%{opacity:1;background:#f05a2b;box-shadow:0 0 4px 1px rgba(255,105,58,.72),0 0 11px 2px rgba(239,76,36,.42),0 0 21px 4px rgba(239,76,36,.18);filter:brightness(1)}50%{opacity:1;background:#ff7845;box-shadow:0 0 5px 1px rgba(255,120,69,1),0 0 13px 3px rgba(239,76,36,.68),0 0 24px 5px rgba(239,76,36,.3);filter:brightness(1.2)}}
+@media(prefers-reduced-motion:reduce){.eyebrow span{animation:none}}
+.faq-answer :deep(p){margin:0}.faq-answer :deep(a){color:#243129;font-weight:800;text-decoration:underline;text-decoration-color:rgba(36,49,41,.42);text-underline-offset:3px;transition:color .18s ease,text-decoration-color .18s ease}.faq-answer :deep(a:hover){color:#111713;text-decoration-color:currentColor}
 </style>

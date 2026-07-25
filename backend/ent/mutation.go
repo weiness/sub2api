@@ -28,6 +28,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/channelmonitorrequesttemplate"
 	"github.com/Wei-Shaw/sub2api/ent/compositemodelroute"
 	"github.com/Wei-Shaw/sub2api/ent/errorpassthroughrule"
+	"github.com/Wei-Shaw/sub2api/ent/faq"
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/idempotencyrecord"
 	"github.com/Wei-Shaw/sub2api/ent/identityadoptiondecision"
@@ -80,6 +81,7 @@ const (
 	TypeChannelMonitorRequestTemplate = "ChannelMonitorRequestTemplate"
 	TypeCompositeModelRoute           = "CompositeModelRoute"
 	TypeErrorPassthroughRule          = "ErrorPassthroughRule"
+	TypeFAQ                           = "FAQ"
 	TypeGroup                         = "Group"
 	TypeIdempotencyRecord             = "IdempotencyRecord"
 	TypeIdentityAdoptionDecision      = "IdentityAdoptionDecision"
@@ -21839,6 +21841,638 @@ func (m *ErrorPassthroughRuleMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ErrorPassthroughRuleMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown ErrorPassthroughRule edge %s", name)
+}
+
+// FAQMutation represents an operation that mutates the FAQ nodes in the graph.
+type FAQMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int64
+	title         *string
+	answer        *string
+	enabled       *bool
+	sort_order    *int
+	addsort_order *int
+	created_at    *time.Time
+	updated_at    *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*FAQ, error)
+	predicates    []predicate.FAQ
+}
+
+var _ ent.Mutation = (*FAQMutation)(nil)
+
+// faqOption allows management of the mutation configuration using functional options.
+type faqOption func(*FAQMutation)
+
+// newFAQMutation creates new mutation for the FAQ entity.
+func newFAQMutation(c config, op Op, opts ...faqOption) *FAQMutation {
+	m := &FAQMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeFAQ,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withFAQID sets the ID field of the mutation.
+func withFAQID(id int64) faqOption {
+	return func(m *FAQMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *FAQ
+		)
+		m.oldValue = func(ctx context.Context) (*FAQ, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().FAQ.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withFAQ sets the old FAQ of the mutation.
+func withFAQ(node *FAQ) faqOption {
+	return func(m *FAQMutation) {
+		m.oldValue = func(context.Context) (*FAQ, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m FAQMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m FAQMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *FAQMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *FAQMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().FAQ.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTitle sets the "title" field.
+func (m *FAQMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *FAQMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the FAQ entity.
+// If the FAQ object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FAQMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *FAQMutation) ResetTitle() {
+	m.title = nil
+}
+
+// SetAnswer sets the "answer" field.
+func (m *FAQMutation) SetAnswer(s string) {
+	m.answer = &s
+}
+
+// Answer returns the value of the "answer" field in the mutation.
+func (m *FAQMutation) Answer() (r string, exists bool) {
+	v := m.answer
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAnswer returns the old "answer" field's value of the FAQ entity.
+// If the FAQ object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FAQMutation) OldAnswer(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAnswer is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAnswer requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAnswer: %w", err)
+	}
+	return oldValue.Answer, nil
+}
+
+// ResetAnswer resets all changes to the "answer" field.
+func (m *FAQMutation) ResetAnswer() {
+	m.answer = nil
+}
+
+// SetEnabled sets the "enabled" field.
+func (m *FAQMutation) SetEnabled(b bool) {
+	m.enabled = &b
+}
+
+// Enabled returns the value of the "enabled" field in the mutation.
+func (m *FAQMutation) Enabled() (r bool, exists bool) {
+	v := m.enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnabled returns the old "enabled" field's value of the FAQ entity.
+// If the FAQ object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FAQMutation) OldEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnabled: %w", err)
+	}
+	return oldValue.Enabled, nil
+}
+
+// ResetEnabled resets all changes to the "enabled" field.
+func (m *FAQMutation) ResetEnabled() {
+	m.enabled = nil
+}
+
+// SetSortOrder sets the "sort_order" field.
+func (m *FAQMutation) SetSortOrder(i int) {
+	m.sort_order = &i
+	m.addsort_order = nil
+}
+
+// SortOrder returns the value of the "sort_order" field in the mutation.
+func (m *FAQMutation) SortOrder() (r int, exists bool) {
+	v := m.sort_order
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSortOrder returns the old "sort_order" field's value of the FAQ entity.
+// If the FAQ object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FAQMutation) OldSortOrder(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSortOrder is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSortOrder requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSortOrder: %w", err)
+	}
+	return oldValue.SortOrder, nil
+}
+
+// AddSortOrder adds i to the "sort_order" field.
+func (m *FAQMutation) AddSortOrder(i int) {
+	if m.addsort_order != nil {
+		*m.addsort_order += i
+	} else {
+		m.addsort_order = &i
+	}
+}
+
+// AddedSortOrder returns the value that was added to the "sort_order" field in this mutation.
+func (m *FAQMutation) AddedSortOrder() (r int, exists bool) {
+	v := m.addsort_order
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSortOrder resets all changes to the "sort_order" field.
+func (m *FAQMutation) ResetSortOrder() {
+	m.sort_order = nil
+	m.addsort_order = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *FAQMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *FAQMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the FAQ entity.
+// If the FAQ object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FAQMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *FAQMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *FAQMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *FAQMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the FAQ entity.
+// If the FAQ object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FAQMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *FAQMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the FAQMutation builder.
+func (m *FAQMutation) Where(ps ...predicate.FAQ) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the FAQMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *FAQMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.FAQ, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *FAQMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *FAQMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (FAQ).
+func (m *FAQMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *FAQMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.title != nil {
+		fields = append(fields, faq.FieldTitle)
+	}
+	if m.answer != nil {
+		fields = append(fields, faq.FieldAnswer)
+	}
+	if m.enabled != nil {
+		fields = append(fields, faq.FieldEnabled)
+	}
+	if m.sort_order != nil {
+		fields = append(fields, faq.FieldSortOrder)
+	}
+	if m.created_at != nil {
+		fields = append(fields, faq.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, faq.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *FAQMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case faq.FieldTitle:
+		return m.Title()
+	case faq.FieldAnswer:
+		return m.Answer()
+	case faq.FieldEnabled:
+		return m.Enabled()
+	case faq.FieldSortOrder:
+		return m.SortOrder()
+	case faq.FieldCreatedAt:
+		return m.CreatedAt()
+	case faq.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *FAQMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case faq.FieldTitle:
+		return m.OldTitle(ctx)
+	case faq.FieldAnswer:
+		return m.OldAnswer(ctx)
+	case faq.FieldEnabled:
+		return m.OldEnabled(ctx)
+	case faq.FieldSortOrder:
+		return m.OldSortOrder(ctx)
+	case faq.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case faq.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown FAQ field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *FAQMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case faq.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case faq.FieldAnswer:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAnswer(v)
+		return nil
+	case faq.FieldEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnabled(v)
+		return nil
+	case faq.FieldSortOrder:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSortOrder(v)
+		return nil
+	case faq.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case faq.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown FAQ field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *FAQMutation) AddedFields() []string {
+	var fields []string
+	if m.addsort_order != nil {
+		fields = append(fields, faq.FieldSortOrder)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *FAQMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case faq.FieldSortOrder:
+		return m.AddedSortOrder()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *FAQMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case faq.FieldSortOrder:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSortOrder(v)
+		return nil
+	}
+	return fmt.Errorf("unknown FAQ numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *FAQMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *FAQMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *FAQMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown FAQ nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *FAQMutation) ResetField(name string) error {
+	switch name {
+	case faq.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case faq.FieldAnswer:
+		m.ResetAnswer()
+		return nil
+	case faq.FieldEnabled:
+		m.ResetEnabled()
+		return nil
+	case faq.FieldSortOrder:
+		m.ResetSortOrder()
+		return nil
+	case faq.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case faq.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown FAQ field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *FAQMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *FAQMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *FAQMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *FAQMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *FAQMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *FAQMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *FAQMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown FAQ unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *FAQMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown FAQ edge %s", name)
 }
 
 // GroupMutation represents an operation that mutates the Group nodes in the graph.

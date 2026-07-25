@@ -16,6 +16,7 @@ func RegisterUserRoutes(
 	auditLog middleware.AuditLogMiddleware,
 	settingService *service.SettingService,
 ) {
+	v1.GET("/faqs", h.FAQ.List)
 	authenticated := v1.Group("")
 	authenticated.Use(gin.HandlerFunc(jwtAuth))
 	authenticated.Use(middleware.BackendModeUserGuard(settingService))

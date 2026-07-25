@@ -24,6 +24,7 @@ const i18n = createI18n({
           rate: "Rate",
           peakRate: "Peak Rate",
           unlimited: "Unlimited",
+          savePercent: "Save {percent}%",
         },
         subscribeNow: "Subscribe now",
       },
@@ -88,6 +89,15 @@ describe("SubscriptionPlanCard", () => {
     expect(cnyPlan).toContain("¥20CNY");
     expect(mountPlanCard("openai", { currency: "USD" }).text()).toContain("$10USD");
     expect(mountPlanCard("openai", { currency: "" }).text()).toContain("$10");
+  });
+
+  it("exposes the rounded discount percentage", () => {
+    const wrapper = mountPlanCard("openai", {
+      price: 49,
+      original_price: 100,
+    });
+
+    expect(wrapper.find('[data-test="plan-discount"]').attributes('data-discount-percent')).toBe("51");
   });
 
   it("keeps peak-rate details in the system tooltip", () => {

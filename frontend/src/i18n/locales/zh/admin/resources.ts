@@ -369,6 +369,32 @@ export default {
     },
 
     // Announcements
+    faqs: {
+      title: 'FAQ 管理',
+      description: '管理营销首页展示的常见问题',
+      create: '添加 FAQ',
+      edit: '编辑 FAQ',
+      delete: '删除 FAQ',
+      deleteConfirm: '确定要删除这条 FAQ 吗？',
+      titleField: '标题',
+      answerField: '回复',
+      answerMarkdownHint: '支持 Markdown 链接：[文字](https://example.com)',
+      enabledField: '在首页启用',
+      sortOrderField: '排序',
+      searchPlaceholder: '按标题搜索...',
+      allStatuses: '全部状态',
+      enabledStatus: '已启用',
+      disabledStatus: '未启用',
+      columns: { title: '标题与回复', enabled: '状态', sortOrder: '排序', actions: '操作' },
+      loadFailed: '加载 FAQ 失败',
+      saveFailed: '保存 FAQ 失败',
+      deleteFailed: '删除 FAQ 失败',
+      saveSuccess: 'FAQ 已保存',
+      deleteSuccess: 'FAQ 已删除',
+      toggleSuccess: 'FAQ 状态已更新',
+      toggleFailed: '更新 FAQ 状态失败'
+    },
+
     announcements: {
       title: '公告管理',
       description: '创建公告并按条件投放',

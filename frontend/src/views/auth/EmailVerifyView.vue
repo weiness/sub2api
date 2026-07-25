@@ -173,6 +173,7 @@ import {
   loadAffiliateReferralCode,
   oauthAffiliatePayload
 } from '@/utils/oauthAffiliate'
+import { sanitizeRedirectPath } from '@/utils/url'
 
 const { t, locale } = useI18n()
 
@@ -271,7 +272,10 @@ onMounted(async () => {
       pendingAuthToken.value = registerData.pending_auth_token || activePendingSession?.token || ''
       pendingAuthTokenField.value = registerData.pending_auth_token_field || activePendingSession?.token_field || 'pending_auth_token'
       pendingProvider.value = registerData.pending_provider || activePendingSession?.provider || ''
-      pendingRedirect.value = registerData.pending_redirect || activePendingSession?.redirect || ''
+      pendingRedirect.value = sanitizeRedirectPath(
+        registerData.pending_redirect || activePendingSession?.redirect,
+        ''
+      )
       pendingAdoptionDecision.value = registerData.pending_adoption_decision
         ? {
             adoptDisplayName: registerData.pending_adoption_decision.adopt_display_name === true,
@@ -286,7 +290,7 @@ onMounted(async () => {
     pendingAuthToken.value = activePendingSession.token
     pendingAuthTokenField.value = activePendingSession.token_field
     pendingProvider.value = activePendingSession.provider
-    pendingRedirect.value = activePendingSession.redirect || ''
+    pendingRedirect.value = sanitizeRedirectPath(activePendingSession.redirect, '')
   }
 
   // Load public settings
@@ -385,11 +389,12 @@ function getPendingOAuthSendCodeSessionResponse(
 }
 
 function persistPendingOAuthSession(provider: string, redirect?: string): void {
+  const safeRedirect = sanitizeRedirectPath(redirect || pendingRedirect.value, '')
   authStore.setPendingAuthSession({
     token: pendingAuthToken.value,
     token_field: pendingAuthTokenField.value,
     provider: provider.trim() || pendingProvider.value.trim(),
-    redirect: redirect || pendingRedirect.value || undefined,
+    redirect: safeRedirect || undefined,
   })
 }
 
@@ -554,7 +559,7 @@ async function handleVerify(): Promise<void> {
     appStore.showSuccess(t('auth.accountCreatedSuccess', { siteName: siteName.value }))
 
     // Redirect to dashboard
-    await router.push(pendingRedirect.value || '/dashboard')
+    await router.push(sanitizeRedirectPath(pendingRedirect.value))
   } catch (error: unknown) {
     errorMessage.value = buildAuthErrorMessage(error, {
       fallback: t('auth.verifyFailed')

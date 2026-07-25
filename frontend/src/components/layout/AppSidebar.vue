@@ -10,17 +10,17 @@
     <div class="sidebar-header" :class="{ 'sidebar-header-collapsed': sidebarCollapsed }">
       <!-- Custom Logo or Default Logo -->
       <router-link
-        :to="homePath"
+        to="/home"
         class="sidebar-logo flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-glow transition-opacity hover:opacity-80"
-        @click="handleMenuItemClick(homePath)"
+        @click="handleMenuItemClick('/home')"
       >
         <img v-if="settingsLoaded" :src="siteLogo || '/logo.svg'" alt="Logo" class="h-full w-full object-contain" />
       </router-link>
       <div class="sidebar-brand" :class="{ 'sidebar-brand-collapsed': sidebarCollapsed }" :aria-hidden="sidebarCollapsed ? 'true' : 'false'">
         <router-link
-          :to="homePath"
+          to="/home"
           class="sidebar-brand-title text-lg font-bold text-gray-900 transition-colors hover:text-primary-600 dark:text-white dark:hover:text-primary-400"
-          @click="handleMenuItemClick(homePath)"
+          @click="handleMenuItemClick('/home')"
         >
           {{ siteName }}
         </router-link>
@@ -249,8 +249,6 @@ const mobileOpen = computed(() => appStore.mobileOpen)
 const isAdmin = computed(() => authStore.isAdmin)
 const sidebarNavRef = ref<HTMLElement | null>(null)
 const isDark = ref(document.documentElement.classList.contains('dark'))
-
-const homePath = computed(() => (isAdmin.value ? '/admin/dashboard' : '/dashboard'))
 
 // Track which parent nav groups are expanded
 const expandedGroups = ref<Set<string>>(new Set())
@@ -482,6 +480,21 @@ const BellIcon = {
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
           d: 'M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9a6 6 0 10-12 0v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0'
+        })
+      ]
+    )
+}
+
+const FAQIcon = {
+  render: () =>
+    h(
+      'svg',
+      { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '1.5' },
+      [
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: 'M8.625 9a3.375 3.375 0 116.75 0c0 2.25-3.375 2.25-3.375 4.5m0 3.75h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z'
         })
       ]
     )
@@ -770,6 +783,7 @@ const adminNavItems = computed((): NavItem[] => {
     { path: '/admin/subscriptions', label: t('nav.subscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
     { path: '/admin/accounts', label: t('nav.accounts'), icon: GlobeIcon },
     { path: '/admin/announcements', label: t('nav.announcements'), icon: BellIcon },
+    { path: '/admin/faqs', label: t('nav.faqs'), icon: FAQIcon },
     { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
     {
       path: '/admin/security-audit',

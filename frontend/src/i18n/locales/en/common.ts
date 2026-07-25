@@ -152,6 +152,7 @@ export default {
   nav: {
     dashboard: 'Dashboard',
     announcements: 'Announcements',
+    faqs: 'FAQs',
     apiKeys: 'API Keys',
     batchImage: 'Batch Images',
     usage: 'Usage',

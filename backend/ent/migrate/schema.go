@@ -892,6 +892,29 @@ var (
 			},
 		},
 	}
+	// FaqsColumns holds the columns for the "faqs" table.
+	FaqsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "title", Type: field.TypeString, Size: 200},
+		{Name: "answer", Type: field.TypeString, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "enabled", Type: field.TypeBool, Default: false},
+		{Name: "sort_order", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+	}
+	// FaqsTable holds the schema information for the "faqs" table.
+	FaqsTable = &schema.Table{
+		Name:       "faqs",
+		Columns:    FaqsColumns,
+		PrimaryKey: []*schema.Column{FaqsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "faq_enabled_sort_order",
+				Unique:  false,
+				Columns: []*schema.Column{FaqsColumns[3], FaqsColumns[4]},
+			},
+		},
+	}
 	// GroupsColumns holds the columns for the "groups" table.
 	GroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -2079,6 +2102,7 @@ var (
 		ChannelMonitorRequestTemplatesTable,
 		CompositeModelRoutesTable,
 		ErrorPassthroughRulesTable,
+		FaqsTable,
 		GroupsTable,
 		IdempotencyRecordsTable,
 		IdentityAdoptionDecisionsTable,
@@ -2167,6 +2191,9 @@ func init() {
 	}
 	ErrorPassthroughRulesTable.Annotation = &entsql.Annotation{
 		Table: "error_passthrough_rules",
+	}
+	FaqsTable.Annotation = &entsql.Annotation{
+		Table: "faqs",
 	}
 	GroupsTable.Annotation = &entsql.Annotation{
 		Table: "groups",

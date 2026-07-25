@@ -43,6 +43,10 @@ describe('AppSidebar scroll position persistence', () => {
 })
 
 describe('AppSidebar header styles', () => {
+  it('routes both the logo and brand name to the home page', () => {
+    expect(componentSource.match(/to="\/home"/g)).toHaveLength(2)
+  })
+
   it('does not clip the version badge dropdown', () => {
     const sidebarHeaderBlockMatch = styleSource.match(/\.sidebar-header\s*\{[\s\S]*?\n {2}\}/)
     const sidebarBrandBlockMatch = componentSource.match(/\.sidebar-brand\s*\{[\s\S]*?\n\}/)

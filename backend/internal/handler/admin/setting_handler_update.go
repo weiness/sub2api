@@ -135,6 +135,8 @@ type UpdateSettingsRequest struct {
 	SiteName                    string                `json:"site_name"`
 	SiteLogo                    string                `json:"site_logo"`
 	SiteSubtitle                string                `json:"site_subtitle"`
+	HomeTitle                   string                `json:"home_title"`
+	HomeTitleHighlight          string                `json:"home_title_highlight"`
 	APIBaseURL                  string                `json:"api_base_url"`
 	ContactInfo                 string                `json:"contact_info"`
 	DocURL                      string                `json:"doc_url"`
@@ -1348,6 +1350,8 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		SiteName:                               req.SiteName,
 		SiteLogo:                               req.SiteLogo,
 		SiteSubtitle:                           req.SiteSubtitle,
+		HomeTitle:                              req.HomeTitle,
+		HomeTitleHighlight:                     req.HomeTitleHighlight,
 		APIBaseURL:                             req.APIBaseURL,
 		ContactInfo:                            req.ContactInfo,
 		DocURL:                                 req.DocURL,
@@ -1877,6 +1881,8 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		SiteName:                                               updatedSettings.SiteName,
 		SiteLogo:                                               updatedSettings.SiteLogo,
 		SiteSubtitle:                                           updatedSettings.SiteSubtitle,
+		HomeTitle:                                              updatedSettings.HomeTitle,
+		HomeTitleHighlight:                                     updatedSettings.HomeTitleHighlight,
 		APIBaseURL:                                             updatedSettings.APIBaseURL,
 		ContactInfo:                                            updatedSettings.ContactInfo,
 		DocURL:                                                 updatedSettings.DocURL,

@@ -344,6 +344,8 @@ export const useAppStore = defineStore('app', () => {
         site_name: siteName.value,
         site_logo: siteLogo.value,
         site_subtitle: '',
+        home_title: '把预算花在',
+        home_title_highlight: '真正好用的模型。',
         api_base_url: apiBaseUrl.value,
         contact_info: contactInfo.value,
         doc_url: docUrl.value,

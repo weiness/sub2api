@@ -469,6 +469,12 @@ export default {
         siteSubtitle: 'Site Subtitle',
         siteSubtitlePlaceholder: 'Subscription to API Conversion Platform',
         siteSubtitleHint: 'Displayed on login and register pages',
+        homeTitle: 'Home headline',
+        homeTitlePlaceholder: 'Spend your budget on',
+        homeTitleHint: 'Plain text portion of the marketing headline',
+        homeTitleHighlight: 'Highlighted headline',
+        homeTitleHighlightPlaceholder: 'models that truly deliver.',
+        homeTitleHighlightHint: 'Brand-colored portion of the marketing headline',
         apiBaseUrl: 'API Base URL',
         apiBaseUrlPlaceholder: 'https://api.example.com',
         apiBaseUrlHint:

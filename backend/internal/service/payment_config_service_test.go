@@ -237,6 +237,47 @@ func TestParsePaymentConfig(t *testing.T) {
 	})
 }
 
+func TestGetMinimumActiveGroupRateMultiplier(t *testing.T) {
+	ctx := context.Background()
+	client := newPaymentConfigServiceTestClient(t)
+	svc := &PaymentConfigService{entClient: client}
+
+	minimum, err := svc.GetMinimumActiveGroupRateMultiplier(ctx)
+	if err != nil {
+		t.Fatalf("empty group lookup returned error: %v", err)
+	}
+	if minimum != 1 {
+		t.Fatalf("empty group minimum = %v, want 1", minimum)
+	}
+
+	for _, input := range []struct {
+		name   string
+		rate   float64
+		status string
+	}{
+		{name: "standard", rate: 1, status: StatusActive},
+		{name: "discounted", rate: 0.5, status: StatusActive},
+		{name: "disabled-lower", rate: 0.1, status: StatusDisabled},
+	} {
+		_, err = client.Group.Create().
+			SetName(input.name).
+			SetRateMultiplier(input.rate).
+			SetStatus(input.status).
+			Save(ctx)
+		if err != nil {
+			t.Fatalf("create group %q: %v", input.name, err)
+		}
+	}
+
+	minimum, err = svc.GetMinimumActiveGroupRateMultiplier(ctx)
+	if err != nil {
+		t.Fatalf("group minimum lookup returned error: %v", err)
+	}
+	if minimum != 0.5 {
+		t.Fatalf("active group minimum = %v, want 0.5", minimum)
+	}
+}
+
 func TestGetBasePaymentType(t *testing.T) {
 	t.Parallel()
 

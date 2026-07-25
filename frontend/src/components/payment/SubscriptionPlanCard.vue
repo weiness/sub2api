@@ -9,12 +9,12 @@
   >
     <div :class="['h-1 rounded-t-lg', accentClass]" />
 
-    <div v-if="plan.recommended" data-test="recommended-badge" class="subscription-recommend-badge">
-      <span>{{ t('payment.recommended') }}</span>
-    </div>
+    <span v-if="plan.recommended" data-test="recommended-badge" class="subscription-recommend-badge">
+      {{ t('payment.recommended') }}
+    </span>
 
     <div class="flex flex-1 flex-col overflow-hidden rounded-b-lg p-6">
-      <div :class="['flex min-w-0 items-center gap-2', plan.recommended ? 'pr-[76px]' : '']">
+      <div class="flex min-w-0 items-center gap-2">
         <h3 class="min-w-0 truncate text-[21px] font-bold text-gray-900 dark:text-white">{{ plan.name }}</h3>
         <span :class="['shrink-0 rounded-md px-2 py-[5px] text-[11px] font-semibold leading-none', badgeLightClass]">
           {{ pLabel }}
@@ -33,8 +33,13 @@
         <span class="shrink-0 text-[13px] font-semibold text-gray-500 dark:text-gray-400">{{ plan.currency || 'USD' }}</span>
         <span data-test="plan-validity" class="ml-auto shrink-0 whitespace-nowrap pl-1 text-[13px] text-gray-400 dark:text-dark-500">/ {{ validitySuffix }}</span>
       </div>
-      <div v-if="plan.original_price" class="mt-2 text-[13px] text-gray-400 line-through dark:text-dark-500">
-        {{ planCurrencySymbol }}{{ plan.original_price }}<template v-if="plan.currency"> {{ plan.currency }}</template>
+      <div v-if="plan.original_price" class="mt-2 flex min-h-6 items-center gap-2 text-[13px]">
+        <span class="text-gray-400 line-through dark:text-dark-500">
+          {{ planCurrencySymbol }}{{ plan.original_price }}<template v-if="plan.currency"> {{ plan.currency }}</template>
+        </span>
+        <span v-if="discountPercent" data-test="plan-discount" :data-discount-percent="discountPercent" class="rounded bg-orange-50 px-1.5 py-0.5 font-bold text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+          {{ t('payment.planCard.savePercent', { percent: discountPercent }) }}
+        </span>
       </div>
 
       <div class="mb-4 mt-6 space-y-1 border-y border-gray-100 py-2.5 text-[13px] dark:border-dark-700">
@@ -146,6 +151,12 @@ const rateDisplay = computed(() => {
   return `×${Number(rate.toPrecision(10))}`
 })
 
+const discountPercent = computed(() => {
+  const original = props.plan.original_price
+  if (!original || original <= props.plan.price) return 0
+  return Math.round((1 - props.plan.price / original) * 100)
+})
+
 const appStore = useAppStore()
 const planCurrencySymbol = computed(() => currencySymbol(props.plan.currency || 'USD'))
 
@@ -183,45 +194,19 @@ const priceSizeClass = computed(() => {
 .subscription-recommend-badge {
   position: absolute;
   z-index: 4;
-  top: -20px;
-  right: -10px;
+  top: -23px;
+  right: -24px;
   display: grid;
-  width: 100px;
-  height: 92px;
+  width: 82px;
+  height: 74px;
   place-items: center;
-  transform: rotate(7deg);
-  filter: drop-shadow(0 6px 6px rgb(150 35 10 / 30%));
-  pointer-events: none;
-}
-
-.subscription-recommend-badge::before,
-.subscription-recommend-badge::after {
-  position: absolute;
-  inset: 0;
-  content: '';
   clip-path: polygon(50% 0, 59% 16%, 74% 5%, 78% 23%, 96% 18%, 89% 38%, 100% 50%, 84% 61%, 95% 79%, 75% 76%, 70% 97%, 55% 82%, 43% 100%, 34% 81%, 14% 92%, 17% 69%, 0 61%, 15% 47%, 2% 31%, 24% 30%, 25% 8%, 42% 20%);
-}
-
-.subscription-recommend-badge::before {
-  background: #ef321f;
-}
-
-.subscription-recommend-badge::after {
-  inset: 6px;
-  background: linear-gradient(145deg, #ffd84a 5%, #ff8a16 48%, #ff4d1f 100%);
-}
-
-.subscription-recommend-badge span {
-  position: relative;
-  z-index: 1;
-  transform: skew(-8deg) rotate(-5deg);
-  color: #fff8d7;
-  font-family: 'Arial Black', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-size: 29px;
-  font-style: italic;
-  font-weight: 1000;
-  letter-spacing: 0;
-  -webkit-text-stroke: 2px #a9180c;
-  text-shadow: 2px 2px 0 #b51b0f, 3px 4px 0 #8f1209;
+  color: #fff9d8;
+  background: #f05a24;
+  transform: rotate(7deg);
+  font-size: 19px;
+  font-weight: 950;
+  text-shadow: 2px 2px #a9180c;
+  pointer-events: none;
 }
 </style>

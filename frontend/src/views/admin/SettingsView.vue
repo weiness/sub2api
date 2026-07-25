@@ -5435,6 +5435,37 @@
                 </div>
               </div>
 
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t("admin.settings.site.homeTitle") }}
+                  </label>
+                  <input
+                    v-model="form.home_title"
+                    type="text"
+                    class="input"
+                    :placeholder="t('admin.settings.site.homeTitlePlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t("admin.settings.site.homeTitleHint") }}
+                  </p>
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t("admin.settings.site.homeTitleHighlight") }}
+                  </label>
+                  <input
+                    v-model="form.home_title_highlight"
+                    type="text"
+                    class="input"
+                    :placeholder="t('admin.settings.site.homeTitleHighlightPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t("admin.settings.site.homeTitleHighlightHint") }}
+                  </p>
+                </div>
+              </div>
+
               <!-- API Base URL -->
               <div>
                 <label
@@ -8497,6 +8528,8 @@ const form = reactive<SettingsForm>({
   site_name: "Sub2API",
   site_logo: "",
   site_subtitle: "Subscription to API Conversion Platform",
+  home_title: "把预算花在",
+  home_title_highlight: "真正好用的模型。",
   api_base_url: "",
   contact_info: "",
   doc_url: "",
@@ -10016,6 +10049,8 @@ async function saveSettings() {
       site_name: form.site_name,
       site_logo: form.site_logo,
       site_subtitle: form.site_subtitle,
+      home_title: form.home_title,
+      home_title_highlight: form.home_title_highlight,
       api_base_url: form.api_base_url,
       contact_info: form.contact_info,
       doc_url: form.doc_url,

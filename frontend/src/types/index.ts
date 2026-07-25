@@ -205,6 +205,8 @@ export interface PublicSettings {
   site_name: string
   site_logo: string
   site_subtitle: string
+  home_title: string
+  home_title_highlight: string
   api_base_url: string
   contact_info: string
   doc_url: string
@@ -364,6 +366,16 @@ export interface AnnouncementUserReadStatus {
   balance: number
   eligible: boolean
   read_at?: string
+}
+
+export interface FAQ {
+  id: number
+  title: string
+  answer: string
+  enabled: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
 }
 
 // ==================== Proxy Node Types ====================
