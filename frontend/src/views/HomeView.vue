@@ -398,5 +398,5 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', handleContactO
 .eyebrow span{animation:model-update-glow 1.9s ease-in-out infinite}
 @keyframes model-update-glow{0%,100%{opacity:1;background:#f05a2b;box-shadow:0 0 4px 1px rgba(255,105,58,.72),0 0 11px 2px rgba(239,76,36,.42),0 0 21px 4px rgba(239,76,36,.18);filter:brightness(1)}50%{opacity:1;background:#ff7845;box-shadow:0 0 5px 1px rgba(255,120,69,1),0 0 13px 3px rgba(239,76,36,.68),0 0 24px 5px rgba(239,76,36,.3);filter:brightness(1.2)}}
 @media(prefers-reduced-motion:reduce){.eyebrow span{animation:none}}
-.faq-answer :deep(p){margin:0}.faq-answer :deep(a){color:#243129;font-weight:800;text-decoration:underline;text-decoration-color:rgba(36,49,41,.42);text-underline-offset:3px;transition:color .18s ease,text-decoration-color .18s ease}.faq-answer :deep(a:hover){color:#111713;text-decoration-color:currentColor}
+.faq-answer{white-space:normal}.faq-answer :deep(p){margin:0}.faq-answer :deep(a){color:#243129;font-weight:800;text-decoration:underline;text-decoration-color:rgba(36,49,41,.42);text-underline-offset:3px;transition:color .18s ease,text-decoration-color .18s ease}.faq-answer :deep(a:hover){color:#111713;text-decoration-color:currentColor}
 </style>

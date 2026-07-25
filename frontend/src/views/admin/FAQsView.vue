@@ -22,9 +22,9 @@
       <template #table>
         <DataTable :columns="columns" :data="items" :loading="loading">
           <template #cell-title="{ row }">
-            <div class="max-w-xl">
+            <div class="min-w-0 max-w-xl">
               <div class="font-medium text-gray-900 dark:text-white">{{ row.title }}</div>
-              <div class="mt-1 line-clamp-2 whitespace-pre-line text-sm text-gray-500 dark:text-dark-400">{{ row.answer }}</div>
+              <div :title="row.answer" class="mt-1 truncate text-sm text-gray-500 dark:text-dark-400">{{ row.answer }}</div>
             </div>
           </template>
           <template #cell-enabled="{ row }">
