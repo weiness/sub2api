@@ -77,7 +77,7 @@
             <h1>{{ homeTitle }}<strong>{{ homeTitleHighlight }}</strong></h1>
             <p>{{ siteSubtitle }}</p>
             <div class="hero-actions">
-              <router-link to="/purchase" class="button button-primary">立即充值</router-link>
+              <router-link :to="isAuthenticated ? dashboardPath : '/login'" class="button button-primary">立即开始</router-link>
               <a v-if="docUrl" :href="docUrl" target="_blank" rel="noopener noreferrer" class="button button-ghost">查看帮助文档</a>
             </div>
           </div>
