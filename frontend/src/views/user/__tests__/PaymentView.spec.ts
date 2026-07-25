@@ -7,7 +7,11 @@ import type { CheckoutInfoResponse, MethodLimit, SubscriptionPlan } from '@/type
 
 const routeState = vi.hoisted(() => ({
   path: '/purchase',
+  hash: '',
   query: {} as Record<string, unknown>,
+}))
+const reactiveRouteState = vi.hoisted(() => ({
+  value: null as null | typeof routeState,
 }))
 
 const routerReplace = vi.hoisted(() => vi.fn())
@@ -24,9 +28,12 @@ const bridgeInvoke = vi.hoisted(() => vi.fn())
 
 vi.mock('vue-router', async () => {
   const actual = await vi.importActual<typeof import('vue-router')>('vue-router')
+  const { reactive } = await vi.importActual<typeof import('vue')>('vue')
+  const mockedRoute = reactive(routeState)
+  reactiveRouteState.value = mockedRoute
   return {
     ...actual,
-    useRoute: () => routeState,
+    useRoute: () => mockedRoute,
     useRouter: () => ({
       replace: routerReplace,
       push: routerPush,
@@ -202,6 +209,7 @@ function oauthOrderFixture() {
 async function mountSubscriptionConfirm(options: Parameters<typeof checkoutInfoWithPlansFixture>[0] = {}) {
   vi.useRealTimers()
   routeState.path = '/purchase'
+  routeState.hash = '#subscription'
   routeState.query = {
     tab: 'subscription',
     group: '3',
@@ -373,6 +381,23 @@ describe('PaymentView subscription confirmation amounts', () => {
     expect(rate.text()).toBe('×1')
     expect(rate.classes()).toContain('text-gray-800')
     expect(rate.classes()).not.toContain('text-emerald-400')
+  })
+
+  it('returns to the plan tabs when the purchase menu is clicked from confirmation', async () => {
+    const wrapper = await mountSubscriptionConfirm()
+
+    expect(wrapper.find('[data-test="subscription-plan-info"]').exists()).toBe(true)
+    expect(wrapper.findAll('button').filter(button =>
+      ['payment.tabTopUp', 'payment.tabSubscribe'].includes(button.text()),
+    )).toHaveLength(0)
+
+    reactiveRouteState.value!.hash = ''
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="subscription-plan-info"]').exists()).toBe(false)
+    expect(wrapper.findAll('button').filter(button =>
+      ['payment.tabTopUp', 'payment.tabSubscribe'].includes(button.text()),
+    )).toHaveLength(2)
   })
 })
 
