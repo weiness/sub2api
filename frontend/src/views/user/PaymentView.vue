@@ -531,6 +531,7 @@ watch(activeTab, (tab) => {
 
 watch(() => route.hash, (hash) => {
   const tab = purchaseTabFromHash(hash)
+  if (!hash || tab !== activeTab.value) selectedPlan.value = null
   if (tab === 'recharge' && checkout.value.balance_disabled) return
   activeTab.value = tab
 })
