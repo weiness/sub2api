@@ -324,6 +324,7 @@ export default {
     fee: '手续费',
     actualPay: '实付金额',
     createOrder: '确认支付',
+    recommended: '推荐',
     methods: {
       easypay: '易支付',
       alipay: '支付宝',
@@ -593,6 +594,7 @@ export default {
       validityUnit: '有效期单位',
       sortOrder: '排序',
       forSale: '上架状态',
+      recommended: '推荐',
       onSale: '上架',
       offSale: '下架',
       group: '分组',

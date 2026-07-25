@@ -4,16 +4,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import AdminPaymentPlansView from '../AdminPaymentPlansView.vue'
 
-const { getPlans, getConfig, getGroups } = vi.hoisted(() => ({
+const { getPlans, getConfig, getGroups, updatePlan } = vi.hoisted(() => ({
   getPlans: vi.fn(),
   getConfig: vi.fn(),
   getGroups: vi.fn(),
+  updatePlan: vi.fn(),
 }))
 
 vi.mock('@/api/admin/payment', () => ({
   adminPaymentAPI: {
     getPlans,
     getConfig,
+    updatePlan,
   },
 }))
 
@@ -41,6 +43,7 @@ const DataTableStub = {
     <div>
       <div v-for="row in data" :key="row.id">
         <slot name="cell-price" :value="row.price" :row="row" />
+        <slot name="cell-recommended" :value="row.recommended" :row="row" />
       </div>
     </div>
   `,
@@ -50,6 +53,7 @@ describe('AdminPaymentPlansView', () => {
   beforeEach(() => {
     getGroups.mockResolvedValue([])
     getConfig.mockResolvedValue({ data: {} })
+    updatePlan.mockReset().mockResolvedValue({ data: {} })
     getPlans.mockResolvedValue({
       data: [
         {
@@ -63,6 +67,7 @@ describe('AdminPaymentPlansView', () => {
           validity_unit: 'day',
           sort_order: 0,
           for_sale: true,
+          recommended: false,
           features: [],
         },
         {
@@ -76,6 +81,7 @@ describe('AdminPaymentPlansView', () => {
           validity_unit: 'day',
           sort_order: 0,
           for_sale: true,
+          recommended: false,
           features: [],
         },
       ],
@@ -102,5 +108,27 @@ describe('AdminPaymentPlansView', () => {
     expect(wrapper.text()).toContain('¥499.00CNY')
     expect(wrapper.text()).toContain('¥599.00')
     expect(wrapper.text()).toContain('$10.00')
+  })
+
+  it('persists the recommended switch from the plan list', async () => {
+    const wrapper = mount(AdminPaymentPlansView, {
+      global: {
+        plugins: [createPinia()],
+        stubs: {
+          AppLayout: { template: '<div><slot /></div>' },
+          DataTable: DataTableStub,
+          ConfirmDialog: true,
+          GroupBadge: true,
+          Icon: true,
+          PlanEditDialog: true,
+        },
+      },
+    })
+
+    await flushPromises()
+    const switches = wrapper.findAll('button[aria-label="payment.admin.recommended"]')
+    await switches[0].trigger('click')
+
+    expect(updatePlan).toHaveBeenCalledWith(1, { recommended: true })
   })
 })

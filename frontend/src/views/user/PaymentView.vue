@@ -6,11 +6,13 @@
       </div>
       <template v-else>
         <!-- Tab Switcher (hide during payment and subscription confirm) -->
-        <div v-if="tabs.length > 1 && paymentPhase === 'select' && !selectedPlan" class="grid grid-cols-2 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-dark-700 dark:bg-dark-800">
-          <button v-for="tab in tabs" :key="tab.key"
-            class="relative px-4 py-3 text-sm font-semibold transition-colors after:absolute after:inset-x-6 after:bottom-0 after:h-0.5 after:rounded-full after:transition-colors"
-            :class="activeTab === tab.key ? 'bg-primary-50/40 text-primary-700 after:bg-primary-500 dark:bg-primary-900/10 dark:text-primary-300' : 'text-gray-500 after:bg-transparent hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'"
-            @click="selectTab(tab.key)">{{ tab.label }}</button>
+        <div v-if="tabs.length > 1 && paymentPhase === 'select' && !selectedPlan" class="flex justify-center">
+          <div class="inline-flex w-max rounded-full border border-gray-200 bg-white p-1 dark:border-dark-700 dark:bg-dark-800">
+            <button v-for="tab in tabs" :key="tab.key"
+              class="min-h-12 min-w-40 rounded-full px-10 py-2.5 text-base font-semibold transition-colors"
+              :class="activeTab === tab.key ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'"
+              @click="selectTab(tab.key)">{{ tab.label }}</button>
+          </div>
         </div>
         <!-- Payment in progress (shared by recharge and subscription) -->
         <template v-if="paymentPhase === 'paying'">
@@ -100,10 +102,10 @@
             <template v-if="selectedPlan">
               <div class="card border-l-4 border-l-primary-500 p-6" data-test="subscription-plan-info">
                 <div class="mb-3 flex flex-wrap items-center gap-2">
+                  <h3 class="text-[22px] font-bold text-gray-900 dark:text-white">{{ selectedPlan.name }}</h3>
                   <span :class="['rounded-md border px-2 py-0.5 text-xs font-medium', planBadgeClass]">
                     {{ platformLabel(selectedPlan.group_platform || '') }}
                   </span>
-                  <h3 class="text-[22px] font-bold text-gray-900 dark:text-white">{{ selectedPlan.name }}</h3>
                 </div>
                 <!-- Description -->
                 <p v-if="selectedPlan.description" data-test="subscription-plan-description" class="mb-3 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
@@ -550,11 +552,13 @@ const subscriptionUsdToCnyRate = computed(() => {
 })
 const creditedAmount = computed(() => Math.round((validAmount.value * balanceRechargeMultiplier.value) * 100) / 100)
 
-// Keep plan cards compact while allowing a full four-plan row on wide screens.
+// Large plan cards keep pricing and quota information easy to scan.
 const planGridClass = computed(() => {
   const n = checkout.value.plans.length
-  if (n <= 2) return 'grid grid-cols-1 gap-5 sm:grid-cols-2'
-  return 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'
+  if (n <= 2) return 'grid grid-cols-1 gap-6 sm:grid-cols-2'
+  if (n === 3) return 'grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3'
+  if (n === 4) return 'grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4'
+  return 'grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3'
 })
 
 // Check if an amount fits a method's [min, max]. 0 = no limit.

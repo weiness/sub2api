@@ -2,37 +2,43 @@
   <div
     data-test="subscription-plan-card"
     :class="[
-      'group relative flex min-h-[330px] flex-col overflow-hidden rounded-lg border bg-white transition-all duration-200 dark:bg-dark-800',
-      'hover:-translate-y-1 hover:shadow-xl hover:shadow-gray-900/10 hover:ring-2 hover:ring-[#0fad76]/20 dark:hover:shadow-black/30 dark:hover:ring-[#2fd398]/25',
+      'group relative flex min-h-[410px] flex-col overflow-visible rounded-lg border bg-white shadow-[0_8px_24px_rgba(15,118,110,0.06)] transition-all duration-200 dark:bg-dark-800',
+      'hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(15,118,110,0.12)] hover:ring-2 hover:ring-[#0fad76]/20 dark:hover:shadow-black/30 dark:hover:ring-[#2fd398]/25',
       borderClass,
     ]"
   >
-    <div :class="['h-1', accentClass]" />
+    <div :class="['h-1 rounded-t-lg', accentClass]" />
 
-    <div class="flex flex-1 flex-col p-4">
-      <div class="mb-2 flex items-start justify-between gap-2">
-        <h3 class="min-w-0 truncate text-base font-bold text-gray-900 dark:text-white">{{ plan.name }}</h3>
-        <span :class="['shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold', badgeLightClass]">
+    <div v-if="plan.recommended" data-test="recommended-badge" class="subscription-recommend-badge">
+      <span>{{ t('payment.recommended') }}</span>
+    </div>
+
+    <div class="flex flex-1 flex-col overflow-hidden rounded-b-lg p-6">
+      <div :class="['flex min-w-0 items-center gap-2', plan.recommended ? 'pr-[76px]' : '']">
+        <h3 class="min-w-0 truncate text-[21px] font-bold text-gray-900 dark:text-white">{{ plan.name }}</h3>
+        <span :class="['shrink-0 rounded-md px-2 py-[5px] text-[11px] font-semibold leading-none', badgeLightClass]">
           {{ pLabel }}
         </span>
       </div>
 
-      <p v-if="plan.description" data-test="plan-description" class="mb-3 min-h-[36px] text-xs leading-relaxed text-gray-500 line-clamp-2 dark:text-dark-400">
-        {{ plan.description }}
-      </p>
-
-      <div class="mb-1 flex items-baseline gap-1">
-        <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ planCurrencySymbol }}</span>
-        <span :class="['text-3xl font-extrabold', textClass]">{{ plan.price }}</span>
-        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ plan.currency || 'USD' }}</span>
-        <span class="ml-auto text-xs text-gray-400 dark:text-dark-500">/ {{ validitySuffix }}</span>
+      <div class="mt-2.5 min-h-5">
+        <p v-if="plan.description" data-test="plan-description" class="text-sm leading-relaxed text-gray-500 line-clamp-2 dark:text-dark-400">
+          {{ plan.description }}
+        </p>
       </div>
-      <div v-if="plan.original_price" class="mb-2 text-xs text-gray-400 line-through dark:text-dark-500">
+
+      <div class="mt-5 flex items-baseline gap-[5px]">
+        <span class="shrink-0 text-sm font-semibold text-gray-500 dark:text-gray-400">{{ planCurrencySymbol }}</span>
+        <span data-test="plan-price" :class="['min-w-0 font-extrabold leading-none tabular-nums', priceSizeClass, textClass]">{{ plan.price }}</span>
+        <span class="shrink-0 text-[13px] font-semibold text-gray-500 dark:text-gray-400">{{ plan.currency || 'USD' }}</span>
+        <span data-test="plan-validity" class="ml-auto shrink-0 whitespace-nowrap pl-1 text-[13px] text-gray-400 dark:text-dark-500">/ {{ validitySuffix }}</span>
+      </div>
+      <div v-if="plan.original_price" class="mt-2 text-[13px] text-gray-400 line-through dark:text-dark-500">
         {{ planCurrencySymbol }}{{ plan.original_price }}<template v-if="plan.currency"> {{ plan.currency }}</template>
       </div>
 
-      <div class="mb-3 space-y-1.5 border-y border-gray-100 py-2.5 text-xs dark:border-dark-700">
-        <div class="flex items-center justify-between">
+      <div class="mb-4 mt-6 space-y-1 border-y border-gray-100 py-2.5 text-[13px] dark:border-dark-700">
+        <div class="flex min-h-6 items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.rate') }}</span>
           <span class="flex items-center font-semibold text-gray-700 dark:text-gray-300">
             {{ rateDisplay }}
@@ -47,23 +53,23 @@
             </HelpTooltip>
           </span>
         </div>
-        <div v-if="plan.daily_limit_usd != null" class="flex items-center justify-between">
+        <div v-if="plan.daily_limit_usd != null" class="flex min-h-6 items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.dailyLimit') }}</span>
           <span class="font-semibold text-gray-700 dark:text-gray-300">${{ plan.daily_limit_usd }}</span>
         </div>
-        <div v-if="plan.weekly_limit_usd != null" class="flex items-center justify-between">
+        <div v-if="plan.weekly_limit_usd != null" class="flex min-h-6 items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.weeklyLimit') }}</span>
           <span class="font-semibold text-gray-700 dark:text-gray-300">${{ plan.weekly_limit_usd }}</span>
         </div>
-        <div v-if="plan.monthly_limit_usd != null" class="flex items-center justify-between">
+        <div v-if="plan.monthly_limit_usd != null" class="flex min-h-6 items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.monthlyLimit') }}</span>
           <span class="font-semibold text-gray-700 dark:text-gray-300">${{ plan.monthly_limit_usd }}</span>
         </div>
-        <div v-if="plan.daily_limit_usd == null && plan.weekly_limit_usd == null && plan.monthly_limit_usd == null" class="flex items-center justify-between">
+        <div v-if="plan.daily_limit_usd == null && plan.weekly_limit_usd == null && plan.monthly_limit_usd == null" class="flex min-h-6 items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.quota') }}</span>
           <span class="font-semibold text-gray-700 dark:text-gray-300">{{ t('payment.planCard.unlimited') }}</span>
         </div>
-        <div v-if="modelScopeLabels.length > 0" class="flex items-center justify-between">
+        <div v-if="modelScopeLabels.length > 0" class="flex min-h-6 items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.models') }}</span>
           <div class="flex flex-wrap justify-end gap-1">
             <span v-for="scope in modelScopeLabels" :key="scope"
@@ -74,7 +80,7 @@
         </div>
       </div>
 
-      <div v-if="plan.features.length > 0" class="mb-3 space-y-1.5">
+      <div v-if="plan.features.length > 0" class="mb-4 space-y-1.5">
         <div v-for="feature in plan.features.slice(0, 3)" :key="feature" class="flex items-start gap-1.5">
           <svg :class="['mt-0.5 h-3.5 w-3.5 flex-shrink-0', iconClass]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -87,7 +93,7 @@
 
       <button
         type="button"
-        :class="['w-full rounded-lg py-2.5 text-sm font-semibold transition-all active:scale-[0.98]', btnClass]"
+        :class="['min-h-12 w-full rounded-lg px-4 py-3 text-sm font-[750] transition-all active:scale-[0.98]', btnClass]"
         @click="emit('select', plan)"
       >
         {{ isRenewal ? t('payment.renewNow') : t('payment.subscribeNow') }}
@@ -163,4 +169,59 @@ const modelScopeLabels = computed(() => {
 })
 
 const validitySuffix = computed(() => planValiditySuffix(props.plan, t))
+
+const priceSizeClass = computed(() => {
+  const length = String(props.plan.price).replace('.', '').length
+  if (length >= 6) return 'text-[30px]'
+  if (length >= 5) return 'text-[33px]'
+  if (length >= 4) return 'text-[36px]'
+  return 'text-[42px]'
+})
 </script>
+
+<style scoped>
+.subscription-recommend-badge {
+  position: absolute;
+  z-index: 4;
+  top: -20px;
+  right: -10px;
+  display: grid;
+  width: 100px;
+  height: 92px;
+  place-items: center;
+  transform: rotate(7deg);
+  filter: drop-shadow(0 6px 6px rgb(150 35 10 / 30%));
+  pointer-events: none;
+}
+
+.subscription-recommend-badge::before,
+.subscription-recommend-badge::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  clip-path: polygon(50% 0, 59% 16%, 74% 5%, 78% 23%, 96% 18%, 89% 38%, 100% 50%, 84% 61%, 95% 79%, 75% 76%, 70% 97%, 55% 82%, 43% 100%, 34% 81%, 14% 92%, 17% 69%, 0 61%, 15% 47%, 2% 31%, 24% 30%, 25% 8%, 42% 20%);
+}
+
+.subscription-recommend-badge::before {
+  background: #ef321f;
+}
+
+.subscription-recommend-badge::after {
+  inset: 6px;
+  background: linear-gradient(145deg, #ffd84a 5%, #ff8a16 48%, #ff4d1f 100%);
+}
+
+.subscription-recommend-badge span {
+  position: relative;
+  z-index: 1;
+  transform: skew(-8deg) rotate(-5deg);
+  color: #fff8d7;
+  font-family: 'Arial Black', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 29px;
+  font-style: italic;
+  font-weight: 1000;
+  letter-spacing: 0;
+  -webkit-text-stroke: 2px #a9180c;
+  text-shadow: 2px 2px 0 #b51b0f, 3px 4px 0 #8f1209;
+}
+</style>

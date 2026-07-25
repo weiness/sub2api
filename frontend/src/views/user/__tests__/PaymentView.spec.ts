@@ -147,6 +147,7 @@ function checkoutInfoWithPlansFixture(options: {
     group_platform: 'openai',
     sort_order: 1,
     for_sale: true,
+    recommended: false,
     group_name: 'OpenAI',
     ...options.plan,
   }

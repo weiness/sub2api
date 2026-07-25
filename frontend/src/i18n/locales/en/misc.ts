@@ -300,6 +300,7 @@ export default {
     fee: 'Fee',
     actualPay: 'Actual Payment',
     createOrder: 'Confirm Payment',
+    recommended: 'HOT',
     methods: {
       easypay: 'EasyPay',
       alipay: 'Alipay',
@@ -569,6 +570,7 @@ export default {
       validityUnit: 'Validity Unit',
       sortOrder: 'Sort Order',
       forSale: 'For Sale',
+      recommended: 'Recommended',
       onSale: 'On Sale',
       offSale: 'Off Sale',
       group: 'Group',

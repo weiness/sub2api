@@ -47,6 +47,7 @@ const mountPlanCard = (groupPlatform: string, overrides: Partial<SubscriptionPla
         validity_unit: "day",
         supported_model_scopes: ["claude", "gemini_text", "gemini_image"],
         is_active: true,
+        recommended: false,
         ...overrides,
       },
     },
@@ -106,12 +107,39 @@ describe("SubscriptionPlanCard", () => {
     const card = wrapper.find('[data-test="subscription-plan-card"]');
     const title = card.find("h3");
     const description = card.find('[data-test="plan-description"]');
-    const price = card.find(".text-3xl");
+    const price = card.find('[data-test="plan-price"]');
 
     expect(title.element.compareDocumentPosition(description.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(description.element.compareDocumentPosition(price.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(card.classes()).toContain("hover:-translate-y-1");
-    expect(card.classes()).toContain("hover:shadow-xl");
+    expect(card.classes()).toContain("hover:shadow-[0_18px_38px_rgba(15,118,110,0.12)]");
     expect(card.classes()).toContain("hover:ring-2");
+  });
+
+  it("renders the selected promotional badge only for recommended plans", () => {
+    expect(mountPlanCard("openai").find('[data-test="recommended-badge"]').exists()).toBe(false);
+
+    const recommended = mountPlanCard("openai", { recommended: true });
+    expect(recommended.find('[data-test="recommended-badge"]').exists()).toBe(true);
+    expect(recommended.find('[data-test="recommended-badge"]').text()).toBe("payment.recommended");
+  });
+
+  it("uses the large-card layout and keeps the platform badge after the plan name", () => {
+    const wrapper = mountPlanCard("openai");
+    const card = wrapper.find('[data-test="subscription-plan-card"]');
+    const title = card.find("h3");
+    const badge = title.element.nextElementSibling;
+
+    expect(card.classes()).toContain("min-h-[410px]");
+    expect(badge?.textContent).toContain("OpenAI");
+  });
+
+  it("keeps the validity period on one line for four-digit prices", () => {
+    const wrapper = mountPlanCard("openai", { price: 1000 });
+    const price = wrapper.find('[data-test="plan-price"]');
+    const validity = wrapper.find('[data-test="plan-validity"]');
+
+    expect(price.classes()).toContain("text-[36px]");
+    expect(validity.classes()).toContain("whitespace-nowrap");
   });
 });

@@ -16,7 +16,7 @@
           :key="amt"
           type="button"
           :class="[
-            'relative h-12 rounded-lg border px-4 text-center font-semibold transition-colors',
+            'relative h-12 rounded-lg border px-4 text-center font-bold transition-colors',
             modelValue === amt
               ? 'border-[#0fad76] bg-[#ebfaf4] text-[#07885b] shadow-[inset_0_0_0_1px_rgba(15,173,118,0.08)] dark:border-[#2fd398] dark:bg-emerald-950/40 dark:text-emerald-300'
               : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-200 dark:hover:border-dark-500',
