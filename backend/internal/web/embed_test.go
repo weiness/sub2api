@@ -331,7 +331,7 @@ func TestFrontendServer_ServeIndexHTML(t *testing.T) {
 		assert.Contains(t, w2.Body.String(), `nonce="nonce2"`)
 	})
 
-	t.Run("sets_etag_header", func(t *testing.T) {
+	t.Run("does_not_expose_etag_for_nonce_html", func(t *testing.T) {
 		provider := &mockSettingsProvider{
 			settings: map[string]string{"test": "value"},
 		}
@@ -346,13 +346,10 @@ func TestFrontendServer_ServeIndexHTML(t *testing.T) {
 
 		server.serveIndexHTML(c)
 
-		etag := w.Header().Get("ETag")
-		assert.NotEmpty(t, etag)
-		assert.True(t, strings.HasPrefix(etag, `"`))
-		assert.True(t, strings.HasSuffix(etag, `"`))
+		assert.Empty(t, w.Header().Get("ETag"))
 	})
 
-	t.Run("returns_304_for_matching_etag", func(t *testing.T) {
+	t.Run("returns_fresh_html_when_if_none_match_is_present", func(t *testing.T) {
 		provider := &mockSettingsProvider{
 			settings: map[string]string{"test": "value"},
 		}
@@ -368,21 +365,25 @@ func TestFrontendServer_ServeIndexHTML(t *testing.T) {
 		})
 		router.Use(server.Middleware())
 
-		// First request to populate cache and get ETag
+		// First request populates the server-side rendered-template cache.
 		w1 := httptest.NewRecorder()
 		req1 := httptest.NewRequest(http.MethodGet, "/", nil)
 		router.ServeHTTP(w1, req1)
-		etag := w1.Header().Get("ETag")
+		cached := server.cache.Get()
+		require.NotNil(t, cached)
+		etag := cached.ETag
 		require.NotEmpty(t, etag)
 
-		// Second request with If-None-Match
+		// A browser may still send an ETag stored before this policy changed.
+		// The nonce-bearing HTML must be rendered again instead of returning 304.
 		w2 := httptest.NewRecorder()
 		req2 := httptest.NewRequest(http.MethodGet, "/", nil)
 		req2.Header.Set("If-None-Match", etag)
 		router.ServeHTTP(w2, req2)
 
-		assert.Equal(t, http.StatusNotModified, w2.Code)
-		assert.Empty(t, w2.Body.String())
+		assert.Equal(t, http.StatusOK, w2.Code)
+		assert.NotEmpty(t, w2.Body.String())
+		assert.Empty(t, w2.Header().Get("ETag"))
 	})
 
 	t.Run("sets_cache_control_header", func(t *testing.T) {
@@ -400,7 +401,7 @@ func TestFrontendServer_ServeIndexHTML(t *testing.T) {
 
 		server.serveIndexHTML(c)
 
-		assert.Equal(t, "no-cache", w.Header().Get("Cache-Control"))
+		assert.Equal(t, "no-store, max-age=0", w.Header().Get("Cache-Control"))
 	})
 
 	t.Run("fallback_on_settings_error", func(t *testing.T) {
@@ -424,6 +425,7 @@ func TestFrontendServer_ServeIndexHTML(t *testing.T) {
 		// Should still return 200 with base HTML
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
+		assert.Equal(t, "no-store, max-age=0", w.Header().Get("Cache-Control"))
 	})
 }
 
