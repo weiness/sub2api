@@ -234,6 +234,12 @@ function applyFeatureFlags(items: NavItem[]): NavItem[] {
   return out
 }
 
+function filterSimpleMode(items: NavItem[]): NavItem[] {
+  return items
+    .filter(item => !item.hideInSimpleMode)
+    .map(item => (item.children ? { ...item, children: filterSimpleMode(item.children) } : item))
+}
+
 const { t } = useI18n()
 
 const route = useRoute()
@@ -470,7 +476,7 @@ const ServerIcon = {
     )
 }
 
-const BellIcon = {
+const AnnouncementIcon = {
   render: () =>
     h(
       'svg',
@@ -479,7 +485,22 @@ const BellIcon = {
         h('path', {
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
-          d: 'M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9a6 6 0 10-12 0v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0'
+          d: 'M3.75 10.5v3A1.5 1.5 0 005.25 15H7.5l9.75 3.75V5.25L7.5 9H5.25a1.5 1.5 0 00-1.5 1.5zM7.5 15l1.125 4.125a1.5 1.5 0 002.897-.776L10.5 15m6.75-6a3 3 0 010 6'
+        })
+      ]
+    )
+}
+
+const OperationsIcon = {
+  render: () =>
+    h(
+      'svg',
+      { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '1.5' },
+      [
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: 'M9 6.75v-1.5A2.25 2.25 0 0111.25 3h1.5A2.25 2.25 0 0115 5.25v1.5m-11.25 0h16.5A1.5 1.5 0 0121.75 8.25v9A2.25 2.25 0 0119.5 19.5h-15a2.25 2.25 0 01-2.25-2.25v-9a1.5 1.5 0 011.5-1.5zM2.25 12a20.38 20.38 0 0019.5 0M10.5 11.25h3'
         })
       ]
     )
@@ -737,7 +758,7 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
 // finalizeNav 合并三重过滤：featureFlag 过滤 + simple 模式过滤。
 function finalizeNav(items: NavItem[]): NavItem[] {
   const visible = applyFeatureFlags(items)
-  return authStore.isSimpleMode ? visible.filter(item => !item.hideInSimpleMode) : visible
+  return authStore.isSimpleMode ? filterSimpleMode(visible) : visible
 }
 
 // User navigation items (for regular users)
@@ -782,9 +803,19 @@ const adminNavItems = computed((): NavItem[] => {
     },
     { path: '/admin/subscriptions', label: t('nav.subscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
     { path: '/admin/accounts', label: t('nav.accounts'), icon: GlobeIcon },
-    { path: '/admin/announcements', label: t('nav.announcements'), icon: BellIcon },
-    { path: '/admin/faqs', label: t('nav.faqs'), icon: FAQIcon },
     { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
+    {
+      path: '/admin/operations',
+      label: t('nav.operationsManagement'),
+      icon: OperationsIcon,
+      expandOnly: true,
+      children: [
+        { path: '/admin/announcements', label: t('nav.announcements'), icon: AnnouncementIcon },
+        { path: '/admin/faqs', label: t('nav.faqs'), icon: FAQIcon },
+        { path: '/admin/redeem', label: t('nav.redeemCodes'), icon: TicketIcon, hideInSimpleMode: true },
+        { path: '/admin/promo-codes', label: t('nav.promoCodes'), icon: GiftIcon, hideInSimpleMode: true },
+      ],
+    },
     {
       path: '/admin/security-audit',
       label: t('nav.securityAudit'),
@@ -797,8 +828,6 @@ const adminNavItems = computed((): NavItem[] => {
         { path: '/admin/prompt-audit', label: t('nav.promptAudit'), icon: ShieldIcon },
       ],
     },
-    { path: '/admin/redeem', label: t('nav.redeemCodes'), icon: TicketIcon, hideInSimpleMode: true },
-    { path: '/admin/promo-codes', label: t('nav.promoCodes'), icon: GiftIcon, hideInSimpleMode: true },
     {
       path: '/admin/affiliates',
       label: t('nav.affiliateManagement'),
@@ -833,7 +862,7 @@ const adminNavItems = computed((): NavItem[] => {
 
   // 简单模式下，在系统设置前插入 API密钥
   if (authStore.isSimpleMode) {
-    const filtered = visible.filter(item => !item.hideInSimpleMode)
+    const filtered = filterSimpleMode(visible)
     filtered.push({ path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon })
     filtered.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
     for (const cm of customMenuItemsForAdmin.value) {
