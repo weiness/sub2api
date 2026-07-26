@@ -60,6 +60,7 @@ export default {
     copyFailed: 'Failed to copy',
     verifying: 'Verifying...',
     processing: 'Processing...',
+    contact: 'Contact',
     contactSupport: 'Contact Support',
     add: 'Add',
     invalidEmail: 'Please enter a valid email address',

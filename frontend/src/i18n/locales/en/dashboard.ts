@@ -577,6 +577,13 @@ export default {
     linkCopied: 'Invite link copied',
     loadFailed: 'Failed to load affiliate data',
     transferFailed: 'Failed to transfer affiliate quota',
+    header: {
+      button: 'Invite & earn {rate}',
+      title: 'Invite friends and earn rebates',
+      description: 'Earn a {rate} rebate when friends register through your link and recharge.',
+      copyHint: 'Click the button to copy your link',
+      viewDetails: 'View details'
+    },
     stats: {
       rebateRate: 'My Rebate Rate',
       rebateRateHint: 'What you earn each time an invitee recharges',

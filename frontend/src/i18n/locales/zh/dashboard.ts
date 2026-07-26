@@ -582,6 +582,13 @@ export default {
     linkCopied: '邀请链接已复制',
     loadFailed: '加载邀请返利数据失败',
     transferFailed: '转入余额失败',
+    header: {
+      button: '邀好友赚 {rate}',
+      title: '邀请好友，充值就有返利',
+      description: '好友通过你的链接注册并充值后，你可获得 {rate} 返利。',
+      copyHint: '点击按钮复制邀请链接',
+      viewDetails: '查看明细'
+    },
     stats: {
       rebateRate: '我的返利比例',
       rebateRateHint: '被邀请用户每次充值后你可获得的返利比例',

@@ -21,10 +21,13 @@
         </div>
       </div>
 
-      <!-- Right: Announcements + Docs + Language + Subscriptions + Balance + User Dropdown -->
-      <div class="flex min-w-0 items-center gap-1 sm:gap-3">
+      <!-- Right: Announcements + Affiliate + Docs + Language + Subscriptions + Balance + User Dropdown -->
+      <div class="flex min-w-0 items-center gap-1 sm:gap-1.5">
         <!-- Announcement Bell -->
         <AnnouncementBell v-if="user" />
+
+        <!-- Affiliate Invite -->
+        <AffiliateInviteButton />
 
         <!-- Docs Link -->
         <a
@@ -46,10 +49,10 @@
           <button
             type="button"
             class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
-            :aria-label="t('common.contactSupport')"
+            :aria-label="t('common.contact')"
           >
             <Icon name="chat" size="sm" />
-            <span>{{ t('common.contactSupport') }}</span>
+            <span>{{ t('common.contact') }}</span>
           </button>
           <div
             class="pointer-events-none invisible absolute right-0 top-full z-50 w-72 pt-2 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:opacity-100"
@@ -240,6 +243,7 @@ import { useAdminSettingsStore } from '@/stores/adminSettings'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import SubscriptionProgressMini from '@/components/common/SubscriptionProgressMini.vue'
 import AnnouncementBell from '@/components/common/AnnouncementBell.vue'
+import AffiliateInviteButton from './AffiliateInviteButton.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { sanitizeUrl } from '@/utils/url'
 
