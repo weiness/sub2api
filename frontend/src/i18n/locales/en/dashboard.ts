@@ -484,9 +484,55 @@ export default {
 
   // Available Channels (user-facing)
   availableChannels: {
-    title: 'Available Channels',
-    description: 'Channels you can access, along with their supported models and pricing',
-    searchPlaceholder: 'Search channels or models...',
+    title: 'Model Catalog',
+    description: 'Explore available models, modalities, and pricing',
+    searchPlaceholder: 'Search models',
+    modelCount: 'available models',
+    showFilters: 'Show filters',
+    hideFilters: 'Hide filters',
+    openModelDetails: 'View details for model {model}',
+    copyModelId: 'Copy model ID',
+    modelIdCopied: 'Model ID copied',
+    emptyModels: 'No matching models',
+    adjustFilters: 'Try changing your search or filters',
+    filters: {
+      all: 'All',
+      provider: 'Provider',
+      modality: 'Modality',
+      reset: 'Reset filters'
+    },
+    modalities: {
+      text: 'Text',
+      image: 'Image',
+      audio: 'Audio',
+      video: 'Video',
+      pdf: 'PDF'
+    },
+    details: {
+      inputOutput: 'Input → Output',
+      inputOutputPrice: 'Input / Output price',
+      toolCalling: 'Tool calling',
+      features: 'Model features',
+      channelPricing: 'Channel pricing',
+      channelPricingHint: 'The same model may be served by multiple channels. Actual pricing follows the selected channel.',
+      billingNote: 'Actual billing combines channel pricing and the group multiplier. For input tokens: {price}/1M × group multiplier 1 = {price}/1M billed.',
+      billingNoteGeneric: "Actual billing combines channel pricing and the group multiplier. The final price follows the applicable billing mode and the user's group.",
+      channel: 'Channel',
+      notAvailable: 'Not available',
+      separator: ', '
+    },
+    capabilities: {
+      function_calling: 'Function calling',
+      parallel_function_calling: 'Parallel tools',
+      web_search: 'Web search',
+      code_execution: 'Code execution',
+      computer_use: 'Computer use',
+      file_search: 'File search',
+      url_context: 'URL context',
+      reasoning: 'Reasoning',
+      structured_output: 'Structured output',
+      prompt_caching: 'Prompt caching'
+    },
     empty: 'No available channels',
     noModels: 'No models configured',
     noPricing: 'Pricing not configured',

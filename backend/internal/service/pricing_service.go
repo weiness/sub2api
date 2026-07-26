@@ -107,25 +107,41 @@ var (
 // LiteLLMModelPricing LiteLLM价格数据结构
 // 只保留我们需要的字段，使用指针来处理可能缺失的值
 type LiteLLMModelPricing struct {
-	InputCostPerToken                   float64 `json:"input_cost_per_token"`
-	InputCostPerTokenPriority           float64 `json:"input_cost_per_token_priority"`
-	OutputCostPerToken                  float64 `json:"output_cost_per_token"`
-	OutputCostPerTokenPriority          float64 `json:"output_cost_per_token_priority"`
-	CacheCreationInputTokenCost         float64 `json:"cache_creation_input_token_cost"`
-	CacheCreationInputTokenCostPriority float64 `json:"cache_creation_input_token_cost_priority"`
-	CacheCreationInputTokenCostAbove1hr float64 `json:"cache_creation_input_token_cost_above_1hr"`
-	CacheReadInputTokenCost             float64 `json:"cache_read_input_token_cost"`
-	CacheReadInputTokenCostPriority     float64 `json:"cache_read_input_token_cost_priority"`
-	LongContextInputTokenThreshold      int     `json:"long_context_input_token_threshold,omitempty"`
-	LongContextInputCostMultiplier      float64 `json:"long_context_input_cost_multiplier,omitempty"`
-	LongContextOutputCostMultiplier     float64 `json:"long_context_output_cost_multiplier,omitempty"`
-	SupportsServiceTier                 bool    `json:"supports_service_tier"`
-	LiteLLMProvider                     string  `json:"litellm_provider"`
-	Mode                                string  `json:"mode"`
-	SupportsPromptCaching               bool    `json:"supports_prompt_caching"`
-	OutputCostPerImage                  float64 `json:"output_cost_per_image"`       // 图片生成模型每张图片价格
-	OutputCostPerImageToken             float64 `json:"output_cost_per_image_token"` // 图片输出 token 价格
-	InputCostPerImageToken              float64 `json:"input_cost_per_image_token"`  // 图片输入 token 价格（如 gpt-image-2 图片编辑）
+	InputCostPerToken                   float64  `json:"input_cost_per_token"`
+	InputCostPerTokenPriority           float64  `json:"input_cost_per_token_priority"`
+	OutputCostPerToken                  float64  `json:"output_cost_per_token"`
+	OutputCostPerTokenPriority          float64  `json:"output_cost_per_token_priority"`
+	CacheCreationInputTokenCost         float64  `json:"cache_creation_input_token_cost"`
+	CacheCreationInputTokenCostPriority float64  `json:"cache_creation_input_token_cost_priority"`
+	CacheCreationInputTokenCostAbove1hr float64  `json:"cache_creation_input_token_cost_above_1hr"`
+	CacheReadInputTokenCost             float64  `json:"cache_read_input_token_cost"`
+	CacheReadInputTokenCostPriority     float64  `json:"cache_read_input_token_cost_priority"`
+	LongContextInputTokenThreshold      int      `json:"long_context_input_token_threshold,omitempty"`
+	LongContextInputCostMultiplier      float64  `json:"long_context_input_cost_multiplier,omitempty"`
+	LongContextOutputCostMultiplier     float64  `json:"long_context_output_cost_multiplier,omitempty"`
+	SupportsServiceTier                 bool     `json:"supports_service_tier"`
+	LiteLLMProvider                     string   `json:"litellm_provider"`
+	Mode                                string   `json:"mode"`
+	SupportsPromptCaching               bool     `json:"supports_prompt_caching"`
+	SupportedModalities                 []string `json:"supported_modalities"`
+	SupportedOutputModalities           []string `json:"supported_output_modalities"`
+	SupportsVision                      bool     `json:"supports_vision"`
+	SupportsAudioInput                  bool     `json:"supports_audio_input"`
+	SupportsAudioOutput                 bool     `json:"supports_audio_output"`
+	SupportsVideoInput                  bool     `json:"supports_video_input"`
+	SupportsPDFInput                    bool     `json:"supports_pdf_input"`
+	SupportsFunctionCalling             bool     `json:"supports_function_calling"`
+	SupportsParallelFunctionCalling     bool     `json:"supports_parallel_function_calling"`
+	SupportsReasoning                   bool     `json:"supports_reasoning"`
+	SupportsResponseSchema              bool     `json:"supports_response_schema"`
+	SupportsWebSearch                   bool     `json:"supports_web_search"`
+	SupportsCodeExecution               bool     `json:"supports_code_execution"`
+	SupportsComputerUse                 bool     `json:"supports_computer_use"`
+	SupportsFileSearch                  bool     `json:"supports_file_search"`
+	SupportsURLContext                  bool     `json:"supports_url_context"`
+	OutputCostPerImage                  float64  `json:"output_cost_per_image"`       // 图片生成模型每张图片价格
+	OutputCostPerImageToken             float64  `json:"output_cost_per_image_token"` // 图片输出 token 价格
+	InputCostPerImageToken              float64  `json:"input_cost_per_image_token"`  // 图片输入 token 价格（如 gpt-image-2 图片编辑）
 
 	// TokenPricingAbsent 表示源数据中 input/output token 价格均缺失（仅有图片价）。
 	// 此类条目只可用于图片计费，token 计费必须回退到 fallback 或 fail-closed，
@@ -157,6 +173,22 @@ type LiteLLMRawEntry struct {
 	LiteLLMProvider                     string   `json:"litellm_provider"`
 	Mode                                string   `json:"mode"`
 	SupportsPromptCaching               bool     `json:"supports_prompt_caching"`
+	SupportedModalities                 []string `json:"supported_modalities"`
+	SupportedOutputModalities           []string `json:"supported_output_modalities"`
+	SupportsVision                      bool     `json:"supports_vision"`
+	SupportsAudioInput                  bool     `json:"supports_audio_input"`
+	SupportsAudioOutput                 bool     `json:"supports_audio_output"`
+	SupportsVideoInput                  bool     `json:"supports_video_input"`
+	SupportsPDFInput                    bool     `json:"supports_pdf_input"`
+	SupportsFunctionCalling             bool     `json:"supports_function_calling"`
+	SupportsParallelFunctionCalling     bool     `json:"supports_parallel_function_calling"`
+	SupportsReasoning                   bool     `json:"supports_reasoning"`
+	SupportsResponseSchema              bool     `json:"supports_response_schema"`
+	SupportsWebSearch                   bool     `json:"supports_web_search"`
+	SupportsCodeExecution               bool     `json:"supports_code_execution"`
+	SupportsComputerUse                 bool     `json:"supports_computer_use"`
+	SupportsFileSearch                  bool     `json:"supports_file_search"`
+	SupportsURLContext                  bool     `json:"supports_url_context"`
 	OutputCostPerImage                  *float64 `json:"output_cost_per_image"`
 	OutputCostPerImageToken             *float64 `json:"output_cost_per_image_token"`
 	InputCostPerImageToken              *float64 `json:"input_cost_per_image_token"`
@@ -447,11 +479,27 @@ func (s *PricingService) parsePricingData(body []byte) (map[string]*LiteLLMModel
 		}
 
 		pricing := &LiteLLMModelPricing{
-			LiteLLMProvider:       entry.LiteLLMProvider,
-			Mode:                  entry.Mode,
-			SupportsPromptCaching: entry.SupportsPromptCaching,
-			SupportsServiceTier:   entry.SupportsServiceTier,
-			TokenPricingAbsent:    entry.InputCostPerToken == nil && entry.OutputCostPerToken == nil,
+			LiteLLMProvider:                 entry.LiteLLMProvider,
+			Mode:                            entry.Mode,
+			SupportsPromptCaching:           entry.SupportsPromptCaching,
+			SupportsServiceTier:             entry.SupportsServiceTier,
+			SupportedModalities:             append([]string(nil), entry.SupportedModalities...),
+			SupportedOutputModalities:       append([]string(nil), entry.SupportedOutputModalities...),
+			SupportsVision:                  entry.SupportsVision,
+			SupportsAudioInput:              entry.SupportsAudioInput,
+			SupportsAudioOutput:             entry.SupportsAudioOutput,
+			SupportsVideoInput:              entry.SupportsVideoInput,
+			SupportsPDFInput:                entry.SupportsPDFInput,
+			SupportsFunctionCalling:         entry.SupportsFunctionCalling,
+			SupportsParallelFunctionCalling: entry.SupportsParallelFunctionCalling,
+			SupportsReasoning:               entry.SupportsReasoning,
+			SupportsResponseSchema:          entry.SupportsResponseSchema,
+			SupportsWebSearch:               entry.SupportsWebSearch,
+			SupportsCodeExecution:           entry.SupportsCodeExecution,
+			SupportsComputerUse:             entry.SupportsComputerUse,
+			SupportsFileSearch:              entry.SupportsFileSearch,
+			SupportsURLContext:              entry.SupportsURLContext,
+			TokenPricingAbsent:              entry.InputCostPerToken == nil && entry.OutputCostPerToken == nil,
 		}
 
 		if entry.InputCostPerToken != nil {

@@ -24,11 +24,11 @@ export default {
           defaultIntervalHint: 'Pre-fills the interval when creating a new monitor; each monitor can override it. Range 15 – 3600.',
         },
         availableChannels: {
-          title: 'Available Channels',
-          description: 'Show logged-in users an aggregate view of the channels, models and pricing they can access. Disabled by default.',
+          title: 'Model Catalog',
+          description: 'Show users the model catalog for browsing available models, supported modalities, and API pricing. Disabled by default.',
           configureLink: 'Configure model pricing in Channel Management > Channel Pricing',
-          enabled: 'Enable Available Channels',
-          enabledHint: 'When off, the sidebar entry is hidden and the endpoint returns an empty list.',
+          enabled: 'Enable Model Catalog',
+          enabledHint: 'When off, the Model Catalog entry is hidden from the user sidebar and the endpoint returns an empty list.',
         },
         riskControl: {
           title: 'Risk Control',

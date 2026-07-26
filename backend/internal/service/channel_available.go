@@ -110,8 +110,8 @@ func (s *ChannelService) ListAvailable(ctx context.Context) ([]AvailableChannel,
 	return out, nil
 }
 
-// fillGlobalPricingFallback 对未命中渠道定价的支持模型，从全局 LiteLLM 数据合成一份
-// 展示用定价。仅用于「可用渠道」展示，不影响真实计费链路。
+// fillGlobalPricingFallback 使用全局 LiteLLM 数据补充展示用的模型能力，并在渠道
+// 未配置价格时合成展示价格。仅用于「可用渠道」页面，不影响真实计费链路。
 //
 // 触发条件：
 //  1. Pricing == nil（渠道完全没声明该模型的定价条目）
@@ -123,15 +123,112 @@ func (s *ChannelService) fillGlobalPricingFallback(models []SupportedModel) {
 		return
 	}
 	for i := range models {
-		if !pricingNeedsFallback(models[i].Pricing) {
-			continue
-		}
 		lp := s.pricingService.GetModelPricing(models[i].Name)
 		if lp == nil {
 			continue
 		}
-		models[i].Pricing = synthesizePricingFromLiteLLM(lp, models[i].Pricing)
+		models[i].Modalities = liteLLMModalities(lp)
+		models[i].OutputModalities = liteLLMOutputModalities(lp)
+		models[i].Capabilities = liteLLMCapabilities(lp)
+		if pricingNeedsFallback(models[i].Pricing) {
+			models[i].Pricing = synthesizePricingFromLiteLLM(lp, models[i].Pricing)
+		}
 	}
+}
+
+func liteLLMOutputModalities(lp *LiteLLMModelPricing) []string {
+	if lp == nil {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(lp.SupportedOutputModalities)+1)
+	modalities := make([]string, 0, len(lp.SupportedOutputModalities)+1)
+	add := func(value string) {
+		value = strings.ToLower(strings.TrimSpace(value))
+		if value == "" {
+			return
+		}
+		if _, ok := seen[value]; ok {
+			return
+		}
+		seen[value] = struct{}{}
+		modalities = append(modalities, value)
+	}
+	for _, modality := range lp.SupportedOutputModalities {
+		add(modality)
+	}
+	if len(modalities) == 0 {
+		switch lp.Mode {
+		case "image_generation":
+			add("image")
+		default:
+			add("text")
+		}
+	}
+	if lp.SupportsAudioOutput {
+		add("audio")
+	}
+	return modalities
+}
+
+func liteLLMCapabilities(lp *LiteLLMModelPricing) []string {
+	if lp == nil {
+		return nil
+	}
+	capabilities := make([]string, 0, 10)
+	add := func(enabled bool, name string) {
+		if enabled {
+			capabilities = append(capabilities, name)
+		}
+	}
+	add(lp.SupportsFunctionCalling, "function_calling")
+	add(lp.SupportsParallelFunctionCalling, "parallel_function_calling")
+	add(lp.SupportsWebSearch, "web_search")
+	add(lp.SupportsCodeExecution, "code_execution")
+	add(lp.SupportsComputerUse, "computer_use")
+	add(lp.SupportsFileSearch, "file_search")
+	add(lp.SupportsURLContext, "url_context")
+	add(lp.SupportsReasoning, "reasoning")
+	add(lp.SupportsResponseSchema, "structured_output")
+	add(lp.SupportsPromptCaching, "prompt_caching")
+	return capabilities
+}
+
+func liteLLMModalities(lp *LiteLLMModelPricing) []string {
+	if lp == nil {
+		return nil
+	}
+	seen := make(map[string]struct{}, 5)
+	modalities := make([]string, 0, 5)
+	add := func(value string) {
+		value = strings.ToLower(strings.TrimSpace(value))
+		if value == "" {
+			return
+		}
+		if _, ok := seen[value]; ok {
+			return
+		}
+		seen[value] = struct{}{}
+		modalities = append(modalities, value)
+	}
+	for _, modality := range lp.SupportedModalities {
+		add(modality)
+	}
+	if len(modalities) == 0 {
+		add("text")
+	}
+	if lp.SupportsVision {
+		add("image")
+	}
+	if lp.SupportsAudioInput {
+		add("audio")
+	}
+	if lp.SupportsVideoInput {
+		add("video")
+	}
+	if lp.SupportsPDFInput {
+		add("pdf")
+	}
+	return modalities
 }
 
 // pricingNeedsFallback 判定一个 ChannelModelPricing 是否需要走全局回落。

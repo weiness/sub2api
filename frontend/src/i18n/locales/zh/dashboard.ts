@@ -489,9 +489,55 @@ export default {
 
   // Available Channels (user-facing)
   availableChannels: {
-    title: '可用渠道',
-    description: '查看您可访问的渠道与其支持的模型、定价',
-    searchPlaceholder: '搜索渠道或模型...',
+    title: '模型广场',
+    description: '查看可用模型、支持模态与调用价格',
+    searchPlaceholder: '搜索模型',
+    modelCount: '个可用模型',
+    showFilters: '展开筛选器',
+    hideFilters: '隐藏筛选器',
+    openModelDetails: '查看模型 {model} 详情',
+    copyModelId: '复制模型 ID',
+    modelIdCopied: '模型 ID 已复制',
+    emptyModels: '没有找到匹配的模型',
+    adjustFilters: '请调整搜索或筛选条件',
+    filters: {
+      all: '全部',
+      provider: '模型厂商',
+      modality: '支持模态',
+      reset: '重置筛选'
+    },
+    modalities: {
+      text: '文本',
+      image: '图片',
+      audio: '音频',
+      video: '视频',
+      pdf: 'PDF'
+    },
+    details: {
+      inputOutput: '输入 → 输出',
+      inputOutputPrice: '输入 / 输出价格',
+      toolCalling: '工具调用',
+      features: '模型特性',
+      channelPricing: '渠道价格',
+      channelPricingHint: '不同渠道提供同一模型，实际调用价格以所选渠道为准。',
+      billingNote: '实际计费由渠道定价与分组倍率共同决定。以输入价格为例：渠道价 {price}/1M × 分组倍率 1 = 最终计费 {price}/1M。',
+      billingNoteGeneric: '实际计费由渠道定价与分组倍率共同决定，最终价格以对应计费模式和用户所属分组为准。',
+      channel: '渠道',
+      notAvailable: '暂无',
+      separator: '、'
+    },
+    capabilities: {
+      function_calling: '函数调用',
+      parallel_function_calling: '并行工具调用',
+      web_search: '网络搜索',
+      code_execution: '代码执行',
+      computer_use: '计算机使用',
+      file_search: '文件搜索',
+      url_context: 'URL 上下文',
+      reasoning: '推理',
+      structured_output: '结构化输出',
+      prompt_caching: '提示缓存'
+    },
     empty: '暂无可用渠道',
     noModels: '未配置模型',
     noPricing: '未配置定价',

@@ -77,6 +77,35 @@ func TestParsePricingData_ParsesPriorityAndServiceTierFields(t *testing.T) {
 	require.True(t, pricing.SupportsServiceTier)
 }
 
+func TestParsePricingData_PreservesModelCapabilities(t *testing.T) {
+	svc := &PricingService{}
+	body := []byte(`{
+		"claude-test": {
+			"input_cost_per_token": 0.000003,
+			"output_cost_per_token": 0.000015,
+			"supported_modalities": ["text", "image"],
+			"supported_output_modalities": ["text"],
+			"supports_vision": true,
+			"supports_pdf_input": true,
+			"supports_function_calling": true,
+			"supports_reasoning": true,
+			"supports_web_search": true
+		}
+	}`)
+
+	data, err := svc.parsePricingData(body)
+	require.NoError(t, err)
+	pricing := data["claude-test"]
+	require.NotNil(t, pricing)
+	require.Equal(t, []string{"text", "image"}, pricing.SupportedModalities)
+	require.Equal(t, []string{"text"}, pricing.SupportedOutputModalities)
+	require.True(t, pricing.SupportsVision)
+	require.True(t, pricing.SupportsPDFInput)
+	require.True(t, pricing.SupportsFunctionCalling)
+	require.True(t, pricing.SupportsReasoning)
+	require.True(t, pricing.SupportsWebSearch)
+}
+
 func TestBillingService_GPT56CacheWritePricingUsesOfficialMultiplier(t *testing.T) {
 	tests := []struct {
 		model             string

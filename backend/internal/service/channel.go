@@ -394,9 +394,12 @@ type ChannelUsageFields struct {
 
 // SupportedModel 渠道的一个支持模型条目（无通配符、可直接展示给用户）
 type SupportedModel struct {
-	Name     string               // 用户侧模型名
-	Platform string               // 所属平台
-	Pricing  *ChannelModelPricing // 定价详情（nil 表示未配置定价）
+	Name             string               // 用户侧模型名
+	Platform         string               // 所属平台
+	Pricing          *ChannelModelPricing // 定价详情（nil 表示未配置定价）
+	Modalities       []string             // 支持的输入模态
+	OutputModalities []string             // 支持的输出模态
+	Capabilities     []string             // 工具调用与模型特性
 }
 
 // wildcardSuffix 是模型模式中的通配符后缀标记（仅支持尾部匹配）。

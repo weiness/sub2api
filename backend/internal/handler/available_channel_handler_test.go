@@ -63,6 +63,26 @@ func TestToUserSupportedModels_NilAllowedPlatformsKeepsAll(t *testing.T) {
 	require.Len(t, toUserSupportedModels(src, nil), 2)
 }
 
+func TestToUserSupportedModels_CopiesPublicModelMetadata(t *testing.T) {
+	src := []service.SupportedModel{{
+		Name:             "gpt-test",
+		Platform:         "openai",
+		Modalities:       []string{"text", "image"},
+		OutputModalities: []string{"text"},
+		Capabilities:     []string{"function_calling", "reasoning"},
+	}}
+
+	out := toUserSupportedModels(src, map[string]struct{}{"openai": {}})
+	require.Len(t, out, 1)
+	require.Equal(t, []string{"text", "image"}, out[0].Modalities)
+	require.Equal(t, []string{"text"}, out[0].OutputModalities)
+	require.Equal(t, []string{"function_calling", "reasoning"}, out[0].Capabilities)
+
+	// DTO 必须拥有独立切片，避免后续响应加工意外修改 service 层数据。
+	out[0].Modalities[0] = "audio"
+	require.Equal(t, "text", src[0].Modalities[0])
+}
+
 func TestUserAvailableChannel_FieldWhitelist(t *testing.T) {
 	// 通过序列化 userAvailableChannel 结构体验证响应形状：
 	// 只有 name / description / platforms；不含管理端字段。
