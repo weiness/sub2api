@@ -511,6 +511,7 @@ export default {
     details: {
       inputOutput: 'Input → Output',
       inputOutputPrice: 'Input / Output price',
+      priceOverview: 'Price overview',
       toolCalling: 'Tool calling',
       features: 'Model features',
       channelPricing: 'Channel pricing',
@@ -518,6 +519,10 @@ export default {
       billingNote: 'Actual billing combines channel pricing and the group multiplier. For input tokens: {price}/1M × group multiplier 1 = {price}/1M billed.',
       billingNoteGeneric: "Actual billing combines channel pricing and the group multiplier. The final price follows the applicable billing mode and the user's group.",
       channel: 'Channel',
+      group: 'Group',
+      rateMultiplier: 'Billing multiplier',
+      groupImagePricing: 'Group image generation pricing',
+      groupImagePricingHint: 'Group prices override model defaults; displayed prices are also multiplied by the applicable billing multiplier.',
       notAvailable: 'Not available',
       separator: ', '
     },
@@ -559,10 +564,14 @@ export default {
       cacheReadPrice: 'Cache Read',
       imageInputPrice: 'Image Input',
       imageOutputPrice: 'Image Output',
+      perImagePrice: 'Generated Image',
       perRequestPrice: 'Per Request',
       intervals: 'Tiered Pricing',
       unitPerMillion: '/ 1M tokens',
-      unitPerRequest: '/ request'
+      unitPerRequest: '/ request',
+      unitPerRequestShort: '/request',
+      unitPerImage: '/image',
+      modelDefault: 'Model default'
     }
   },
 

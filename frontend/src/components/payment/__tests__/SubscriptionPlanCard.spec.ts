@@ -4,7 +4,6 @@ import { createPinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import type { SubscriptionPlan } from "@/types/payment";
 import SubscriptionPlanCard from "../SubscriptionPlanCard.vue";
-import HelpTooltip from "@/components/common/HelpTooltip.vue";
 
 const i18n = createI18n({
   legacy: false,
@@ -49,6 +48,7 @@ const mountPlanCard = (groupPlatform: string, overrides: Partial<SubscriptionPla
         supported_model_scopes: ["claude", "gemini_text", "gemini_image"],
         is_active: true,
         recommended: false,
+        sold_count: 0,
         ...overrides,
       },
     },
@@ -100,7 +100,7 @@ describe("SubscriptionPlanCard", () => {
     expect(wrapper.find('[data-test="plan-discount"]').attributes('data-discount-percent')).toBe("51");
   });
 
-  it("keeps peak-rate details in the system tooltip", () => {
+  it("keeps peak-rate details out of the compact catalog card", () => {
     const wrapper = mountPlanCard("openai", {
       peak_rate_enabled: true,
       peak_start: "14:00",
@@ -108,8 +108,7 @@ describe("SubscriptionPlanCard", () => {
       peak_rate_multiplier: 1.5,
     });
 
-    expect(wrapper.findComponent(HelpTooltip).exists()).toBe(true);
-    expect(document.body.textContent).toContain("14:00-17:00 ×1.5");
+    expect(wrapper.text()).not.toContain("14:00-17:00 ×1.5");
   });
 
   it("places the description below the title and exposes a distinct hover state", () => {
@@ -123,7 +122,7 @@ describe("SubscriptionPlanCard", () => {
     expect(description.element.compareDocumentPosition(price.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(card.classes()).toContain("hover:-translate-y-1");
     expect(card.classes()).toContain("hover:shadow-[0_18px_38px_rgba(15,118,110,0.12)]");
-    expect(card.classes()).toContain("hover:ring-2");
+    expect(card.classes()).not.toContain("hover:ring-2");
   });
 
   it("renders the selected promotional badge only for recommended plans", () => {
@@ -134,13 +133,26 @@ describe("SubscriptionPlanCard", () => {
     expect(recommended.find('[data-test="recommended-badge"]').text()).toBe("payment.recommended");
   });
 
-  it("uses the large-card layout and keeps the platform badge after the plan name", () => {
+  it("renders the plan sold count", () => {
+    const wrapper = mountPlanCard("openai", { sold_count: 1286 });
+	const title = wrapper.find('h3');
+	const validity = wrapper.find('[data-test="plan-validity"]');
+	const soldCount = wrapper.find('[data-test="plan-sold-count"]');
+
+	expect(soldCount.attributes("data-sold-count")).toBe("1286");
+	expect(validity.classes()).not.toContain("ml-auto");
+	expect(soldCount.classes()).toContain("ml-auto");
+	expect(soldCount.classes()).toContain("text-orange-600");
+	expect(title.element.parentElement).toBe(soldCount.element.parentElement);
+  });
+
+  it("uses the compact card layout and keeps the platform badge after the plan name", () => {
     const wrapper = mountPlanCard("openai");
     const card = wrapper.find('[data-test="subscription-plan-card"]');
     const title = card.find("h3");
     const badge = title.element.nextElementSibling;
 
-    expect(card.classes()).toContain("min-h-[410px]");
+    expect(card.classes()).toContain("min-h-[336px]");
     expect(badge?.textContent).toContain("OpenAI");
   });
 
@@ -149,7 +161,7 @@ describe("SubscriptionPlanCard", () => {
     const price = wrapper.find('[data-test="plan-price"]');
     const validity = wrapper.find('[data-test="plan-validity"]');
 
-    expect(price.classes()).toContain("text-[36px]");
+    expect(price.classes()).toContain("text-[30px]");
     expect(validity.classes()).toContain("whitespace-nowrap");
   });
 });

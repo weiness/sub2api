@@ -1,5 +1,6 @@
 import type {
   UserAvailableChannel,
+  UserAvailableGroup,
   UserSupportedModelPricing,
 } from '@/api/channels'
 import type { GroupPlatform } from '@/types'
@@ -9,6 +10,7 @@ export interface AvailableModelRoute {
   channelDescription: string
   platform: string
   pricing: UserSupportedModelPricing | null
+  groups: UserAvailableGroup[]
 }
 
 export interface AvailableModelCatalogItem {
@@ -23,6 +25,9 @@ export interface AvailableModelCatalogItem {
     output: number | null
     cacheWrite: number | null
     cacheRead: number | null
+    imageInput: number | null
+    imageOutput: number | null
+    perRequest: number | null
   }
 }
 
@@ -56,6 +61,7 @@ export function aggregateAvailableModels(channels: UserAvailableChannel[]): Avai
           channelDescription: channel.description,
           platform: model.platform || section.platform,
           pricing: model.pricing,
+          groups: section.groups,
         }
 
         if (existing) {
@@ -73,7 +79,15 @@ export function aggregateAvailableModels(channels: UserAvailableChannel[]): Avai
           outputModalities: model.output_modalities?.length ? [...model.output_modalities] : ['text'],
           capabilities: [...(model.capabilities || [])],
           routes: [route],
-          displayPricing: { input: null, output: null, cacheWrite: null, cacheRead: null },
+          displayPricing: {
+            input: null,
+            output: null,
+            cacheWrite: null,
+            cacheRead: null,
+            imageInput: null,
+            imageOutput: null,
+            perRequest: null,
+          },
         })
       }
     }
@@ -87,6 +101,9 @@ export function aggregateAvailableModels(channels: UserAvailableChannel[]): Avai
         output: minimum(model.routes.map((route) => route.pricing?.output_price)),
         cacheWrite: minimum(model.routes.map((route) => route.pricing?.cache_write_price)),
         cacheRead: minimum(model.routes.map((route) => route.pricing?.cache_read_price)),
+        imageInput: minimum(model.routes.map((route) => route.pricing?.image_input_price)),
+        imageOutput: minimum(model.routes.map((route) => route.pricing?.image_output_price)),
+        perRequest: minimum(model.routes.map((route) => route.pricing?.per_request_price)),
       },
     }))
     .sort((a, b) => a.id.localeCompare(b.id, undefined, { sensitivity: 'base' }))

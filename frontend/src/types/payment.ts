@@ -65,6 +65,7 @@ export interface CheckoutInfoResponse {
   methods: Record<string, MethodLimit>
   global_min: number
   global_max: number
+  min_amount?: number
   plans: SubscriptionPlan[]
   balance_disabled: boolean
   balance_recharge_multiplier: number
@@ -135,6 +136,7 @@ export interface SubscriptionPlan {
   for_sale: boolean
   recommended: boolean
   sort_order: number
+  sold_count?: number
 }
 
 export interface PaymentChannel {

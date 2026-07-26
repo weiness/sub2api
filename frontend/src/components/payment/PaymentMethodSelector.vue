@@ -1,16 +1,16 @@
 <template>
   <div>
-    <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label class="mb-[18px] block text-[15px] font-bold text-[#152033] dark:text-white">
       {{ t('payment.paymentMethod') }}
     </label>
-    <div class="grid grid-cols-2 gap-3 sm:flex">
+    <div class="grid gap-3" :class="sortedMethods.length > 1 ? 'sm:grid-cols-2' : 'grid-cols-1'">
       <button
         v-for="method in sortedMethods"
         :key="method.type"
         type="button"
         :disabled="!method.available"
         :class="[
-          'relative flex h-[60px] flex-col items-center justify-center rounded-lg border px-3 transition-all sm:flex-1',
+          'relative flex h-[70px] items-center gap-3 rounded-lg border px-4 text-left transition-all',
           !method.available
             ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-50 dark:border-dark-700 dark:bg-dark-800/50'
             : selected === method.type
@@ -19,18 +19,15 @@
         ]"
         @click="method.available && emit('select', method.type)"
       >
-        <span class="flex items-center gap-2">
-          <img :src="methodIcon(method.type)" :alt="methodLabel(method)" class="h-7 w-7 object-contain" />
-          <span class="flex flex-col items-start leading-none">
+        <img :src="methodIcon(method.type)" :alt="methodLabel(method)" class="h-9 w-9 shrink-0 object-contain" />
+          <span class="flex min-w-0 flex-1 flex-col items-start leading-none">
             <span class="text-base font-semibold">{{ methodLabel(method) }}</span>
             <span
-              v-if="method.fee_rate > 0"
-              class="text-[10px] tracking-wide text-gray-500 dark:text-dark-400"
+              class="mt-1.5 text-[11px] font-normal text-[#8b96a5] dark:text-dark-400"
             >
-              {{ t('payment.fee') }} {{ method.fee_rate }}%
+              {{ method.fee_rate > 0 ? `${t('payment.fee')} ${method.fee_rate}%` : t('payment.methodSecureHint') }}
             </span>
           </span>
-        </span>
         <span
           v-if="selected === method.type"
           data-testid="payment-method-selected-indicator"

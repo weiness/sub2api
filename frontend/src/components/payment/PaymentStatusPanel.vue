@@ -1,16 +1,16 @@
 <template>
-  <div class="space-y-4">
+  <div class="mx-auto max-w-[1320px] space-y-4">
     <!-- ═══ Terminal States: show result, user clicks to return ═══ -->
 
     <!-- Success -->
     <template v-if="outcome === 'success'">
-      <div class="card p-6">
-        <div class="flex flex-col items-center space-y-4 py-4">
-          <div class="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-            <Icon name="check" size="lg" class="text-green-500" />
+      <div class="rounded-xl border border-[#bee8d9] bg-white/90 p-6 shadow-[0_8px_28px_rgba(28,55,64,0.07)] dark:border-dark-700 dark:bg-dark-900/70">
+        <div class="mx-auto flex max-w-xl flex-col items-center space-y-4 py-5">
+          <div class="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-[#0fad76] text-white">
+            <Icon name="check" size="lg" />
           </div>
           <p class="text-lg font-bold text-gray-900 dark:text-white">{{ props.orderType === 'subscription' ? t('payment.result.subscriptionSuccess') : t('payment.result.success') }}</p>
-          <div v-if="paidOrder" class="w-full rounded-xl bg-gray-50 p-4 dark:bg-dark-800">
+          <div v-if="paidOrder" class="w-full rounded-xl border border-[#e3e8eb] bg-white px-[22px] py-3 shadow-[0_7px_18px_rgba(21,32,51,0.08)] dark:border-dark-700 dark:bg-dark-800">
             <div class="space-y-2 text-sm">
               <div class="flex justify-between">
                 <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.orderId') }}</span>
@@ -30,15 +30,15 @@
               </div>
             </div>
           </div>
-          <button class="btn btn-primary" @click="handleDone">{{ t('common.confirm') }}</button>
+          <button class="btn btn-primary min-h-12 w-full" @click="handleDone">{{ t('common.confirm') }}</button>
         </div>
       </div>
     </template>
 
     <!-- Cancelled -->
     <template v-else-if="outcome === 'cancelled'">
-      <div class="card p-6">
-        <div class="flex flex-col items-center space-y-4 py-4">
+      <div class="rounded-xl border border-[#e3e8eb] bg-white/90 p-6 shadow-[0_8px_28px_rgba(28,55,64,0.07)] dark:border-dark-700 dark:bg-dark-900/70">
+        <div class="mx-auto flex max-w-xl flex-col items-center space-y-4 py-5">
           <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-dark-700">
             <svg class="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -46,15 +46,15 @@
           </div>
           <p class="text-lg font-bold text-gray-900 dark:text-white">{{ t('payment.qr.cancelled') }}</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('payment.qr.cancelledDesc') }}</p>
-          <button class="btn btn-primary" @click="handleDone">{{ t('common.confirm') }}</button>
+          <button class="btn btn-primary min-h-12 w-full" @click="handleDone">{{ t('common.confirm') }}</button>
         </div>
       </div>
     </template>
 
     <!-- Expired / Failed -->
     <template v-else-if="outcome === 'expired'">
-      <div class="card p-6">
-        <div class="flex flex-col items-center space-y-4 py-4">
+      <div class="rounded-xl border border-[#f1d7b4] bg-white/90 p-6 shadow-[0_8px_28px_rgba(28,55,64,0.07)] dark:border-dark-700 dark:bg-dark-900/70">
+        <div class="mx-auto flex max-w-xl flex-col items-center space-y-4 py-5">
           <div class="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
             <svg class="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -62,7 +62,7 @@
           </div>
           <p class="text-lg font-bold text-gray-900 dark:text-white">{{ t('payment.qr.expired') }}</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('payment.qr.expiredDesc') }}</p>
-          <button class="btn btn-primary" @click="handleDone">{{ t('common.confirm') }}</button>
+          <button class="btn btn-primary min-h-12 w-full" @click="handleDone">{{ t('common.confirm') }}</button>
         </div>
       </div>
     </template>
@@ -72,7 +72,7 @@
     <!-- Mobile Alipay app handoff. The QR fallback stays hidden until launch timeout. -->
     <template v-else-if="isMobileAlipayDeepLink">
       <template v-if="!deepLinkFallbackVisible">
-        <div class="card p-6">
+        <div class="rounded-lg border border-[#dfe7e4] bg-[#f7f9f8] p-6 dark:border-dark-700 dark:bg-dark-900/70">
           <div class="flex flex-col items-center space-y-4 py-4 text-center">
             <div
               v-if="deepLinkState === 'launching'"
@@ -99,14 +99,14 @@
             </button>
           </div>
         </div>
-        <div class="card p-4 text-center">
+        <div class="rounded-lg border border-[#dfe7e4] bg-white p-4 text-center dark:border-dark-700 dark:bg-dark-800">
           <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('payment.qr.expiresIn') }}</p>
           <p class="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{{ countdownDisplay }}</p>
           <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ t('payment.qr.waitingPayment') }}</p>
         </div>
       </template>
       <template v-else>
-        <div data-test="alipay-qr-fallback" class="card p-6">
+        <div data-test="alipay-qr-fallback" class="rounded-lg border border-[#dfe7e4] bg-[#f7f9f8] p-6 dark:border-dark-700 dark:bg-dark-900/70">
           <div class="flex flex-col items-center space-y-4">
             <div class="text-center">
               <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('payment.qr.alipayFallbackTitle') }}</p>
@@ -167,37 +167,48 @@
 
     <!-- QR Code Mode -->
     <template v-else-if="showQRCode">
-      <div class="card p-6">
-        <div class="flex flex-col items-center space-y-4">
-          <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ scanTitle }}</p>
-          <div :class="['relative rounded-lg border-2 p-4', qrBorderClass]">
-            <canvas ref="qrCanvas" class="mx-auto"></canvas>
-            <!-- Brand logo overlay -->
-            <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <span :class="['rounded-full p-2 shadow ring-2 ring-white', qrLogoBgClass]">
-                <img :src="qrLogoIcon" alt="" class="h-5 w-5 brightness-0 invert" />
-              </span>
+      <div class="overflow-hidden rounded-lg border border-[#e3e8eb] bg-white shadow-[0_8px_28px_rgba(28,55,64,0.07)] dark:border-dark-700 dark:bg-dark-800">
+        <header class="flex flex-col justify-between gap-5 border-b border-[#e3e8eb] px-6 py-7 sm:px-9 lg:flex-row lg:items-center">
+          <div class="flex items-center gap-4"><span class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#0fad76] text-white"><Icon name="check" size="lg" :stroke-width="2.5" /></span><div><h1 class="text-2xl font-bold text-[#152033] dark:text-white">{{ t('payment.qr.orderSubmitted') }}</h1><p class="mt-1.5 text-sm text-[#718096]">{{ t('payment.qr.orderSubmittedHint') }}</p></div></div>
+          <div class="grid gap-2 text-xs text-[#718096]"><span>{{ t('payment.orders.orderNo') }}：<strong class="font-normal text-[#718096] dark:text-gray-400">{{ displayOrderNumber }}</strong></span><span v-if="createdAtText">{{ t('payment.orders.createdAt') }}：<strong class="font-normal text-[#718096] dark:text-gray-400">{{ createdAtText }}</strong></span></div>
+        </header>
+
+        <div class="grid items-center gap-7 px-6 py-8 sm:px-9 xl:grid-cols-[320px_minmax(360px,1fr)_260px]">
+          <aside class="min-h-[390px] border-b border-[#e3e8eb] pb-7 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-7">
+            <h2 class="mb-6 text-[17px] font-bold text-[#152033] dark:text-white">{{ props.orderType === 'subscription' ? t('payment.planInfo') : t('payment.rechargeInfo') }}</h2>
+            <template v-if="props.orderType === 'subscription' && plan">
+              <div class="mb-6 flex items-center gap-3"><span class="grid h-16 w-16 place-items-center rounded-lg bg-[#f4f7f6]"><img v-if="isOpenAIPlan" src="/payment-flow-icons/openai.svg" alt="" class="h-8 w-8" /><Icon v-else name="calendar" size="lg" class="text-[#0fad76]" /></span><div><h3 class="font-bold text-[#152033] dark:text-white">{{ plan.name }}</h3><p class="mt-1 text-xs text-[#718096]">{{ plan.description }}</p></div></div>
+              <div class="grid gap-[18px] border-t border-[#e3e8eb] pt-5"><div class="flex justify-between text-sm"><span class="text-[#657184]">{{ t('payment.planCard.validity') }}</span><strong>{{ planValidity }}</strong></div><div class="flex justify-between text-sm"><span class="text-[#657184]">{{ t('payment.expectedExpiry') }}</span><strong>{{ planExpiry }}</strong></div><div class="flex justify-between text-sm"><span class="text-[#657184]">{{ t('payment.planFee') }}</span><strong>{{ displayPaymentAmount }}</strong></div></div>
+            </template>
+            <template v-else>
+              <div class="grid gap-7 pt-2">
+                <div class="flex items-center gap-4"><span class="grid h-[62px] w-[62px] place-items-center rounded-full bg-[#eaf8f3] text-[#0fad76]"><Icon name="creditCard" size="xl" /></span><p><span class="block text-sm text-[#657184]">{{ t('payment.paymentAmount') }}</span><strong class="mt-1 block text-[27px] text-[#07885b]">{{ displayPaymentAmount }}</strong></p></div>
+                <div class="flex items-center gap-4"><span class="grid h-[62px] w-[62px] place-items-center rounded-full bg-[#eaf8f3] text-[#0fad76]"><Icon name="dollar" size="xl" /></span><p><span class="block text-sm text-[#657184]">{{ t('payment.orders.creditedAmount') }}</span><strong class="mt-1 block text-[27px] text-[#07885b]">{{ creditedAmountSymbol }}{{ Number(props.amount || 0).toFixed(2) }}</strong></p></div>
+                <div class="flex items-center gap-4"><span class="grid h-[62px] w-[62px] place-items-center rounded-full bg-[#eaf8f3] text-[#0fad76]"><Icon name="globe" size="xl" /></span><p><span class="block text-sm text-[#657184]">{{ t('payment.currentRate') }}</span><strong class="mt-1 block text-base text-[#07885b]">{{ waitingRateText }}</strong></p></div>
+              </div>
+            </template>
+          </aside>
+
+          <div class="text-center">
+            <h2 class="mb-4 text-lg font-bold text-[#152033] dark:text-white">{{ scanTitle }}</h2>
+            <div :class="['relative mx-auto w-fit rounded-lg border-2 p-4', qrBorderClass]"><canvas ref="qrCanvas" class="mx-auto block"></canvas><div class="pointer-events-none absolute inset-0 flex items-center justify-center"><span :class="['rounded-lg border-4 border-white p-2 shadow', qrLogoBgClass]"><img :src="qrLogoIcon" alt="" class="h-6 w-6 brightness-0 invert" /></span></div></div>
+            <div class="mt-5 flex flex-wrap items-center justify-center gap-2 text-left">
+              <span class="grid h-10 w-10 place-items-center rounded-full bg-[#eaf8f3] text-[#0fad76]"><Icon name="smartphone" size="sm" /></span><p><strong class="block text-xs">{{ t('payment.qr.openPaymentApp', { app: paymentAppName }) }}</strong><small class="mt-1 block text-[10px] text-[#718096]">{{ t('payment.qr.tapScan') }}</small></p><i class="mx-1 text-2xl not-italic text-[#b1bbc8]">›</i><span class="grid h-10 w-10 place-items-center rounded-full bg-[#eaf8f3]"><span class="grid h-5 w-5 place-items-center rounded-full bg-[#0fad76] text-white"><Icon name="check" size="sm" class="-translate-y-px translate-x-px" :stroke-width="3" /></span></span><p><strong class="block text-xs">{{ t('payment.qr.scanQRCode') }}</strong><small class="mt-1 block text-[10px] text-[#718096]">{{ t('payment.qr.completePayment') }}</small></p>
             </div>
           </div>
-          <p v-if="scanHint" class="text-center text-sm text-gray-500 dark:text-gray-400">{{ scanHint }}</p>
-          <button v-if="payUrl" class="btn btn-secondary text-sm" @click="reopenPopup">
-            {{ t('payment.qr.openPayWindow') }}
-          </button>
+
+          <div class="relative mx-auto hidden h-[330px] w-[190px] rotate-[7deg] rounded-[34px] border-[14px] border-[#edf2f7] bg-[#f8fafc] opacity-85 xl:block"><span class="absolute left-1/2 top-2 h-1.5 w-12 -translate-x-1/2 rounded-full bg-[#d5dde5]"></span><div class="absolute left-[-28px] top-[112px] grid h-[112px] w-[174px] place-items-center rounded-xl bg-white text-[#0fad76] shadow-[0_10px_30px_rgba(33,66,77,0.12)]"><Icon name="qrCode" size="xl" class="h-12 w-12" /><strong class="-mt-5 text-sm">{{ t('payment.qr.scan') }}</strong></div></div>
         </div>
+
+        <div class="mx-6 mb-8 grid items-center gap-5 rounded-lg bg-gradient-to-r from-[#eef9f6] to-[#f8fbfa] px-6 py-6 sm:mx-8 md:grid-cols-[76px_220px_1px_1fr] md:px-12"><span class="grid h-[70px] w-[70px] place-items-center rounded-full bg-[#0fad76] text-white"><Icon name="clock" size="xl" class="h-9 w-9" /></span><div><span class="block text-sm text-[#657184]">{{ t('payment.qr.expiresIn') }}</span><strong class="mt-1 block text-[34px] leading-none tabular-nums text-[#0fad76]">{{ countdownDisplay }}</strong><small class="mt-1 block text-xs text-[#718096]">{{ t('payment.qr.completeSoon') }}</small></div><i class="hidden h-[70px] bg-[#dde9e5] md:block"></i><div class="grid gap-2 text-xs"><strong>{{ t('payment.warmTip') }}</strong><span class="text-[#718096]">• {{ t('payment.qr.keepPageOpen') }}</span><span class="text-[#718096]">• {{ props.orderType === 'subscription' ? t('payment.qr.subscriptionAutoActive') : t('payment.qr.creditAutoAdded') }}</span></div></div>
       </div>
-      <div class="card p-4 text-center">
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('payment.qr.expiresIn') }}</p>
-        <p class="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{{ countdownDisplay }}</p>
-        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ t('payment.qr.waitingPayment') }}</p>
-      </div>
-      <button class="btn btn-secondary w-full" :disabled="cancelling" @click="handleCancel">
-        {{ cancelling ? t('common.processing') : t('payment.qr.cancelOrder') }}
-      </button>
+      <button class="btn btn-secondary min-h-12 w-full text-base" :disabled="cancelling" @click="handleCancel">{{ cancelling ? t('common.processing') : t('payment.qr.cancelOrder') }}</button>
+      <div class="flex items-center justify-center gap-2 pt-1 text-xs text-[#718096]"><Icon name="shield" size="md" class="text-[#0fad76]" /><span>{{ t('payment.securePaymentTitle') }}</span><span>{{ t('payment.securePaymentDesc') }}</span></div>
     </template>
 
     <!-- Waiting for Popup/Redirect Mode -->
     <template v-else>
-      <div class="card p-6">
+      <div class="rounded-lg border border-[#dfe7e4] bg-[#f7f9f8] p-6 dark:border-dark-700 dark:bg-dark-900/70">
         <div class="flex flex-col items-center space-y-4 py-4">
           <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
           <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('payment.qr.payInNewWindowHint') }}</p>
@@ -206,7 +217,7 @@
           </button>
         </div>
       </div>
-      <div class="card p-4 text-center">
+      <div class="rounded-lg border border-[#dfe7e4] bg-white p-4 text-center dark:border-dark-700 dark:bg-dark-800">
         <p class="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{{ countdownDisplay }}</p>
         <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ t('payment.qr.waitingPayment') }}</p>
       </div>
@@ -227,6 +238,7 @@ import { extractI18nErrorMessage } from '@/utils/apiError'
 import { getPaymentPopupFeatures, isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/components/payment/providerConfig'
 import { currencySymbol, formatPaymentAmount, normalizePaymentCurrency } from '@/components/payment/currency'
 import type { PaymentOrder } from '@/types/payment'
+import type { SubscriptionPlan } from '@/types/payment'
 import Icon from '@/components/icons/Icon.vue'
 import QRCode from 'qrcode'
 import alipayIcon from '@/assets/icons/alipay.svg'
@@ -237,6 +249,7 @@ import {
   type AlipayDeepLinkLauncher,
   type AlipayDeepLinkState,
 } from './alipayDeepLink'
+import { planValiditySuffix } from './validity'
 
 const props = defineProps<{
   orderId: number
@@ -249,7 +262,11 @@ const props = defineProps<{
   orderType?: string
   currency?: string
   outTradeNo?: string
+  createdAt?: number
   mobileAlipayDeepLink?: boolean
+  plan?: SubscriptionPlan | null
+  renewalBaseExpiresAt?: string
+  rechargeRate?: number
 }>()
 
 type PaymentOutcome = 'success' | 'cancelled' | 'expired'
@@ -293,6 +310,19 @@ const VERIFY_RETRY_MAX_ATTEMPTS = 6
 
 const isAlipay = computed(() => isBuiltInAlipayMethod(props.paymentType))
 const isWxpay = computed(() => isBuiltInWxpayMethod(props.paymentType))
+const paymentAppName = computed(() => isAlipay.value ? t('payment.methods.alipay') : isWxpay.value ? t('payment.methods.wxpay') : t('payment.paymentApp'))
+const isOpenAIPlan = computed(() => String(props.plan?.group_platform || '').toLowerCase() === 'openai')
+const planValidity = computed(() => props.plan ? planValiditySuffix(props.plan, t) : '-')
+const planExpiry = computed(() => {
+  if (!props.plan) return '-'
+  const unit = String(props.plan.validity_unit || 'day').replace(/s$/, '')
+  const multiplier = unit === 'month' ? 30 : unit === 'week' ? 7 : 1
+  const currentExpiry = Date.parse(props.renewalBaseExpiresAt || '')
+  const startsAt = Number.isFinite(currentExpiry) && currentExpiry > Date.now() ? currentExpiry : Date.now()
+  const date = new Date(startsAt + props.plan.validity_days * multiplier * 86400000)
+  return new Intl.DateTimeFormat(localeCode.value, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date)
+})
+const waitingRateText = computed(() => `1 ${paymentCurrency.value} = $${Number(props.rechargeRate || 1)} ${t('payment.creditUnit')}`)
 const isMobileAlipayDeepLink = computed(() => props.mobileAlipayDeepLink === true && isAlipay.value && !!qrUrl.value)
 const showQRCode = computed(() => !!qrUrl.value && (!isMobileAlipayDeepLink.value || deepLinkFallbackVisible.value))
 
@@ -320,12 +350,6 @@ const scanTitle = computed(() => {
   return t('payment.qr.scanToPay')
 })
 
-const scanHint = computed(() => {
-  if (isAlipay.value) return t('payment.qr.scanAlipayHint')
-  if (isWxpay.value) return t('payment.qr.scanWxpayHint')
-  return ''
-})
-
 const countdownDisplay = computed(() => {
   const m = Math.floor(remainingSeconds.value / 60)
   const s = remainingSeconds.value % 60
@@ -334,6 +358,17 @@ const countdownDisplay = computed(() => {
 
 const displayPaymentAmount = computed(() => formatGatewayAmount(props.payAmount || props.amount || 0))
 const displayOrderNumber = computed(() => props.outTradeNo || `#${props.orderId}`)
+const createdAtText = computed(() => {
+  if (!props.createdAt) return ''
+  return new Intl.DateTimeFormat(localeCode.value, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date(props.createdAt))
+})
 
 function formatGatewayAmount(value: number, currency?: string | null): string {
   return formatPaymentAmount(value, currency || paymentCurrency.value, localeCode.value)

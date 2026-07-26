@@ -7,7 +7,10 @@ import (
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/ent/group"
+	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
+	"github.com/Wei-Shaw/sub2api/ent/schema/mixins"
 	"github.com/Wei-Shaw/sub2api/ent/subscriptionplan"
+	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
 	"github.com/Wei-Shaw/sub2api/internal/payment"
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 )
@@ -129,7 +132,79 @@ func (s *PaymentConfigService) ListPlans(ctx context.Context) ([]*dbent.Subscrip
 }
 
 func (s *PaymentConfigService) ListPlansForSale(ctx context.Context) ([]*dbent.SubscriptionPlan, error) {
-	return s.entClient.SubscriptionPlan.Query().Where(subscriptionplan.ForSaleEQ(true)).Order(subscriptionplan.BySortOrder()).All(ctx)
+	return s.entClient.SubscriptionPlan.Query().
+		Where(subscriptionplan.ForSaleEQ(true)).
+		Order(
+			dbent.Desc(subscriptionplan.FieldRecommended),
+			subscriptionplan.BySortOrder(),
+			dbent.Asc(subscriptionplan.FieldID),
+		).
+		All(ctx)
+}
+
+// GetPlanSoldCountMap counts completed subscription orders by plan.
+func (s *PaymentConfigService) GetPlanSoldCountMap(ctx context.Context, plans []*dbent.SubscriptionPlan) (map[int64]int, error) {
+	var rows []struct {
+		PlanID    int64 `json:"plan_id"`
+		SoldCount int   `json:"sold_count"`
+	}
+	err := s.entClient.PaymentOrder.Query().
+		Where(
+			paymentorder.OrderTypeEQ(payment.OrderTypeSubscription),
+			paymentorder.StatusEQ(OrderStatusCompleted),
+			paymentorder.PlanIDNotNil(),
+		).
+		GroupBy(paymentorder.FieldPlanID).
+		Aggregate(dbent.As(dbent.Count(), "sold_count")).
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, err
+	}
+
+	counts := make(map[int64]int, len(rows))
+	for _, row := range rows {
+		counts[row.PlanID] = row.SoldCount
+	}
+
+	var manualRows []struct {
+		GroupID   int64 `json:"group_id"`
+		SoldCount int   `json:"sold_count"`
+	}
+	err = s.entClient.UserSubscription.Query().
+		Where(usersubscription.AssignedByNotNil()).
+		GroupBy(usersubscription.FieldGroupID).
+		Aggregate(dbent.As(dbent.Count(), "sold_count")).
+		Scan(mixins.SkipSoftDelete(ctx), &manualRows)
+	if err != nil {
+		return nil, err
+	}
+	manualByGroup := make(map[int64]int, len(manualRows))
+	for _, row := range manualRows {
+		manualByGroup[row.GroupID] = row.SoldCount
+	}
+	for index, plan := range plans {
+		marketingOrder := plan.SortOrder
+		if marketingOrder <= 0 {
+			marketingOrder = index + 1
+		}
+		counts[int64(plan.ID)] += manualByGroup[plan.GroupID] + planMarketingBaseSoldCount(marketingOrder)
+	}
+	return counts, nil
+}
+
+func planMarketingBaseSoldCount(sortOrder int) int {
+	switch sortOrder {
+	case 1:
+		return 11
+	case 2:
+		return 105
+	case 3:
+		return 56
+	case 4:
+		return 32
+	default:
+		return 0
+	}
 }
 
 func (s *PaymentConfigService) CreatePlan(ctx context.Context, req CreatePlanRequest) (*dbent.SubscriptionPlan, error) {

@@ -117,16 +117,15 @@
               </div>
             </div>
           </div>
-          <div class="pointer-events-none relative z-10 mt-4 flex items-center justify-start gap-1.5 text-xs text-gray-500 dark:text-dark-400">
-            <span class="flex shrink-0 items-center whitespace-nowrap">
-              {{ t('availableChannels.pricing.inputPrice') }}
-              <PriceValue :value="model.displayPricing.input" />
-            </span>
-            <span aria-hidden="true">·</span>
-            <span class="flex shrink-0 items-center whitespace-nowrap">
-              {{ t('availableChannels.pricing.outputPrice') }}
-              <PriceValue :value="model.displayPricing.output" />
-            </span>
+          <div class="pointer-events-none relative z-10 mt-4 flex min-h-4 items-center justify-start gap-1.5 overflow-hidden text-xs text-gray-500 dark:text-dark-400">
+            <template v-for="(item, index) in modelSummaryItems(model)" :key="item.key">
+              <span v-if="index" aria-hidden="true">·</span>
+              <span class="flex min-w-0 shrink items-center whitespace-nowrap">
+                {{ item.label }}
+                <span class="ml-1 truncate font-mono">{{ item.value }}</span>
+              </span>
+            </template>
+            <span v-if="modelSummaryItems(model).length === 0">{{ t('availableChannels.noPricing') }}</span>
           </div>
         </article>
       </div>
@@ -178,10 +177,9 @@
                     </p>
                   </div>
                   <div class="info-cell">
-                    <p class="info-label">{{ t('availableChannels.details.inputOutputPrice') }}</p>
-                    <p class="mt-1.5 whitespace-nowrap font-mono text-sm font-semibold leading-5 text-gray-900 dark:text-white">
-                      {{ formatPrice(selectedModel.displayPricing.input) }}/{{ formatPrice(selectedModel.displayPricing.output) }}
-                      <span class="font-sans text-xs font-normal text-gray-500 dark:text-dark-400">per 1M</span>
+                    <p class="info-label">{{ t('availableChannels.details.priceOverview') }}</p>
+                    <p class="mt-1.5 truncate whitespace-nowrap font-mono text-sm font-semibold leading-5 text-gray-900 dark:text-white">
+                      {{ modelPriceOverview(selectedModel) }}
                     </p>
                   </div>
                   <div class="info-cell">
@@ -211,33 +209,43 @@
                   {{ t('availableChannels.details.channelPricing') }}
                 </h3>
                 <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">{{ t('availableChannels.details.channelPricingHint') }}</p>
-                <div class="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-900">
-                  <div class="min-w-[700px]">
-                    <div class="channel-grid bg-primary-50/70 px-4 py-2.5 text-[11px] font-medium text-primary-800 dark:bg-primary-900/15 dark:text-primary-300">
-                      <span>{{ t('availableChannels.details.channel') }}</span>
-                      <span>{{ t('availableChannels.pricing.inputPrice') }}/1M</span>
-                      <span>{{ t('availableChannels.pricing.outputPrice') }}/1M</span>
-                      <span>{{ t('availableChannels.pricing.cacheWritePrice') }}/1M</span>
-                      <span>{{ t('availableChannels.pricing.cacheReadPrice') }}/1M</span>
-                    </div>
-                    <div
-                      v-for="route in selectedModel.routes"
-                      :key="`${route.channelName}-${route.platform}`"
-                      class="channel-grid items-center border-t border-gray-100 px-4 py-3.5 text-xs transition-colors hover:bg-primary-50/40 dark:border-dark-700 dark:hover:bg-primary-900/10"
-                    >
+                <div class="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-900">
+                  <article
+                    v-for="route in selectedModel.routes"
+                    :key="`${route.channelName}-${route.platform}`"
+                    class="border-t border-gray-100 px-4 py-4 first:border-t-0 dark:border-dark-700"
+                  >
+                    <div class="flex items-start justify-between gap-3">
                       <div class="flex min-w-0 items-center gap-2.5">
-                        <PlatformIcon :platform="normalizedPlatform(route.platform)" size="md" class="text-gray-700 dark:text-gray-300" />
+                        <PlatformIcon :platform="normalizedPlatform(route.platform)" size="md" class="shrink-0 text-gray-700 dark:text-gray-300" />
                         <div class="min-w-0">
-                          <p class="truncate font-medium text-gray-900 dark:text-gray-100">{{ route.channelName }}</p>
+                          <p class="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{{ route.channelName }}</p>
                           <p v-if="route.channelDescription" class="mt-0.5 truncate text-[11px] text-gray-400 dark:text-dark-500">{{ route.channelDescription }}</p>
                         </div>
                       </div>
-                      <span class="price-cell">{{ formatPrice(route.pricing?.input_price) }}</span>
-                      <span class="price-cell">{{ formatPrice(route.pricing?.output_price) }}</span>
-                      <span class="price-cell">{{ formatPrice(route.pricing?.cache_write_price) }}</span>
-                      <span class="price-cell">{{ formatPrice(route.pricing?.cache_read_price) }}</span>
+                      <span class="billing-mode-badge">{{ billingModeLabel(route.pricing?.billing_mode) }}</span>
                     </div>
-                  </div>
+
+                    <div v-if="routePricingItems(route.pricing).length" class="price-grid mt-3">
+                      <div v-for="item in routePricingItems(route.pricing)" :key="item.key" class="min-w-0">
+                        <p class="text-[11px] text-gray-500 dark:text-dark-400">{{ item.label }}</p>
+                        <p class="mt-0.5 truncate font-mono text-xs font-medium text-gray-800 dark:text-gray-200">{{ item.value }}</p>
+                      </div>
+                    </div>
+                    <p v-else class="mt-3 text-xs text-gray-500 dark:text-dark-400">{{ t('availableChannels.noPricing') }}</p>
+
+                    <div v-if="route.pricing?.intervals?.length" class="mt-3 border-t border-gray-100 pt-3 dark:border-dark-700">
+                      <p class="mb-2 text-[11px] font-medium text-gray-500 dark:text-dark-400">{{ t('availableChannels.pricing.intervals') }}</p>
+                      <div class="space-y-2">
+                        <div v-for="(interval, index) in route.pricing.intervals" :key="index" class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                          <span class="w-24 shrink-0 font-medium text-gray-700 dark:text-gray-300">{{ intervalLabel(interval) }}</span>
+                          <span v-for="item in intervalPricingItems(interval, route.pricing.billing_mode)" :key="item.key" class="whitespace-nowrap text-gray-500 dark:text-dark-400">
+                            {{ item.label }} <b class="font-mono font-medium text-gray-800 dark:text-gray-200">{{ item.value }}</b>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
                 </div>
                 <p class="mt-3 flex items-center gap-1.5 text-[11px] leading-5 text-orange-600 dark:text-orange-400">
                   <Icon name="infoCircle" size="xs" class="shrink-0" />
@@ -247,6 +255,35 @@
                       : t('availableChannels.details.billingNote', { price: formatPrice(selectedModel.displayPricing.input) }) }}
                   </span>
                 </p>
+              </section>
+
+              <section v-if="imageGroupRows(selectedModel).length" class="px-6 pb-6">
+                <h3 class="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
+                  <span class="h-4 w-1 rounded-full bg-pink-500" aria-hidden="true" />
+                  {{ t('availableChannels.details.groupImagePricing') }}
+                </h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">{{ t('availableChannels.details.groupImagePricingHint') }}</p>
+                <div class="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-900">
+                  <div class="min-w-[620px]">
+                    <div class="image-group-grid bg-pink-50/70 px-4 py-2.5 text-[11px] font-medium text-pink-800 dark:bg-pink-900/15 dark:text-pink-300">
+                      <span>{{ t('availableChannels.details.group') }}</span>
+                      <span>{{ t('availableChannels.details.rateMultiplier') }}</span>
+                      <span>1K</span>
+                      <span>2K</span>
+                      <span>4K</span>
+                    </div>
+                    <div v-for="row in imageGroupRows(selectedModel)" :key="`${row.channelName}-${row.group.id}`" class="image-group-grid items-center border-t border-gray-100 px-4 py-3 text-xs dark:border-dark-700">
+                      <div class="min-w-0">
+                        <p class="truncate font-medium text-gray-900 dark:text-gray-100">{{ row.group.name }}</p>
+                        <p class="truncate text-[11px] text-gray-400 dark:text-dark-500">{{ row.channelName }}</p>
+                      </div>
+                      <span class="price-cell">{{ imageRateLabel(row.group) }}</span>
+                      <span class="price-cell">{{ formatGroupImagePrice(row.group.image_price_1k) }}</span>
+                      <span class="price-cell">{{ formatGroupImagePrice(row.group.image_price_2k) }}</span>
+                      <span class="price-cell">{{ formatGroupImagePrice(row.group.image_price_4k) }}</span>
+                    </div>
+                  </div>
+                </div>
               </section>
             </div>
           </aside>
@@ -263,6 +300,8 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import userChannelsAPI, { type UserAvailableChannel } from '@/api/channels'
+import type { UserAvailableGroup, UserPricingInterval, UserSupportedModelPricing } from '@/api/channels'
+import { BILLING_MODE_IMAGE, BILLING_MODE_PER_REQUEST, type BillingMode } from '@/constants/channel'
 import { useAppStore } from '@/stores/app'
 import { extractApiErrorMessage } from '@/utils/apiError'
 import { aggregateAvailableModels, type AvailableModelCatalogItem } from '@/utils/availableModels'
@@ -323,13 +362,6 @@ const FilterRow = defineComponent({
   },
 })
 
-const PriceValue = defineComponent({
-  props: { value: { type: Number as PropType<number | null>, default: null } },
-  setup(props) {
-    return () => h('span', { class: 'ml-1 shrink-0 font-mono' }, pricePerMillion(props.value))
-  },
-})
-
 function modalityLabel(modality: string): string {
   const normalized = modality.trim().toLowerCase()
   return ['text', 'image', 'audio', 'video', 'pdf'].includes(normalized)
@@ -345,6 +377,143 @@ function formatPrice(value: number | null | undefined): string {
 
 function pricePerMillion(value: number | null | undefined): string {
   return value == null ? '-' : `${formatPrice(value)}/1M`
+}
+
+interface PriceDisplayItem {
+  key: string
+  label: string
+  value: string
+}
+
+function formatFlatPrice(value: number | null | undefined, unit: string): string {
+  if (value == null) return '-'
+  return `$${value.toLocaleString(undefined, { maximumFractionDigits: 6 })}${unit}`
+}
+
+function billingModeLabel(mode: BillingMode | undefined): string {
+  switch (mode) {
+    case BILLING_MODE_IMAGE:
+      return t('availableChannels.pricing.billingModeImage')
+    case BILLING_MODE_PER_REQUEST:
+      return t('availableChannels.pricing.billingModePerRequest')
+    default:
+      return t('availableChannels.pricing.billingModeToken')
+  }
+}
+
+function routePricingItems(pricing: UserSupportedModelPricing | null): PriceDisplayItem[] {
+  if (!pricing) return []
+  const items: PriceDisplayItem[] = []
+  const addToken = (key: string, labelKey: string, value: number | null) => {
+    if (value != null) items.push({ key, label: t(labelKey), value: pricePerMillion(value) })
+  }
+
+  addToken('input', 'availableChannels.pricing.inputPrice', pricing.input_price)
+  addToken('output', 'availableChannels.pricing.outputPrice', pricing.output_price)
+  addToken('cacheWrite', 'availableChannels.pricing.cacheWritePrice', pricing.cache_write_price)
+  addToken('cacheRead', 'availableChannels.pricing.cacheReadPrice', pricing.cache_read_price)
+  addToken('imageInput', 'availableChannels.pricing.imageInputPrice', pricing.image_input_price)
+  addToken('imageOutput', 'availableChannels.pricing.imageOutputPrice', pricing.image_output_price)
+
+  if (pricing.per_request_price != null) {
+    items.push({
+      key: 'perRequest',
+      label: t(pricing.billing_mode === BILLING_MODE_IMAGE
+        ? 'availableChannels.pricing.perImagePrice'
+        : 'availableChannels.pricing.perRequestPrice'),
+      value: formatFlatPrice(
+        pricing.per_request_price,
+        t(pricing.billing_mode === BILLING_MODE_IMAGE
+          ? 'availableChannels.pricing.unitPerImage'
+          : 'availableChannels.pricing.unitPerRequestShort'),
+      ),
+    })
+  }
+  return items
+}
+
+function intervalLabel(interval: UserPricingInterval): string {
+  if (interval.tier_label) return interval.tier_label
+  const max = interval.max_tokens == null ? '∞' : interval.max_tokens.toLocaleString()
+  return `${interval.min_tokens.toLocaleString()}–${max}`
+}
+
+function intervalPricingItems(interval: UserPricingInterval, mode: BillingMode): PriceDisplayItem[] {
+  return routePricingItems({
+    billing_mode: mode,
+    input_price: interval.input_price,
+    output_price: interval.output_price,
+    cache_write_price: interval.cache_write_price,
+    cache_read_price: interval.cache_read_price,
+    image_input_price: null,
+    image_output_price: null,
+    per_request_price: interval.per_request_price,
+    intervals: [],
+  })
+}
+
+function modelSummaryItems(model: AvailableModelCatalogItem): PriceDisplayItem[] {
+  const imageMode = model.routes.some((route) => route.pricing?.billing_mode === BILLING_MODE_IMAGE)
+  const candidates = imageMode
+    ? [
+        { key: 'perRequest', label: t('availableChannels.pricing.perImagePrice'), value: model.displayPricing.perRequest, flat: true },
+        { key: 'imageOutput', label: t('availableChannels.pricing.imageOutputPrice'), value: model.displayPricing.imageOutput, flat: false },
+      ]
+    : [
+        { key: 'input', label: t('availableChannels.pricing.inputPrice'), value: model.displayPricing.input, flat: false },
+        { key: 'output', label: t('availableChannels.pricing.outputPrice'), value: model.displayPricing.output, flat: false },
+        { key: 'perRequest', label: t('availableChannels.pricing.perRequestPrice'), value: model.displayPricing.perRequest, flat: true },
+      ]
+
+  return candidates
+    .filter((item): item is typeof item & { value: number } => item.value != null)
+    .slice(0, 2)
+    .map((item) => ({
+      key: item.key,
+      label: item.label,
+      value: item.flat
+        ? formatFlatPrice(item.value, t(imageMode ? 'availableChannels.pricing.unitPerImage' : 'availableChannels.pricing.unitPerRequestShort'))
+        : pricePerMillion(item.value),
+    }))
+}
+
+function modelPriceOverview(model: AvailableModelCatalogItem): string {
+  const items = modelSummaryItems(model)
+  return items.length ? items.map((item) => item.value).join(' / ') : t('availableChannels.noPricing')
+}
+
+interface ImageGroupRow {
+  channelName: string
+  group: UserAvailableGroup
+}
+
+function imageGroupRows(model: AvailableModelCatalogItem): ImageGroupRow[] {
+  const imageCapable = model.outputModalities.includes('image') ||
+    model.routes.some((route) => route.pricing?.billing_mode === BILLING_MODE_IMAGE)
+  if (!imageCapable) return []
+
+  const seen = new Set<string>()
+  const rows: ImageGroupRow[] = []
+  for (const route of model.routes) {
+    for (const group of route.groups) {
+      const key = `${route.channelName}:${group.id}`
+      if (!group.allow_image_generation || seen.has(key)) continue
+      seen.add(key)
+      rows.push({ channelName: route.channelName, group })
+    }
+  }
+  return rows
+}
+
+function formatGroupImagePrice(value: number | null): string {
+  return value == null
+    ? t('availableChannels.pricing.modelDefault')
+    : formatFlatPrice(value, t('availableChannels.pricing.unitPerImage'))
+}
+
+function imageRateLabel(group: UserAvailableGroup): string {
+  const rate = group.image_rate_independent ? group.image_rate_multiplier : group.rate_multiplier
+  return `${rate.toLocaleString(undefined, { maximumFractionDigits: 4 })}×`
 }
 
 function capabilityLabel(capability: string): string {
@@ -422,10 +591,20 @@ onBeforeUnmount(() => {
   @apply text-xs font-medium text-gray-500 dark:text-dark-400;
 }
 
-.channel-grid {
+.price-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1.45fr) repeat(4, minmax(92px, 0.75fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px 16px;
+}
+
+.image-group-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(90px, 0.7fr) repeat(3, minmax(95px, 0.75fr));
   gap: 12px;
+}
+
+.billing-mode-badge {
+  @apply shrink-0 rounded-sm bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600 dark:bg-dark-800 dark:text-dark-300;
 }
 
 .price-cell {

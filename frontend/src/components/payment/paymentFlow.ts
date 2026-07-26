@@ -33,6 +33,7 @@ export type PaymentLaunchKind =
 
 export interface PaymentRecoverySnapshot {
   orderId: number
+  planId?: number
   amount: number
   qrCode: string
   expiresAt: string
@@ -55,6 +56,7 @@ export interface PaymentRecoverySnapshot {
 export interface PaymentLaunchContext {
   visibleMethod: string
   orderType: OrderType
+  planId?: number
   isMobile: boolean
   isWechatBrowser?: boolean
   /** When true, Alipay payments always use QR code regardless of device type */
@@ -153,6 +155,7 @@ export function decidePaymentLaunch(
   const visibleMethod = normalizeVisibleMethod(context.visibleMethod) || context.visibleMethod
   const baseState = createPaymentRecoverySnapshot({
     orderId: result.order_id,
+    planId: context.planId,
     amount: result.amount,
     qrCode: result.qr_code || '',
     expiresAt: result.expires_at || '',
@@ -281,6 +284,7 @@ export function readPaymentRecoverySnapshot(
     const parsed = JSON.parse(raw) as Partial<PaymentRecoverySnapshot>
     if (
       typeof parsed.orderId !== 'number'
+      || (parsed.planId != null && typeof parsed.planId !== 'number')
       || typeof parsed.amount !== 'number'
       || typeof parsed.qrCode !== 'string'
       || typeof parsed.expiresAt !== 'string'
@@ -312,6 +316,7 @@ export function readPaymentRecoverySnapshot(
 
     return {
       orderId: parsed.orderId,
+      planId: parsed.planId,
       amount: parsed.amount,
       qrCode: parsed.qrCode,
       expiresAt: parsed.expiresAt,

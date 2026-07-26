@@ -84,9 +84,12 @@
         <SubscriptionProgressMini v-if="user" />
 
         <!-- Balance Display -->
-        <div
+        <router-link
           v-if="user"
-          class="group relative hidden items-center gap-2 rounded-xl bg-primary-50 px-3 py-1.5 dark:bg-primary-900/20 sm:flex"
+          to="/purchase"
+          class="group relative hidden items-center gap-2 rounded-xl bg-primary-50 px-3 py-1.5 transition-colors hover:bg-primary-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:bg-primary-900/20 dark:hover:bg-primary-900/35 sm:flex"
+          :aria-label="t('nav.buySubscription')"
+          :title="t('nav.buySubscription')"
         >
           <svg
             class="h-4 w-4 text-primary-600 dark:text-primary-400"
@@ -128,7 +131,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </router-link>
 
         <!-- User Dropdown -->
         <div v-if="user" class="relative" ref="dropdownRef">

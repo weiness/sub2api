@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, shallowMount } from '@vue/test-utils'
+import { flushPromises, mount, shallowMount } from '@vue/test-utils'
 import PaymentView from '../PaymentView.vue'
 import { PAYMENT_RECOVERY_STORAGE_KEY } from '@/components/payment/paymentFlow'
 import { formatPaymentAmount } from '@/components/payment/currency'
@@ -229,7 +229,7 @@ async function mountSubscriptionConfirm(options: Parameters<typeof checkoutInfoW
   window.localStorage.clear()
   ;(window as Window & { WeixinJSBridge?: { invoke: typeof bridgeInvoke } }).WeixinJSBridge = undefined
 
-  const wrapper = shallowMount(PaymentView, {
+  const wrapper = mount(PaymentView, {
     global: {
       stubs: {
         AppLayout: {
@@ -244,6 +244,52 @@ async function mountSubscriptionConfirm(options: Parameters<typeof checkoutInfoW
   await flushPromises()
   return wrapper
 }
+
+describe('PaymentView recharge confirmation', () => {
+  it('does not create an order until the user confirms payment', async () => {
+    routeState.path = '/purchase'
+    routeState.hash = ''
+    routeState.query = {}
+    createOrder.mockReset().mockResolvedValue({
+      order_id: 900,
+      amount: 10,
+      pay_amount: 10,
+      fee_rate: 0,
+      expires_at: '2099-01-01T00:10:00.000Z',
+      payment_type: 'wxpay',
+      qr_code: 'weixin://wxpay/bizpayurl?pr=confirm-test',
+      out_trade_no: 'sub2_qr_900',
+    })
+    getCheckoutInfo.mockReset().mockResolvedValue(checkoutInfoFixture())
+    window.localStorage.clear()
+
+    const wrapper = mount(PaymentView, {
+      global: {
+        stubs: {
+          AppLayout: { template: '<div><slot /></div>' },
+          PaymentStatusPanel: true,
+          Teleport: true,
+          Transition: false,
+        },
+      },
+    })
+    await flushPromises()
+
+    await wrapper.findAll('button').find(button => button.text().includes('¥10'))!.trigger('click')
+    await wrapper.findAll('button').find(button => button.text().includes('payment.submitOrder'))!.trigger('click')
+    expect(createOrder).not.toHaveBeenCalled()
+
+    await wrapper.findAll('button').find(button => button.text() === 'payment.cancelPayment')!.trigger('click')
+    expect(createOrder).not.toHaveBeenCalled()
+
+    await wrapper.findAll('button').find(button => button.text().includes('payment.submitOrder'))!.trigger('click')
+    await wrapper.findAll('button').find(button => button.text().includes('payment.createOrder'))!.trigger('click')
+    await flushPromises()
+
+    expect(createOrder).toHaveBeenCalledTimes(1)
+    expect(createOrder).toHaveBeenCalledWith(expect.objectContaining({ amount: 10, order_type: 'balance' }))
+  })
+})
 
 describe('PaymentView subscription confirmation amounts', () => {
   it('shows converted CNY pay amount using the subscription rate, not the balance multiplier', async () => {
@@ -270,7 +316,7 @@ describe('PaymentView subscription confirmation amounts', () => {
     expect(text).not.toContain(formatPaymentAmount(9.99, 'CNY'))
     // 换算必须使用订阅汇率（×7.15），而不是余额倍率（÷0.14 = 71.36）
     expect(text).not.toContain(formatPaymentAmount(71.36, 'CNY'))
-    expect(wrapper.findAll('button').some(button => button.text().includes(convertedPrice))).toBe(true)
+    expect(wrapper.find('[data-test="subscription-total-info"]').text()).toContain(convertedPrice)
   })
 
   it('keeps plan price when the subscription rate is not configured or payment currency is not CNY', async () => {
@@ -331,7 +377,7 @@ describe('PaymentView subscription confirmation amounts', () => {
     expect(text).toContain(convertedPrice)
     expect(text).toContain(fee)
     expect(text).toContain(total)
-    expect(wrapper.findAll('button').some(button => button.text().includes(total))).toBe(true)
+    expect(wrapper.find('[data-test="subscription-total-info"]').text()).toContain(total)
   })
 
   it('keeps the subscription confirmation sections in the preview order', async () => {
@@ -342,22 +388,28 @@ describe('PaymentView subscription confirmation amounts', () => {
 
     const plan = wrapper.find('[data-test="subscription-plan-info"]')
     const order = wrapper.find('[data-test="subscription-order-info"]')
+    const total = wrapper.find('[data-test="subscription-total-info"]')
     const method = wrapper.find('[data-test="subscription-payment-method"]')
+    const subscription = wrapper.find('[data-test="subscription-info"]')
     const actions = wrapper.find('[data-test="subscription-actions"]')
 
     expect(plan.exists()).toBe(true)
     expect(order.exists()).toBe(true)
+    expect(total.exists()).toBe(true)
     expect(method.exists()).toBe(true)
+    expect(subscription.exists()).toBe(true)
     expect(actions.exists()).toBe(true)
-    expect(order.text()).toContain('payment.planFee')
-    expect(plan.element.compareDocumentPosition(order.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(order.element.compareDocumentPosition(method.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(method.element.compareDocumentPosition(actions.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(total.text()).toContain('payment.planFee')
+    expect(plan.element.compareDocumentPosition(subscription.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(subscription.element.compareDocumentPosition(method.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(method.element.compareDocumentPosition(order.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(order.element.compareDocumentPosition(total.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(total.element.compareDocumentPosition(actions.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(actions.find('.btn-purchase').exists()).toBe(true)
     expect(actions.find('.btn-alipay').exists()).toBe(false)
   })
 
-  it('uses the v0.1.164.4 confirmation card with a neutral rate value', async () => {
+  it('uses the unified confirmation card with a neutral rate value', async () => {
     const wrapper = await mountSubscriptionConfirm({
       plan: {
         description: 'Plan description',
@@ -370,17 +422,11 @@ describe('PaymentView subscription confirmation amounts', () => {
 
     const plan = wrapper.find('[data-test="subscription-plan-info"]')
     const rate = wrapper.find('[data-test="subscription-rate"]')
-    const title = plan.find('h3')
-    const description = plan.find('[data-test="subscription-plan-description"]')
-    const price = plan.find('[data-test="subscription-plan-price"]')
-
-    expect(plan.classes()).toContain('border-l-4')
+    expect(plan.classes()).toContain('bg-white')
     expect(plan.find('.sm\\:grid-cols-4').exists()).toBe(true)
-    expect(plan.text()).not.toContain('payment.planInfo')
-    expect(title.element.compareDocumentPosition(description.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(description.element.compareDocumentPosition(price.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(rate.text()).toBe('×1')
-    expect(rate.classes()).toContain('text-gray-800')
+    expect(plan.text()).toContain('payment.planInfo')
+    expect(plan.text()).toContain('Plan description')
+    expect(rate.text()).toContain('×1')
     expect(rate.classes()).not.toContain('text-emerald-400')
   })
 
@@ -464,11 +510,8 @@ describe('PaymentView payment recovery', () => {
             template: '<div><slot /></div>',
           },
           PaymentStatusPanel: {
-            template: '<button data-test="payment-done" @click="$emit(\'done\')" />',
-          },
-          PaymentMethodSelector: {
-            props: ['selected'],
-            template: '<div data-test="method-selector">{{ selected }}</div>',
+            props: ['paymentType'],
+            template: '<div><span data-test="restored-method">{{ paymentType }}</span><button data-test="payment-done" @click="$emit(\'done\')" /></div>',
           },
           Teleport: true,
           Transition: false,
@@ -477,10 +520,49 @@ describe('PaymentView payment recovery', () => {
     })
     await flushPromises()
     await flushPromises()
-    await wrapper.find('[data-test="payment-done"]').trigger('click')
+    expect(wrapper.find('[data-test="restored-method"]').text()).toBe('ldc')
+  })
+
+  it('restores the selected plan for a subscription QR order', async () => {
+    getCheckoutInfo.mockResolvedValue(checkoutInfoWithPlansFixture())
+    window.localStorage.setItem(PAYMENT_RECOVERY_STORAGE_KEY, JSON.stringify({
+      orderId: 889,
+      planId: 7,
+      amount: 128,
+      qrCode: 'subscription-qr',
+      expiresAt: '2099-01-01T00:10:00.000Z',
+      paymentType: 'wxpay',
+      payUrl: '',
+      outTradeNo: 'sub2_subscription_889',
+      clientSecret: '',
+      intentId: '',
+      currency: 'CNY',
+      countryCode: '',
+      paymentEnv: '',
+      payAmount: 128,
+      orderType: 'subscription',
+      paymentMode: 'qrcode',
+      resumeToken: '',
+      createdAt: Date.now(),
+    }))
+
+    const wrapper = shallowMount(PaymentView, {
+      global: {
+        stubs: {
+          AppLayout: { template: '<div><slot /></div>' },
+          PaymentStatusPanel: {
+            props: ['plan'],
+            template: '<div data-test="restored-plan">{{ plan?.name || "" }}</div>',
+          },
+          Teleport: true,
+          Transition: false,
+        },
+      },
+    })
+    await flushPromises()
     await flushPromises()
 
-    expect(wrapper.find('[data-test="method-selector"]').text()).toBe('ldc')
+    expect(wrapper.find('[data-test="restored-plan"]').text()).toBe('Starter')
   })
 })
 

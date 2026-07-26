@@ -118,6 +118,20 @@ describe('decidePaymentLaunch', () => {
     expect(decision.paymentState.orderType).toBe('subscription')
   })
 
+  it('keeps the selected plan id in subscription recovery state', () => {
+    const decision = decidePaymentLaunch(createOrderResult({
+      qr_code: 'https://pay.example.com/qr/subscription',
+    }), {
+      visibleMethod: 'alipay',
+      orderType: 'subscription',
+      planId: 27,
+      isMobile: false,
+    })
+
+    expect(decision.kind).toBe('qr_waiting')
+    expect(decision.recovery.planId).toBe(27)
+  })
+
   it('routes Airwallex client secrets through the hosted Airwallex page', () => {
     const decision = decidePaymentLaunch(createOrderResult({
       client_secret: 'awx_cs',
@@ -403,6 +417,29 @@ describe('readPaymentRecoverySnapshot', () => {
     })
 
     expect(restored?.orderId).toBe(33)
+  })
+
+  it('restores an optional subscription plan id', () => {
+    const restored = readPaymentRecoverySnapshot(JSON.stringify({
+      orderId: 34,
+      planId: 27,
+      amount: 39,
+      qrCode: 'https://pay.example.com/qr/34',
+      expiresAt: '2099-01-01T00:10:00.000Z',
+      paymentType: 'alipay',
+      payUrl: '',
+      outTradeNo: 'sub2_34',
+      clientSecret: '',
+      payAmount: 39,
+      orderType: 'subscription',
+      paymentMode: 'qrcode',
+      resumeToken: 'resume-34',
+      createdAt: Date.UTC(2099, 0, 1, 0, 0, 0),
+    }), {
+      now: Date.UTC(2099, 0, 1, 0, 1, 0),
+    })
+
+    expect(restored?.planId).toBe(27)
   })
 
   it('drops expired or mismatched recovery snapshots', () => {

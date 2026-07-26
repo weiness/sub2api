@@ -516,6 +516,7 @@ export default {
     details: {
       inputOutput: '输入 → 输出',
       inputOutputPrice: '输入 / 输出价格',
+      priceOverview: '价格概览',
       toolCalling: '工具调用',
       features: '模型特性',
       channelPricing: '渠道价格',
@@ -523,6 +524,10 @@ export default {
       billingNote: '实际计费由渠道定价与分组倍率共同决定。以输入价格为例：渠道价 {price}/1M × 分组倍率 1 = 最终计费 {price}/1M。',
       billingNoteGeneric: '实际计费由渠道定价与分组倍率共同决定，最终价格以对应计费模式和用户所属分组为准。',
       channel: '渠道',
+      group: '分组',
+      rateMultiplier: '计费倍率',
+      groupImagePricing: '分组图片生成价格',
+      groupImagePricingHint: '分组配置价优先于模型默认价；表中价格还会乘以对应计费倍率。',
       notAvailable: '暂无',
       separator: '、'
     },
@@ -564,10 +569,14 @@ export default {
       cacheReadPrice: '缓存读取',
       imageInputPrice: '图片输入',
       imageOutputPrice: '图片输出',
+      perImagePrice: '生成图片',
       perRequestPrice: '每次请求',
       intervals: '阶梯定价',
       unitPerMillion: '/ 1M token',
-      unitPerRequest: '/ 次'
+      unitPerRequest: '/ 次',
+      unitPerRequestShort: '/次',
+      unitPerImage: '/张',
+      modelDefault: '模型默认价'
     }
   },
 

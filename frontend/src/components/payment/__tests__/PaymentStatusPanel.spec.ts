@@ -100,9 +100,7 @@ describe('PaymentStatusPanel', () => {
     expect(wrapper.emitted('success')).toHaveLength(1)
   })
 
-  it('shows reopen button in QR mode when payUrl is also available', async () => {
-    const openSpy = vi.spyOn(window, 'open').mockReturnValue({ closed: false } as Window)
-
+  it('does not show a reopen button in QR mode when payUrl is also available', async () => {
     const wrapper = mount(PaymentStatusPanel, {
       props: {
         orderId: 42,
@@ -120,16 +118,26 @@ describe('PaymentStatusPanel', () => {
     })
 
     await flushPromises()
-    expect(wrapper.text()).toContain('payment.qr.openPayWindow')
+    expect(wrapper.text()).not.toContain('payment.qr.openPayWindow')
+  })
 
-    await wrapper.get('button.btn.btn-secondary.text-sm').trigger('click')
-    expect(openSpy).toHaveBeenCalledWith(
-      'https://pay.example.com/session/42',
-      'paymentPopup',
-      expect.any(String),
-    )
+  it('shows the order creation time in the QR header', async () => {
+    const wrapper = mount(PaymentStatusPanel, {
+      props: {
+        orderId: 42,
+        qrCode: 'https://pay.example.com/qr/42',
+        expiresAt: '2099-01-01T12:30:00Z',
+        paymentType: 'alipay',
+        orderType: 'balance',
+        createdAt: Date.UTC(2026, 3, 20, 12, 0, 0),
+      },
+      global: { stubs: { Icon: true } },
+    })
 
-    openSpy.mockRestore()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('payment.orders.createdAt')
+    expect(wrapper.text()).toContain('2026')
   })
 
   it('uses generic QR copy for custom methods that contain built-in names', async () => {

@@ -45,7 +45,13 @@ func (h *PaymentHandler) GetPaymentConfig(c *gin.Context) {
 // GetPlans returns subscription plans available for sale.
 // GET /api/v1/payment/plans
 func (h *PaymentHandler) GetPlans(c *gin.Context) {
-	plans, err := h.configService.ListPlansForSale(c.Request.Context())
+	ctx := c.Request.Context()
+	plans, err := h.configService.ListPlansForSale(ctx)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	soldCounts, err := h.configService.GetPlanSoldCountMap(ctx, plans)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
@@ -73,8 +79,9 @@ func (h *PaymentHandler) GetPlans(c *gin.Context) {
 		ForSale            bool     `json:"for_sale"`
 		Recommended        bool     `json:"recommended"`
 		SortOrder          int      `json:"sort_order"`
+		SoldCount          int      `json:"sold_count"`
 	}
-	groupInfo := h.configService.GetGroupInfoMap(c.Request.Context(), plans)
+	groupInfo := h.configService.GetGroupInfoMap(ctx, plans)
 	result := make([]planWithPlatform, 0, len(plans))
 	for _, p := range plans {
 		gi := groupInfo[p.GroupID]
@@ -87,6 +94,7 @@ func (h *PaymentHandler) GetPlans(c *gin.Context) {
 			Currency:     p.Currency,
 			ValidityDays: p.ValidityDays, ValidityUnit: p.ValidityUnit, Features: p.Features,
 			ProductName: p.ProductName, ForSale: p.ForSale, Recommended: p.Recommended, SortOrder: p.SortOrder,
+			SoldCount: soldCounts[int64(p.ID)],
 		})
 	}
 	response.Success(c, result)
@@ -213,7 +221,16 @@ func (h *PaymentHandler) GetCheckoutInfo(c *gin.Context) {
 	}
 
 	// Fetch plans with group info
-	plans, _ := h.configService.ListPlansForSale(ctx)
+	plans, err := h.configService.ListPlansForSale(ctx)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	soldCounts, err := h.configService.GetPlanSoldCountMap(ctx, plans)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
 	groupInfo := h.configService.GetGroupInfoMap(ctx, plans)
 	planList := make([]checkoutPlan, 0, len(plans))
 	for _, p := range plans {
@@ -230,7 +247,8 @@ func (h *PaymentHandler) GetCheckoutInfo(c *gin.Context) {
 			Name:        p.Name, Description: p.Description, Price: p.Price, OriginalPrice: p.OriginalPrice,
 			Currency:     p.Currency,
 			ValidityDays: p.ValidityDays, ValidityUnit: p.ValidityUnit, Features: parseFeatures(p.Features),
-			ProductName: p.ProductName, Recommended: p.Recommended,
+			ProductName: p.ProductName, Recommended: p.Recommended, SortOrder: p.SortOrder,
+			SoldCount: soldCounts[int64(p.ID)],
 		})
 	}
 
@@ -238,6 +256,7 @@ func (h *PaymentHandler) GetCheckoutInfo(c *gin.Context) {
 		Methods:                       limitsResp.Methods,
 		GlobalMin:                     limitsResp.GlobalMin,
 		GlobalMax:                     limitsResp.GlobalMax,
+		MinAmount:                     cfg.MinAmount,
 		Plans:                         planList,
 		BalanceDisabled:               cfg.BalanceDisabled,
 		BalanceRechargeMultiplier:     cfg.BalanceRechargeMultiplier,
@@ -255,6 +274,7 @@ type checkoutInfoResponse struct {
 	Methods                       map[string]service.MethodLimits `json:"methods"`
 	GlobalMin                     float64                         `json:"global_min"`
 	GlobalMax                     float64                         `json:"global_max"`
+	MinAmount                     float64                         `json:"min_amount"`
 	Plans                         []checkoutPlan                  `json:"plans"`
 	BalanceDisabled               bool                            `json:"balance_disabled"`
 	BalanceRechargeMultiplier     float64                         `json:"balance_recharge_multiplier"`
@@ -291,6 +311,8 @@ type checkoutPlan struct {
 	Features           []string `json:"features"`
 	ProductName        string   `json:"product_name"`
 	Recommended        bool     `json:"recommended"`
+	SortOrder          int      `json:"sort_order"`
+	SoldCount          int      `json:"sold_count"`
 }
 
 // parseFeatures splits a newline-separated features string into a string slice.

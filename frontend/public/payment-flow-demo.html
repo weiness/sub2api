@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sub2API 支付流程设计预览</title>
+  <link rel="stylesheet" href="./payment-flow-demo.css">
+</head>
+<body>
+  <section id="catalog-view" class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">C</span><strong>充值中心</strong></div>
+      <nav class="side-nav">
+        <button class="side-item active" data-catalog-mode="recharge"><span class="side-icon">▣</span><span>充值余额</span></button>
+        <button class="side-item" data-catalog-mode="subscription"><span class="side-icon">▤</span><span>订阅套餐</span></button>
+      </nav>
+      <div class="security-note"><span class="shield">✓</span><div><strong>安全支付</strong><small>资金安全有保障</small></div></div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <div></div>
+        <div class="user"><span class="avatar">U</span><strong>User</strong><span>⌄</span></div>
+      </header>
+      <main class="catalog-content" data-active-catalog="recharge">
+        <nav class="catalog-tabs">
+          <button class="catalog-tab active" data-catalog-mode="recharge">充值余额</button>
+          <button class="catalog-tab" data-catalog-mode="subscription">订阅套餐</button>
+        </nav>
+
+        <section id="recharge-catalog" class="catalog-panel surface">
+          <div class="account-line">
+            <div><span>充值账户</span><strong>m15665412209@gmail.com</strong></div>
+            <div><span>当前余额</span><strong class="balance-value" id="balance-value">$100.00</strong></div>
+          </div>
+          <div class="section-heading"><h2>选择充值金额</h2><span class="rate-tag">汇率说明：1 CNY = $10 额度</span></div>
+          <div class="recharge-grid" id="recharge-grid"></div>
+          <div class="benefit-strip">
+            <div><span class="benefit-icon icon icon-infinity"></span><p><strong>余额永久有效</strong><small>不过期，随用随充</small></p></div>
+            <div><span class="benefit-icon icon icon-usage"></span><p><strong>按实际使用扣费</strong><small>使用多少扣多少，透明计费</small></p></div>
+            <div><span class="benefit-icon icon icon-refresh"></span><p><strong>支持随时充值</strong><small>满足你的使用需求</small></p></div>
+          </div>
+          <button id="submit-recharge" class="primary-action" disabled>提交订单</button>
+        </section>
+
+        <section id="subscription-catalog" class="catalog-panel surface" hidden>
+          <div class="plans-heading"><h2>选择订阅套餐</h2><span>选择适合你的套餐，支付后立即生效</span></div>
+          <div class="plan-grid" id="plan-grid"></div>
+          <div class="active-sub-heading">我的订阅</div>
+          <div class="active-sub surface"><div><div class="active-sub-title"><strong>GPT - Max</strong><span class="platform platform-openai">OpenAI</span></div><p>倍率：×1　高峰倍率：14:00–17:00 ×1.5 (UTC+08:00)<span class="remaining-days">剩余 24 天</span></p></div><span class="status-badge">生效中</span></div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <section id="confirm-view" class="flow-page" hidden>
+    <div class="flow-container narrow">
+      <header class="flow-title"><h1 id="confirm-title">确认订单（余额充值）</h1><p>请核对订单信息并完成支付</p></header>
+      <div class="stepper">
+        <div class="step done"><span>✓</span><strong id="step-one-label">选择金额</strong></div><i></i>
+        <div class="step current"><span>2</span><strong>确认订单</strong></div><i></i>
+        <div class="step"><span>3</span><strong>支付结果</strong></div>
+      </div>
+
+      <div id="recharge-confirm-content" class="confirm-stack">
+        <article class="surface confirm-card recharge-info-card">
+          <h2>充值信息</h2>
+          <div class="recharge-hero"><span class="wallet-visual"><span class="icon icon-credit-card"></span></span><div class="key-values"><div><span>充值金额</span><strong id="confirm-recharge-amount">¥100.00</strong></div><div><span>到账额度</span><strong id="confirm-credit-amount">$1000.00</strong></div><div><span>当前汇率</span><strong>1 CNY = $10 额度</strong></div></div></div>
+          <div class="info-tip"><strong>ⓘ　温馨提示</strong><span>充值的额度即时到账，可用于按量调用模型，永久有效，无使用期限。</span></div>
+        </article>
+      </div>
+
+      <div id="subscription-confirm-content" class="confirm-stack" hidden>
+        <article class="surface confirm-card">
+          <h2>套餐信息</h2>
+          <div class="package-head"><span class="plan-avatar"><img src="./payment-flow-icons/openai.svg" alt="OpenAI"></span><div><h3 id="confirm-plan-name">GPT - Pro <em class="platform platform-openai">OpenAI</em></h3><p id="confirm-plan-desc">适合大多数用户，高效使用</p></div></div>
+          <div class="package-limits"><div><span>倍率</span><strong>×1</strong></div><div><span>日限额</span><strong>$0</strong></div><div><span>周限额</span><strong>$0</strong></div><div><span>月限额</span><strong id="confirm-plan-limit">$3000</strong></div></div>
+          <div class="order-section"><h2>订阅信息</h2><div class="detail-row"><span>订阅周期</span><strong id="confirm-plan-days">30天</strong></div><div class="detail-row"><span>到期时间</span><strong class="subscription-expiry-value">2024-06-23 14:30</strong></div></div>
+        </article>
+      </div>
+
+      <article class="surface confirm-card payment-method-card"><h2>支付方式</h2><div id="payment-methods" class="payment-methods"></div></article>
+      <article class="surface confirm-card order-info-card"><h2>订单信息</h2><div class="detail-row"><span>订单类型</span><strong id="confirm-order-type">余额充值</strong></div><div class="detail-row"><span>订单编号</span><strong id="confirm-order-number" class="muted-order-value">RC20240524000123</strong></div><div class="detail-row"><span>创建时间</span><strong class="muted-order-value">2024-05-24 14:30:25</strong></div></article>
+      <article class="surface total-card"><div class="detail-row"><strong id="confirm-fee-label">支付金额</strong><b id="confirm-pay-amount">¥100.00</b></div><div class="detail-row highlight"><strong id="confirm-benefit-label">到账额度</strong><b id="confirm-benefit-value">$1000.00</b></div></article>
+      <div class="checkout-actions"><div class="secure-pay"><span class="shield">✓</span><span>安全加密支付<br><small>资金安全有保障</small></span></div><div class="checkout-buttons"><button id="confirm-payment" class="primary-action">确认支付 ¥100.00</button><button id="cancel-confirm" class="secondary-action">取消支付</button></div></div>
+    </div>
+  </section>
+
+  <section id="payment-view" class="flow-page" hidden>
+    <div class="flow-container">
+      <article class="surface payment-shell">
+        <header class="submitted-head"><div class="submitted-title"><span class="shield large">✓</span><div><h1>订单已提交，请扫码支付</h1><p>请在下方时间内完成支付，超时订单将自动取消</p></div></div><div class="submitted-meta"><span>订单号： <strong id="waiting-order-number"></strong></span><span>创建时间： 2024-05-24 14:30:25</span></div></header>
+        <div class="payment-main">
+          <aside id="waiting-summary" class="waiting-summary"></aside>
+          <div class="qr-section"><h2>支付宝扫码支付</h2><div class="qr-frame"><canvas id="qr-canvas" width="260" height="260"></canvas><span class="qr-logo">支</span></div><div class="scan-steps"><span class="step-icon"><span class="icon icon-smartphone"></span></span><p><strong>打开支付宝</strong><small>点击「扫一扫」</small></p><i>›</i><span class="step-icon success"><span class="success-check"><span class="icon icon-check"></span></span></span><p><strong>扫描二维码</strong><small>完成支付</small></p></div></div>
+          <div class="phone-visual"><div class="phone-device"><span class="phone-speaker"></span><div class="phone-ui"><i></i><i></i><i></i></div></div><div class="scan-card"><span class="scan-symbol icon icon-scan"></span><span>扫一扫</span></div></div>
+        </div>
+        <div class="payment-tip"><div class="timer-visual"><span class="icon icon-clock"></span></div><div><span>剩余支付时间</span><strong id="countdown">29:59</strong><small>请尽快完成支付</small></div><i></i><div class="warm-tip"><strong>温馨提示</strong><span>• 支付完成前请不要关闭当前页面</span><span id="success-tip">• 支付成功后，额度将自动充值到您的账户</span></div></div>
+      </article>
+      <button id="cancel-order" class="cancel-order">取消订单</button>
+      <div class="secure-footer"><span class="shield">✓</span>安全加密支付　资金安全有保障</div>
+      <aside id="callback-tools" class="callback-tools"><strong>支付回调模拟器</strong><span>静态预览，不请求后端</span><div><button data-outcome="success">模拟支付完成回调</button><button data-outcome="failed">模拟支付失败</button><button data-outcome="expired">模拟订单过期</button></div><p id="callback-loading" hidden>正在处理模拟回调...</p></aside>
+    </div>
+  </section>
+
+  <section id="result-view" class="flow-page" hidden>
+    <div class="flow-container result-container">
+      <article id="result-panel" class="result-panel success">
+        <div class="confetti">◆　·　◆</div><div id="result-icon" class="result-icon">✓</div>
+        <h1 id="result-title">充值成功</h1><p id="result-description">账户余额已成功充值</p>
+        <div class="result-details"><div><span>订单 ID</span><strong id="result-id"></strong></div><div><span>订单编号</span><strong id="result-number"></strong></div><div><span id="result-amount-label">充值金额</span><strong id="result-amount"></strong></div><div id="result-benefit-row"><span id="result-benefit-label">到账金额</span><strong id="result-benefit"></strong></div></div>
+        <button id="result-done" class="primary-action">完成</button>
+      </article>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+  <script src="./payment-flow-demo.js"></script>
+</body>
+</html>

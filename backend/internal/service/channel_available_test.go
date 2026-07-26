@@ -221,13 +221,21 @@ func TestSynthesizePricingFromLiteLLM_ImageGenerationMode(t *testing.T) {
 	// LiteLLM mode=image_generation 且渠道未声明模式时，按 image 合成。
 	lp := &LiteLLMModelPricing{
 		Mode:                    "image_generation",
+		InputCostPerImageToken:  3e-6,
 		OutputCostPerImageToken: 4e-5,
 	}
 	got := synthesizePricingFromLiteLLM(lp, nil)
 	require.NotNil(t, got)
 	require.Equal(t, BillingModeImage, got.BillingMode)
 	require.Nil(t, got.PerRequestPrice)
+	require.NotNil(t, got.ImageInputPrice)
+	require.InDelta(t, 3e-6, *got.ImageInputPrice, 1e-12)
 	require.NotNil(t, got.ImageOutputPrice)
+}
+
+func TestPricingNeedsFallback_ImageInputOnly(t *testing.T) {
+	price := 3e-6
+	require.False(t, pricingNeedsFallback(&ChannelModelPricing{ImageInputPrice: &price}))
 }
 
 func TestSynthesizePricingFromLiteLLM_RespectsExistingChannelMode(t *testing.T) {
