@@ -1552,6 +1552,7 @@ var (
 		{Name: "for_sale", Type: field.TypeBool, Default: true},
 		{Name: "recommended", Type: field.TypeBool, Default: false},
 		{Name: "sort_order", Type: field.TypeInt, Default: 0},
+		{Name: "base_sold_count", Type: field.TypeInt, Default: 0},
 		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
 	}

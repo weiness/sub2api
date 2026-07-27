@@ -63,6 +63,9 @@ func (SubscriptionPlan) Fields() []ent.Field {
 			Default(false),
 		field.Int("sort_order").
 			Default(0),
+		field.Int("base_sold_count").
+			Default(0).
+			NonNegative(),
 		field.Time("created_at").
 			Immutable().
 			Default(time.Now).

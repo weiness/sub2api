@@ -119,6 +119,11 @@ func SortOrder(v int) predicate.SubscriptionPlan {
 	return predicate.SubscriptionPlan(sql.FieldEQ(FieldSortOrder, v))
 }
 
+// BaseSoldCount applies equality check predicate on the "base_sold_count" field. It's identical to BaseSoldCountEQ.
+func BaseSoldCount(v int) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldEQ(FieldBaseSoldCount, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.SubscriptionPlan {
 	return predicate.SubscriptionPlan(sql.FieldEQ(FieldCreatedAt, v))
@@ -747,6 +752,46 @@ func SortOrderLT(v int) predicate.SubscriptionPlan {
 // SortOrderLTE applies the LTE predicate on the "sort_order" field.
 func SortOrderLTE(v int) predicate.SubscriptionPlan {
 	return predicate.SubscriptionPlan(sql.FieldLTE(FieldSortOrder, v))
+}
+
+// BaseSoldCountEQ applies the EQ predicate on the "base_sold_count" field.
+func BaseSoldCountEQ(v int) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldEQ(FieldBaseSoldCount, v))
+}
+
+// BaseSoldCountNEQ applies the NEQ predicate on the "base_sold_count" field.
+func BaseSoldCountNEQ(v int) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldNEQ(FieldBaseSoldCount, v))
+}
+
+// BaseSoldCountIn applies the In predicate on the "base_sold_count" field.
+func BaseSoldCountIn(vs ...int) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldIn(FieldBaseSoldCount, vs...))
+}
+
+// BaseSoldCountNotIn applies the NotIn predicate on the "base_sold_count" field.
+func BaseSoldCountNotIn(vs ...int) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldNotIn(FieldBaseSoldCount, vs...))
+}
+
+// BaseSoldCountGT applies the GT predicate on the "base_sold_count" field.
+func BaseSoldCountGT(v int) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldGT(FieldBaseSoldCount, v))
+}
+
+// BaseSoldCountGTE applies the GTE predicate on the "base_sold_count" field.
+func BaseSoldCountGTE(v int) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldGTE(FieldBaseSoldCount, v))
+}
+
+// BaseSoldCountLT applies the LT predicate on the "base_sold_count" field.
+func BaseSoldCountLT(v int) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldLT(FieldBaseSoldCount, v))
+}
+
+// BaseSoldCountLTE applies the LTE predicate on the "base_sold_count" field.
+func BaseSoldCountLTE(v int) predicate.SubscriptionPlan {
+	return predicate.SubscriptionPlan(sql.FieldLTE(FieldBaseSoldCount, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

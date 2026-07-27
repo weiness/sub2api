@@ -28,7 +28,11 @@
           <span v-else class="text-sm text-gray-400">-</span>
         </template>
         <template #cell-price="{ value, row }">
-          <div class="text-sm">
+          <div v-if="subscriptionMultiplier > 0" class="text-sm">
+            <div><span class="text-xs text-gray-400">{{ t('payment.admin.customerPaidPrice') }}</span> <span class="font-medium text-gray-900 dark:text-white">¥{{ displayCnyPrice(value).toFixed(2) }}</span><span v-if="row.original_price" class="ml-1 text-xs text-gray-400 line-through">¥{{ displayCnyPrice(row.original_price).toFixed(2) }}</span></div>
+            <div class="mt-0.5 text-xs text-gray-400">{{ t('payment.admin.billingPrice') }} ${{ (value ?? 0).toFixed(2) }}<span v-if="row.original_price" class="ml-1 line-through">${{ row.original_price.toFixed(2) }}</span></div>
+          </div>
+          <div v-else class="text-sm">
             <span class="font-medium text-gray-900 dark:text-white">{{ planCurrencySymbol(row.currency) }}{{ (value ?? 0).toFixed(2) }}</span>
             <span v-if="row.currency" class="ml-1 text-xs text-gray-400">{{ row.currency }}</span>
             <span v-if="row.original_price" class="ml-1 text-xs text-gray-400 line-through">{{ planCurrencySymbol(row.currency) }}{{ row.original_price.toFixed(2) }}</span>
@@ -121,6 +125,14 @@ function planCurrencySymbol(currency?: string): string {
 
 const groups = ref<AdminGroup[]>([])
 const paymentConfig = ref<AdminPaymentConfig | null>(null)
+const subscriptionMultiplier = computed(() => {
+  const multiplier = Number(paymentConfig.value?.subscription_cny_to_usd_multiplier)
+  return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 0
+})
+
+function displayCnyPrice(billingPrice: number): number {
+  return subscriptionMultiplier.value > 0 ? billingPrice / subscriptionMultiplier.value : billingPrice
+}
 
 async function loadGroups() {
   try {
@@ -166,6 +178,7 @@ const planColumns = computed((): Column[] => [
   { key: 'validity_days', label: t('payment.admin.validity') },
   { key: 'for_sale', label: t('payment.admin.forSale') },
   { key: 'recommended', label: t('payment.admin.recommended') },
+  { key: 'base_sold_count', label: t('payment.admin.baseSoldCount') },
   { key: 'sort_order', label: t('payment.admin.sortOrder') },
   { key: 'actions', label: t('common.actions') },
 ])

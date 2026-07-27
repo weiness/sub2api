@@ -599,10 +599,12 @@ export default {
         balanceRechargeMultiplier: '余额充值倍率',
         balanceRechargeMultiplierHint: '用户每支付 1 CNY 可获得多少 USD 余额',
         balanceRechargePreview: '预览：1 CNY = {usd} USD',
-        subscriptionUsdToCnyRate: '订阅 CNY 换算汇率',
-        subscriptionUsdToCnyRateHint:
-          'CNY 支付通道下，套餐每 1 USD 价格收取多少 CNY（如 7.15）。0 或留空 = 不换算，订阅按 price 数值直接收款。启用后所有套餐 price 必须按 USD 定价',
-        subscriptionUsdToCnyRateDisabled: '未启用（按 price 直付）',
+        subscriptionCnyToUsdMultiplier: '订阅计费倍率',
+        subscriptionCnyToUsdMultiplierHint:
+          'CNY 支付通道下，用户每支付 1 CNY 对应多少 USD 计费价格。套餐编辑页按用户实付 CNY 填写，系统保存时自动换算为 USD 计费价格；邀请返利按该计费价格计算。',
+        subscriptionCnyToUsdMultiplierDisabled: '未启用（按 price 直付）',
+        subscriptionCnyToUsdMultiplierPreview: '预览：1 CNY = {usd} USD 计费价格',
+        subscriptionCnyToUsdMultiplierExample: '套餐实付 ¥10.00，入库计费价格 ${billing}',
         rechargeFeeRate: '充值手续费率',
         rechargeFeeRateHint: '用户充值时额外收取的手续费百分比，0 表示不收取手续费',
         rechargeFeePreview: '预览：充值 100 元，手续费 {fee} 元',

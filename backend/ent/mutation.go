@@ -40079,33 +40079,35 @@ func (m *SettingMutation) ResetEdge(name string) error {
 // SubscriptionPlanMutation represents an operation that mutates the SubscriptionPlan nodes in the graph.
 type SubscriptionPlanMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *int64
-	group_id          *int64
-	addgroup_id       *int64
-	name              *string
-	description       *string
-	price             *float64
-	addprice          *float64
-	original_price    *float64
-	addoriginal_price *float64
-	currency          *string
-	validity_days     *int
-	addvalidity_days  *int
-	validity_unit     *string
-	features          *string
-	product_name      *string
-	for_sale          *bool
-	recommended       *bool
-	sort_order        *int
-	addsort_order     *int
-	created_at        *time.Time
-	updated_at        *time.Time
-	clearedFields     map[string]struct{}
-	done              bool
-	oldValue          func(context.Context) (*SubscriptionPlan, error)
-	predicates        []predicate.SubscriptionPlan
+	op                 Op
+	typ                string
+	id                 *int64
+	group_id           *int64
+	addgroup_id        *int64
+	name               *string
+	description        *string
+	price              *float64
+	addprice           *float64
+	original_price     *float64
+	addoriginal_price  *float64
+	currency           *string
+	validity_days      *int
+	addvalidity_days   *int
+	validity_unit      *string
+	features           *string
+	product_name       *string
+	for_sale           *bool
+	recommended        *bool
+	sort_order         *int
+	addsort_order      *int
+	base_sold_count    *int
+	addbase_sold_count *int
+	created_at         *time.Time
+	updated_at         *time.Time
+	clearedFields      map[string]struct{}
+	done               bool
+	oldValue           func(context.Context) (*SubscriptionPlan, error)
+	predicates         []predicate.SubscriptionPlan
 }
 
 var _ ent.Mutation = (*SubscriptionPlanMutation)(nil)
@@ -40788,6 +40790,60 @@ func (m *SubscriptionPlanMutation) ResetSortOrder() {
 	m.addsort_order = nil
 }
 
+// SetBaseSoldCount sets the "base_sold_count" field.
+func (m *SubscriptionPlanMutation) SetBaseSoldCount(i int) {
+	m.base_sold_count = &i
+	m.addbase_sold_count = nil
+}
+
+// BaseSoldCount returns the value of the "base_sold_count" field in the mutation.
+func (m *SubscriptionPlanMutation) BaseSoldCount() (r int, exists bool) {
+	v := m.base_sold_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBaseSoldCount returns the old "base_sold_count" field's value of the SubscriptionPlan entity.
+func (m *SubscriptionPlanMutation) OldBaseSoldCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBaseSoldCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBaseSoldCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBaseSoldCount: %w", err)
+	}
+	return oldValue.BaseSoldCount, nil
+}
+
+// AddBaseSoldCount adds i to the "base_sold_count" field.
+func (m *SubscriptionPlanMutation) AddBaseSoldCount(i int) {
+	if m.addbase_sold_count != nil {
+		*m.addbase_sold_count += i
+	} else {
+		m.addbase_sold_count = &i
+	}
+}
+
+// AddedBaseSoldCount returns the value that was added to the "base_sold_count" field in this mutation.
+func (m *SubscriptionPlanMutation) AddedBaseSoldCount() (r int, exists bool) {
+	v := m.addbase_sold_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBaseSoldCount resets all changes to the "base_sold_count" field.
+func (m *SubscriptionPlanMutation) ResetBaseSoldCount() {
+	m.base_sold_count = nil
+	m.addbase_sold_count = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *SubscriptionPlanMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -40894,7 +40950,7 @@ func (m *SubscriptionPlanMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SubscriptionPlanMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 16)
 	if m.group_id != nil {
 		fields = append(fields, subscriptionplan.FieldGroupID)
 	}
@@ -40933,6 +40989,9 @@ func (m *SubscriptionPlanMutation) Fields() []string {
 	}
 	if m.sort_order != nil {
 		fields = append(fields, subscriptionplan.FieldSortOrder)
+	}
+	if m.base_sold_count != nil {
+		fields = append(fields, subscriptionplan.FieldBaseSoldCount)
 	}
 	if m.created_at != nil {
 		fields = append(fields, subscriptionplan.FieldCreatedAt)
@@ -40974,6 +41033,8 @@ func (m *SubscriptionPlanMutation) Field(name string) (ent.Value, bool) {
 		return m.Recommended()
 	case subscriptionplan.FieldSortOrder:
 		return m.SortOrder()
+	case subscriptionplan.FieldBaseSoldCount:
+		return m.BaseSoldCount()
 	case subscriptionplan.FieldCreatedAt:
 		return m.CreatedAt()
 	case subscriptionplan.FieldUpdatedAt:
@@ -41013,6 +41074,8 @@ func (m *SubscriptionPlanMutation) OldField(ctx context.Context, name string) (e
 		return m.OldRecommended(ctx)
 	case subscriptionplan.FieldSortOrder:
 		return m.OldSortOrder(ctx)
+	case subscriptionplan.FieldBaseSoldCount:
+		return m.OldBaseSoldCount(ctx)
 	case subscriptionplan.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case subscriptionplan.FieldUpdatedAt:
@@ -41117,6 +41180,13 @@ func (m *SubscriptionPlanMutation) SetField(name string, value ent.Value) error 
 		}
 		m.SetSortOrder(v)
 		return nil
+	case subscriptionplan.FieldBaseSoldCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBaseSoldCount(v)
+		return nil
 	case subscriptionplan.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -41153,6 +41223,9 @@ func (m *SubscriptionPlanMutation) AddedFields() []string {
 	}
 	if m.addsort_order != nil {
 		fields = append(fields, subscriptionplan.FieldSortOrder)
+	}
+	if m.addbase_sold_count != nil {
+		fields = append(fields, subscriptionplan.FieldBaseSoldCount)
 	}
 	return fields
 }

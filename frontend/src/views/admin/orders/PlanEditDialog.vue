@@ -36,27 +36,35 @@
       <div><label class="input-label">{{ t('payment.admin.planDescription') }} <span class="text-red-500">*</span></label><textarea v-model="planForm.description" rows="2" class="input" required></textarea></div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="input-label">{{ t('payment.admin.price') }} <span class="text-red-500">*</span></label>
-          <input v-model.number="planForm.price" type="number" step="0.01" min="0.01" class="input" required />
+          <label class="input-label">{{ multiplierEnabled ? t('payment.admin.customerPriceCny') : t('payment.admin.price') }} <span class="text-red-500">*</span></label>
+          <input v-model.number="planForm.price" data-test="plan-price-input" type="number" step="0.01" min="0.01" class="input" required />
           <p v-if="subscriptionCnyPreview" class="mt-1 text-xs font-medium text-primary-600 dark:text-primary-400">
-            {{ t('payment.admin.subscriptionCnyPayPreview', { amount: subscriptionCnyPreview.amount }) }}
+            {{ t('payment.admin.subscriptionBillingPreview', { paid: subscriptionCnyPreview.paid, billing: subscriptionCnyPreview.billing }) }}
             <span v-if="subscriptionCnyPreview.feeRate > 0">
-              {{ t('payment.admin.subscriptionCnyPayPreviewWithFee', { feeRate: subscriptionCnyPreview.feeRate, total: subscriptionCnyPreview.total }) }}
+              {{ t('payment.admin.subscriptionBillingPreviewWithFee', { feeRate: subscriptionCnyPreview.feeRate, total: subscriptionCnyPreview.total }) }}
             </span>
           </p>
+          <p v-else-if="!multiplierEnabled" class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.subscriptionBillingDisabled') }}</p>
         </div>
-        <div><label class="input-label">{{ t('payment.admin.originalPrice') }}</label><input v-model.number="planForm.original_price" type="number" step="0.01" min="0" class="input" /></div>
+        <div><label class="input-label">{{ multiplierEnabled ? t('payment.admin.customerOriginalPriceCny') : t('payment.admin.originalPrice') }}</label><input v-model.number="planForm.original_price" data-test="plan-original-price-input" type="number" step="0.01" min="0" class="input" /></div>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div><label class="input-label">{{ t('payment.admin.validity') }} <span class="text-red-500">*</span></label><input v-model.number="planForm.validity_days" type="number" min="1" class="input" required /></div>
         <div><label class="input-label">{{ t('payment.admin.validityUnit') }} <span class="text-red-500">*</span></label><Select v-model="planForm.validity_unit" :options="validityUnitOptions" /></div>
       </div>
       <div class="grid grid-cols-2 gap-4">
-        <div><label class="input-label">{{ t('payment.admin.sortOrder') }}</label><input v-model.number="planForm.sort_order" type="number" min="0" class="input" /></div>
+        <div class="space-y-4">
+          <div><label class="input-label">{{ t('payment.admin.sortOrder') }}</label><input v-model.number="planForm.sort_order" type="number" min="0" class="input" /></div>
+          <div>
+            <label class="input-label">{{ t('payment.admin.currency') }}</label>
+            <input v-model="planForm.currency" type="text" maxlength="3" class="input uppercase" :placeholder="t('payment.admin.currencyPlaceholder')" />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.currencyHint') }}</p>
+          </div>
+        </div>
         <div>
-          <label class="input-label">{{ t('payment.admin.currency') }}</label>
-          <input v-model="planForm.currency" type="text" maxlength="3" class="input uppercase" :placeholder="t('payment.admin.currencyPlaceholder')" />
-          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.currencyHint') }}</p>
+          <label class="input-label">{{ t('payment.admin.baseSoldCount') }}</label>
+          <input v-model.number="planForm.base_sold_count" data-test="plan-base-sold-count-input" type="number" step="1" min="0" class="input" />
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.baseSoldCountHint') }}</p>
         </div>
       </div>
       <div>
@@ -122,7 +130,7 @@ const { t } = useI18n()
 const appStore = useAppStore()
 
 const saving = ref(false)
-const planForm = reactive({ name: '', group_id: null as number | null, description: '', price: 0, original_price: 0, currency: '', validity_days: 30, validity_unit: 'days', sort_order: 0, for_sale: true })
+const planForm = reactive({ name: '', group_id: null as number | null, description: '', price: 0, original_price: 0, currency: '', validity_days: 30, validity_unit: 'days', sort_order: 0, base_sold_count: 0, for_sale: true })
 const planFeaturesText = ref('')
 
 const validityUnitOptions = computed(() => [
@@ -154,18 +162,31 @@ function ceilCnyAmount(value: number): number {
   return Math.ceil(value * 100) / 100
 }
 
+function roundBillingAmount(value: number): number {
+  return Math.round(value * 1e8) / 1e8
+}
+
+const subscriptionMultiplier = computed(() => {
+  const multiplier = Number(props.paymentConfig?.subscription_cny_to_usd_multiplier)
+  return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 0
+})
+
+const multiplierEnabled = computed(() => subscriptionMultiplier.value > 0)
+
 const subscriptionCnyPreview = computed(() => {
   const price = Number(planForm.price) || 0
-  const rate = Number(props.paymentConfig?.subscription_usd_to_cny_rate) || 0
-  if (price <= 0 || rate <= 0) return null
+  const multiplier = subscriptionMultiplier.value
+  if (price <= 0 || multiplier <= 0) return null
 
-  const amount = roundCnyAmount(price * rate)
+  const amount = roundCnyAmount(price)
+  const billing = roundBillingAmount(price * multiplier)
   const feeRate = Number(props.paymentConfig?.recharge_fee_rate) || 0
   const fee = feeRate > 0 ? ceilCnyAmount((amount * feeRate) / 100) : 0
   const total = feeRate > 0 ? roundCnyAmount(amount + fee) : amount
 
   return {
-    amount: formatPaymentAmount(amount, 'CNY'),
+    paid: formatPaymentAmount(amount, 'CNY'),
+    billing: formatPaymentAmount(billing, 'USD'),
     feeRate,
     total: formatPaymentAmount(total, 'CNY'),
   }
@@ -175,27 +196,30 @@ const subscriptionCnyPreview = computed(() => {
 watch(() => props.show, (visible) => {
   if (!visible) return
   if (props.plan) {
-    Object.assign(planForm, { name: props.plan.name, group_id: props.plan.group_id, description: props.plan.description, price: props.plan.price, original_price: props.plan.original_price || 0, currency: props.plan.currency || '', validity_days: props.plan.validity_days, validity_unit: props.plan.validity_unit || 'days', sort_order: props.plan.sort_order || 0, for_sale: props.plan.for_sale })
+    const multiplier = subscriptionMultiplier.value
+    Object.assign(planForm, { name: props.plan.name, group_id: props.plan.group_id, description: props.plan.description, price: multiplier > 0 ? roundCnyAmount(props.plan.price / multiplier) : props.plan.price, original_price: multiplier > 0 ? roundCnyAmount((props.plan.original_price || 0) / multiplier) : props.plan.original_price || 0, currency: props.plan.currency || '', validity_days: props.plan.validity_days, validity_unit: props.plan.validity_unit || 'days', sort_order: props.plan.sort_order || 0, base_sold_count: props.plan.base_sold_count || 0, for_sale: props.plan.for_sale })
     planFeaturesText.value = (props.plan.features || []).join('\n')
   } else {
-    Object.assign(planForm, { name: '', group_id: null, description: '', price: 0, original_price: 0, currency: '', validity_days: 30, validity_unit: 'days', sort_order: 0, for_sale: true })
+    Object.assign(planForm, { name: '', group_id: null, description: '', price: 0, original_price: 0, currency: '', validity_days: 30, validity_unit: 'days', sort_order: 0, base_sold_count: 0, for_sale: true })
     planFeaturesText.value = ''
   }
-})
+}, { immediate: true })
 
 /** Build request payload with snake_case keys matching backend JSON tags */
 function buildPlanPayload() {
   const features = planFeaturesText.value.split('\n').map(f => f.trim()).filter(Boolean).join('\n')
+  const multiplier = subscriptionMultiplier.value
   return {
     name: planForm.name,
     group_id: planForm.group_id,
     description: planForm.description,
-    price: planForm.price,
-    original_price: planForm.original_price || 0,
+    price: multiplier > 0 ? roundBillingAmount(planForm.price * multiplier) : planForm.price,
+    original_price: multiplier > 0 ? roundBillingAmount((planForm.original_price || 0) * multiplier) : planForm.original_price || 0,
     currency: planForm.currency.trim().toUpperCase(),
     validity_days: planForm.validity_days,
     validity_unit: planForm.validity_unit,
     sort_order: planForm.sort_order,
+    base_sold_count: Math.max(0, Math.trunc(Number(planForm.base_sold_count) || 0)),
     for_sale: planForm.for_sale,
     features,
   }

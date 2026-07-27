@@ -7134,12 +7134,12 @@
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.subscriptionUsdToCnyRate")
+                      t("admin.settings.payment.subscriptionCnyToUsdMultiplier")
                     }}</label>
                     <input
-                      :value="form.payment_subscription_usd_to_cny_rate || ''"
+                      :value="form.payment_subscription_cny_to_usd_multiplier || ''"
                       @input="
-                        form.payment_subscription_usd_to_cny_rate =
+                        form.payment_subscription_cny_to_usd_multiplier =
                           parseFloat(
                             ($event.target as HTMLInputElement).value,
                           ) || 0
@@ -7150,13 +7150,29 @@
                       class="input"
                       :placeholder="
                         t(
-                          'admin.settings.payment.subscriptionUsdToCnyRateDisabled',
+                          'admin.settings.payment.subscriptionCnyToUsdMultiplierDisabled',
                         )
                       "
                     />
                     <p class="mt-0.5 text-xs text-gray-400">
                       {{
-                        t("admin.settings.payment.subscriptionUsdToCnyRateHint")
+                        t("admin.settings.payment.subscriptionCnyToUsdMultiplierHint")
+                      }}
+                    </p>
+                    <p
+                      v-if="Number(form.payment_subscription_cny_to_usd_multiplier) > 0"
+                      class="mt-1 text-xs font-medium text-primary-600 dark:text-primary-400"
+                    >
+                      {{
+                        t("admin.settings.payment.subscriptionCnyToUsdMultiplierPreview", {
+                          usd: Number(form.payment_subscription_cny_to_usd_multiplier).toFixed(2),
+                        })
+                      }}
+                      <br />
+                      {{
+                        t("admin.settings.payment.subscriptionCnyToUsdMultiplierExample", {
+                          billing: (10 * Number(form.payment_subscription_cny_to_usd_multiplier)).toFixed(2),
+                        })
                       }}
                     </p>
                   </div>
@@ -8801,7 +8817,7 @@ const form = reactive<SettingsForm>({
   payment_order_timeout_minutes: 30,
   payment_balance_disabled: false,
   payment_balance_recharge_multiplier: 1,
-  payment_subscription_usd_to_cny_rate: 0,
+  payment_subscription_cny_to_usd_multiplier: 0,
   payment_recharge_fee_rate: 0,
   payment_enabled_types: [],
   payment_help_image_url: "",
@@ -10493,8 +10509,8 @@ async function saveSettings() {
       payment_balance_disabled: form.payment_balance_disabled,
       payment_balance_recharge_multiplier:
         Number(form.payment_balance_recharge_multiplier) || 1,
-      payment_subscription_usd_to_cny_rate:
-        Number(form.payment_subscription_usd_to_cny_rate) || 0,
+      payment_subscription_cny_to_usd_multiplier:
+        Number(form.payment_subscription_cny_to_usd_multiplier) || 0,
       payment_recharge_fee_rate: Number(form.payment_recharge_fee_rate) || 0,
       payment_enabled_types: form.payment_enabled_types,
       payment_load_balance_strategy: form.payment_load_balance_strategy,

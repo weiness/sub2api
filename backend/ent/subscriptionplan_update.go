@@ -251,6 +251,26 @@ func (_u *SubscriptionPlanUpdate) AddSortOrder(v int) *SubscriptionPlanUpdate {
 	return _u
 }
 
+// SetBaseSoldCount sets the "base_sold_count" field.
+func (_u *SubscriptionPlanUpdate) SetBaseSoldCount(v int) *SubscriptionPlanUpdate {
+	_u.mutation.SetBaseSoldCount(v)
+	return _u
+}
+
+// SetNillableBaseSoldCount sets the "base_sold_count" field if the given value is not nil.
+func (_u *SubscriptionPlanUpdate) SetNillableBaseSoldCount(v *int) *SubscriptionPlanUpdate {
+	if v != nil {
+		_u.SetBaseSoldCount(*v)
+	}
+	return _u
+}
+
+// AddBaseSoldCount adds value to the "base_sold_count" field.
+func (_u *SubscriptionPlanUpdate) AddBaseSoldCount(v int) *SubscriptionPlanUpdate {
+	_u.mutation.AddBaseSoldCount(v)
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *SubscriptionPlanUpdate) SetUpdatedAt(v time.Time) *SubscriptionPlanUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -318,6 +338,11 @@ func (_u *SubscriptionPlanUpdate) check() error {
 	if v, ok := _u.mutation.ProductName(); ok {
 		if err := subscriptionplan.ProductNameValidator(v); err != nil {
 			return &ValidationError{Name: "product_name", err: fmt.Errorf(`ent: validator failed for field "SubscriptionPlan.product_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.BaseSoldCount(); ok {
+		if err := subscriptionplan.BaseSoldCountValidator(v); err != nil {
+			return &ValidationError{Name: "base_sold_count", err: fmt.Errorf(`ent: validator failed for field "SubscriptionPlan.base_sold_count": %w`, err)}
 		}
 	}
 	return nil
@@ -388,6 +413,12 @@ func (_u *SubscriptionPlanUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if value, ok := _u.mutation.SortOrder(); ok {
 		_spec.SetField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.BaseSoldCount(); ok {
+		_spec.SetField(subscriptionplan.FieldBaseSoldCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedBaseSoldCount(); ok {
+		_spec.AddField(subscriptionplan.FieldBaseSoldCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
@@ -638,6 +669,26 @@ func (_u *SubscriptionPlanUpdateOne) AddSortOrder(v int) *SubscriptionPlanUpdate
 	return _u
 }
 
+// SetBaseSoldCount sets the "base_sold_count" field.
+func (_u *SubscriptionPlanUpdateOne) SetBaseSoldCount(v int) *SubscriptionPlanUpdateOne {
+	_u.mutation.SetBaseSoldCount(v)
+	return _u
+}
+
+// SetNillableBaseSoldCount sets the "base_sold_count" field if the given value is not nil.
+func (_u *SubscriptionPlanUpdateOne) SetNillableBaseSoldCount(v *int) *SubscriptionPlanUpdateOne {
+	if v != nil {
+		_u.SetBaseSoldCount(*v)
+	}
+	return _u
+}
+
+// AddBaseSoldCount adds value to the "base_sold_count" field.
+func (_u *SubscriptionPlanUpdateOne) AddBaseSoldCount(v int) *SubscriptionPlanUpdateOne {
+	_u.mutation.AddBaseSoldCount(v)
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *SubscriptionPlanUpdateOne) SetUpdatedAt(v time.Time) *SubscriptionPlanUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -718,6 +769,11 @@ func (_u *SubscriptionPlanUpdateOne) check() error {
 	if v, ok := _u.mutation.ProductName(); ok {
 		if err := subscriptionplan.ProductNameValidator(v); err != nil {
 			return &ValidationError{Name: "product_name", err: fmt.Errorf(`ent: validator failed for field "SubscriptionPlan.product_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.BaseSoldCount(); ok {
+		if err := subscriptionplan.BaseSoldCountValidator(v); err != nil {
+			return &ValidationError{Name: "base_sold_count", err: fmt.Errorf(`ent: validator failed for field "SubscriptionPlan.base_sold_count": %w`, err)}
 		}
 	}
 	return nil
@@ -805,6 +861,12 @@ func (_u *SubscriptionPlanUpdateOne) sqlSave(ctx context.Context) (_node *Subscr
 	}
 	if value, ok := _u.mutation.SortOrder(); ok {
 		_spec.SetField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.BaseSoldCount(); ok {
+		_spec.SetField(subscriptionplan.FieldBaseSoldCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedBaseSoldCount(); ok {
+		_spec.AddField(subscriptionplan.FieldBaseSoldCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedSortOrder(); ok {
 		_spec.AddField(subscriptionplan.FieldSortOrder, field.TypeInt, value)

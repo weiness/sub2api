@@ -40,6 +40,7 @@ func TestGetPlanSoldCountMap(t *testing.T) {
 		SetGroupID(groupOne.ID).
 		SetName("Plan One").
 		SetPrice(39).
+		SetBaseSoldCount(4).
 		Save(ctx)
 	require.NoError(t, err)
 	planTwo, err := client.SubscriptionPlan.Create().
@@ -92,7 +93,7 @@ func TestGetPlanSoldCountMap(t *testing.T) {
 	plans := []*dbent.SubscriptionPlan{planOne, planTwo}
 	counts, err := NewPaymentConfigService(client, nil, nil).GetPlanSoldCountMap(ctx, plans)
 	require.NoError(t, err)
-	require.Equal(t, map[int64]int{planOneID: 14, planTwoID: 106}, counts)
+	require.Equal(t, map[int64]int{planOneID: 7, planTwoID: 1}, counts)
 }
 
 func TestListPlansForSaleOrdersRecommendedFirstThenSortOrder(t *testing.T) {
@@ -120,13 +121,53 @@ func TestListPlansForSaleOrdersRecommendedFirstThenSortOrder(t *testing.T) {
 	require.Equal(t, []string{"Recommended First", "Recommended Later", "Regular"}, []string{plans[0].Name, plans[1].Name, plans[2].Name})
 }
 
-func TestPlanMarketingBaseSoldCountUsesSortOrder(t *testing.T) {
-	require.Equal(t, 11, planMarketingBaseSoldCount(1))
-	require.Equal(t, 105, planMarketingBaseSoldCount(2))
-	require.Equal(t, 56, planMarketingBaseSoldCount(3))
-	require.Equal(t, 32, planMarketingBaseSoldCount(4))
-	require.Zero(t, planMarketingBaseSoldCount(0))
-	require.Zero(t, planMarketingBaseSoldCount(5))
+func TestListPlansOrdersForSaleThenSortOrderThenID(t *testing.T) {
+	ctx := context.Background()
+	client := newPaymentConfigTestClient(t, "payment_plan_admin_sort")
+	group, err := client.Group.Create().SetName("admin-plan-sort").Save(ctx)
+	require.NoError(t, err)
+
+	createPlan := func(name string, forSale bool, sortOrder int) {
+		_, err := client.SubscriptionPlan.Create().
+			SetGroupID(group.ID).
+			SetName(name).
+			SetPrice(39).
+			SetForSale(forSale).
+			SetSortOrder(sortOrder).
+			Save(ctx)
+		require.NoError(t, err)
+	}
+
+	createPlan("On Sale Later Sort", true, 20)
+	createPlan("On Sale First ID", true, 10)
+	createPlan("On Sale Second ID", true, 10)
+	createPlan("Off Sale", false, 0)
+
+	plans, err := NewPaymentConfigService(client, nil, nil).ListPlans(ctx)
+	require.NoError(t, err)
+	require.Equal(t,
+		[]string{"On Sale First ID", "On Sale Second ID", "On Sale Later Sort", "Off Sale"},
+		[]string{plans[0].Name, plans[1].Name, plans[2].Name, plans[3].Name},
+	)
+}
+
+func TestUpdatePlanPersistsBaseSoldCount(t *testing.T) {
+	ctx := context.Background()
+	client := newPaymentConfigTestClient(t, "payment_plan_base_sold_count_update")
+	group, err := client.Group.Create().SetName("base-sold-count").Save(ctx)
+	require.NoError(t, err)
+	plan, err := client.SubscriptionPlan.Create().
+		SetGroupID(group.ID).
+		SetName("Plan").
+		SetPrice(39).
+		Save(ctx)
+	require.NoError(t, err)
+	require.Zero(t, plan.BaseSoldCount)
+
+	baseSoldCount := 9
+	updated, err := NewPaymentConfigService(client, nil, nil).UpdatePlan(ctx, plan.ID, UpdatePlanRequest{BaseSoldCount: &baseSoldCount})
+	require.NoError(t, err)
+	require.Equal(t, baseSoldCount, updated.BaseSoldCount)
 }
 
 func newPaymentConfigTestClient(t *testing.T, databaseName string) *dbent.Client {

@@ -4,12 +4,14 @@ import { mount } from '@vue/test-utils'
 
 import PlanEditDialog from '../PlanEditDialog.vue'
 import type { AdminGroup } from '@/types'
+import type { SubscriptionPlan } from '@/types/payment'
+import { adminPaymentAPI } from '@/api/admin/payment'
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     t: (key: string, params?: Record<string, unknown>) => {
-      if (key === 'payment.admin.subscriptionCnyPayPreview') return `preview ${params?.amount}`
-      if (key === 'payment.admin.subscriptionCnyPayPreviewWithFee') return `fee ${params?.feeRate} ${params?.total}`
+      if (key === 'payment.admin.subscriptionBillingPreview') return `preview ${params?.paid} ${params?.billing}`
+      if (key === 'payment.admin.subscriptionBillingPreviewWithFee') return `fee ${params?.feeRate} ${params?.total}`
       return key
     },
   }),
@@ -116,14 +118,16 @@ const groupFixture = (overrides: Partial<AdminGroup>): AdminGroup => ({
 function mountDialog({
   groups = [],
   paymentConfig = null,
+  plan = null,
 }: {
   groups?: AdminGroup[]
   paymentConfig?: Record<string, unknown> | null
+  plan?: SubscriptionPlan | null
 } = {}) {
   return mount(PlanEditDialog, {
     props: {
       show: true,
-      plan: null,
+      plan,
       groups,
       paymentConfig,
     },
@@ -139,34 +143,88 @@ function mountDialog({
 }
 
 describe('PlanEditDialog', () => {
-  it('shows CNY channel charge using the configured subscription rate and fee', async () => {
+  it('shows the paid CNY amount and stored billing price using the configured multiplier', async () => {
     const wrapper = mountDialog({
       paymentConfig: {
-        subscription_usd_to_cny_rate: 7.15,
-        recharge_fee_rate: 2.5,
+        subscription_cny_to_usd_multiplier: 10,
+        recharge_fee_rate: 2,
       },
     })
 
-    await wrapper.find('input[type="number"]').setValue('9.99')
+    await wrapper.find('[data-test="plan-price-input"]').setValue('10')
 
     expect(wrapper.text()).toContain('preview')
-    expect(wrapper.text()).toContain('¥71.43')
-    expect(wrapper.text()).toContain('fee 2.5')
-    expect(wrapper.text()).toContain('¥73.22')
+    expect(wrapper.text()).toContain('¥10.00')
+    expect(wrapper.text()).toContain('$100.00')
+    expect(wrapper.text()).toContain('fee 2')
+    expect(wrapper.text()).toContain('¥10.20')
   })
 
   it('hides the preview when the subscription rate is not configured', async () => {
     const wrapper = mountDialog({
       paymentConfig: {
-        subscription_usd_to_cny_rate: 0,
+        subscription_cny_to_usd_multiplier: 0,
         recharge_fee_rate: 2.5,
       },
     })
 
-    await wrapper.find('input[type="number"]').setValue('9.99')
+    await wrapper.find('[data-test="plan-price-input"]').setValue('9.99')
 
     expect(wrapper.text()).not.toContain('preview')
     expect(wrapper.text()).not.toContain('¥71.43')
+  })
+
+  it('converts CNY inputs to billing prices when creating a plan', async () => {
+    vi.mocked(adminPaymentAPI.createPlan).mockResolvedValue({} as never)
+    const wrapper = mountDialog({
+      groups: [groupFixture({})],
+      paymentConfig: { subscription_cny_to_usd_multiplier: 10, recharge_fee_rate: 0 },
+    })
+
+    await wrapper.find('select').setValue('1')
+    await wrapper.find('input[type="text"]').setValue('Pro')
+    await wrapper.find('textarea').setValue('Plan')
+    await wrapper.find('[data-test="plan-price-input"]').setValue('10')
+    await wrapper.find('[data-test="plan-original-price-input"]').setValue('20')
+    await wrapper.find('[data-test="plan-base-sold-count-input"]').setValue('4')
+    await wrapper.find('form').trigger('submit')
+
+    expect(adminPaymentAPI.createPlan).toHaveBeenCalledWith(expect.objectContaining({ price: 100, original_price: 200, base_sold_count: 4 }))
+  })
+
+  it('divides stored prices for editing and does not multiply them twice on save', async () => {
+    vi.mocked(adminPaymentAPI.updatePlan).mockResolvedValue({} as never)
+    const plan = {
+      id: 9, group_id: 1, name: 'Pro', description: 'Plan', price: 100, original_price: 200,
+      currency: 'USD', validity_days: 30, validity_unit: 'days', features: [], for_sale: true,
+      recommended: false, sort_order: 0, base_sold_count: 12, amount: 0, rate_multiplier: 1, is_active: true,
+    } as SubscriptionPlan
+    const wrapper = mountDialog({
+      plan,
+      groups: [groupFixture({})],
+      paymentConfig: { subscription_cny_to_usd_multiplier: 10, recharge_fee_rate: 0 },
+    })
+
+    expect((wrapper.find('[data-test="plan-price-input"]').element as HTMLInputElement).value).toBe('10')
+    expect((wrapper.find('[data-test="plan-original-price-input"]').element as HTMLInputElement).value).toBe('20')
+    expect((wrapper.find('[data-test="plan-base-sold-count-input"]').element as HTMLInputElement).value).toBe('12')
+    await wrapper.find('form').trigger('submit')
+
+    expect(adminPaymentAPI.updatePlan).toHaveBeenCalledWith(9, expect.objectContaining({ price: 100, original_price: 200, base_sold_count: 12 }))
+  })
+
+  it('defaults an empty base sold count to zero', async () => {
+    vi.mocked(adminPaymentAPI.createPlan).mockResolvedValue({} as never)
+    const wrapper = mountDialog({ groups: [groupFixture({})] })
+
+    await wrapper.find('select').setValue('1')
+    await wrapper.find('input[type="text"]').setValue('Pro')
+    await wrapper.find('textarea').setValue('Plan')
+    await wrapper.find('[data-test="plan-price-input"]').setValue('10')
+    await wrapper.find('[data-test="plan-base-sold-count-input"]').setValue('')
+    await wrapper.find('form').trigger('submit')
+
+    expect(adminPaymentAPI.createPlan).toHaveBeenCalledWith(expect.objectContaining({ base_sold_count: 0 }))
   })
 
   it('allows composite subscription groups for payment plans', () => {

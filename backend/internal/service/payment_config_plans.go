@@ -51,6 +51,13 @@ func validatePlanRequired(name string, groupID int64, price float64, validityDay
 	return nil
 }
 
+func validatePlanBaseSoldCount(baseSoldCount int) error {
+	if baseSoldCount < 0 {
+		return infraerrors.BadRequest("PLAN_BASE_SOLD_COUNT_INVALID", "base sold count must be >= 0")
+	}
+	return nil
+}
+
 // validatePlanPatch validates only the non-nil fields in a patch update.
 func validatePlanPatch(req UpdatePlanRequest) error {
 	if req.Name != nil && strings.TrimSpace(*req.Name) == "" {
@@ -70,6 +77,9 @@ func validatePlanPatch(req UpdatePlanRequest) error {
 	}
 	if req.OriginalPrice != nil && *req.OriginalPrice < 0 {
 		return infraerrors.BadRequest("PLAN_ORIGINAL_PRICE_INVALID", "original price must be >= 0")
+	}
+	if req.BaseSoldCount != nil && *req.BaseSoldCount < 0 {
+		return infraerrors.BadRequest("PLAN_BASE_SOLD_COUNT_INVALID", "base sold count must be >= 0")
 	}
 	return nil
 }
@@ -128,7 +138,13 @@ func (s *PaymentConfigService) GetGroupInfoMap(ctx context.Context, plans []*dbe
 }
 
 func (s *PaymentConfigService) ListPlans(ctx context.Context) ([]*dbent.SubscriptionPlan, error) {
-	return s.entClient.SubscriptionPlan.Query().Order(subscriptionplan.BySortOrder()).All(ctx)
+	return s.entClient.SubscriptionPlan.Query().
+		Order(
+			dbent.Desc(subscriptionplan.FieldForSale),
+			dbent.Asc(subscriptionplan.FieldSortOrder),
+			dbent.Asc(subscriptionplan.FieldID),
+		).
+		All(ctx)
 }
 
 func (s *PaymentConfigService) ListPlansForSale(ctx context.Context) ([]*dbent.SubscriptionPlan, error) {
@@ -182,33 +198,17 @@ func (s *PaymentConfigService) GetPlanSoldCountMap(ctx context.Context, plans []
 	for _, row := range manualRows {
 		manualByGroup[row.GroupID] = row.SoldCount
 	}
-	for index, plan := range plans {
-		marketingOrder := plan.SortOrder
-		if marketingOrder <= 0 {
-			marketingOrder = index + 1
-		}
-		counts[int64(plan.ID)] += manualByGroup[plan.GroupID] + planMarketingBaseSoldCount(marketingOrder)
+	for _, plan := range plans {
+		counts[int64(plan.ID)] += manualByGroup[plan.GroupID] + plan.BaseSoldCount
 	}
 	return counts, nil
 }
 
-func planMarketingBaseSoldCount(sortOrder int) int {
-	switch sortOrder {
-	case 1:
-		return 11
-	case 2:
-		return 105
-	case 3:
-		return 56
-	case 4:
-		return 32
-	default:
-		return 0
-	}
-}
-
 func (s *PaymentConfigService) CreatePlan(ctx context.Context, req CreatePlanRequest) (*dbent.SubscriptionPlan, error) {
 	if err := validatePlanRequired(req.Name, req.GroupID, req.Price, req.ValidityDays, req.ValidityUnit, req.OriginalPrice); err != nil {
+		return nil, err
+	}
+	if err := validatePlanBaseSoldCount(req.BaseSoldCount); err != nil {
 		return nil, err
 	}
 	currency, err := normalizePlanCurrency(req.Currency)
@@ -219,7 +219,8 @@ func (s *PaymentConfigService) CreatePlan(ctx context.Context, req CreatePlanReq
 		SetGroupID(req.GroupID).SetName(req.Name).SetDescription(req.Description).
 		SetPrice(req.Price).SetCurrency(currency).SetValidityDays(req.ValidityDays).SetValidityUnit(req.ValidityUnit).
 		SetFeatures(req.Features).SetProductName(req.ProductName).
-		SetForSale(req.ForSale).SetRecommended(req.Recommended).SetSortOrder(req.SortOrder)
+		SetForSale(req.ForSale).SetRecommended(req.Recommended).SetSortOrder(req.SortOrder).
+		SetBaseSoldCount(req.BaseSoldCount)
 	if req.OriginalPrice != nil {
 		b.SetOriginalPrice(*req.OriginalPrice)
 	}
@@ -276,6 +277,9 @@ func (s *PaymentConfigService) UpdatePlan(ctx context.Context, id int64, req Upd
 	}
 	if req.SortOrder != nil {
 		u.SetSortOrder(*req.SortOrder)
+	}
+	if req.BaseSoldCount != nil {
+		u.SetBaseSoldCount(*req.BaseSoldCount)
 	}
 	return u.Save(ctx)
 }

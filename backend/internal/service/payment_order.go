@@ -69,7 +69,7 @@ func (s *PaymentService) CreateOrder(ctx context.Context, req CreateOrderRequest
 			return nil, err
 		}
 	}
-	payAmountStr, payAmount, err := calculateCreateOrderPayAmountForOrderType(limitAmount, feeRate, methodCurrency, req.OrderType, cfg.SubscriptionUSDToCNYRate)
+	payAmountStr, payAmount, err := calculateCreateOrderPayAmountForOrderType(limitAmount, feeRate, methodCurrency, req.OrderType, cfg.SubscriptionCNYToUSDMultiplier)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (s *PaymentService) CreateOrder(ctx context.Context, req CreateOrderRequest
 		selectedCurrency = paymentProviderConfigCurrency(sel.ProviderKey, sel.Config)
 	}
 	if selectedCurrency != methodCurrency {
-		payAmountStr, payAmount, err = calculateCreateOrderPayAmountForOrderType(limitAmount, feeRate, selectedCurrency, req.OrderType, cfg.SubscriptionUSDToCNYRate)
+		payAmountStr, payAmount, err = calculateCreateOrderPayAmountForOrderType(limitAmount, feeRate, selectedCurrency, req.OrderType, cfg.SubscriptionCNYToUSDMultiplier)
 		if err != nil {
 			return nil, err
 		}
@@ -643,24 +643,24 @@ func calculateCreateOrderPayAmount(limitAmount, feeRate float64, currency string
 	return payAmountStr, payAmount, nil
 }
 
-func calculateCreateOrderPayAmountForOrderType(limitAmount, feeRate float64, currency, orderType string, usdToCnyRate float64) (string, float64, error) {
+func calculateCreateOrderPayAmountForOrderType(limitAmount, feeRate float64, currency, orderType string, cnyToUsdMultiplier float64) (string, float64, error) {
 	paymentAmount := limitAmount
 	if orderType == payment.OrderTypeSubscription {
-		paymentAmount = calculateSubscriptionGatewayBaseAmount(limitAmount, usdToCnyRate, currency)
+		paymentAmount = calculateSubscriptionGatewayBaseAmount(limitAmount, cnyToUsdMultiplier, currency)
 	}
 	return calculateCreateOrderPayAmount(paymentAmount, feeRate, currency)
 }
 
 // calculateSubscriptionGatewayBaseAmount 计算订阅订单的网关扣款基数。
-// 换算是显式 opt-in：仅当管理员配置了订阅汇率（rate > 0，1 USD = rate CNY）
-// 且网关币种为 CNY 时，按 price × rate 换算；未配置时保持 price 直付的存量行为。
-func calculateSubscriptionGatewayBaseAmount(amount, usdToCnyRate float64, currency string) float64 {
-	rate := normalizeSubscriptionUSDToCNYRate(usdToCnyRate)
-	if rate <= 0 || currency != payment.DefaultPaymentCurrency {
+// 换算是显式 opt-in：仅当管理员配置了订阅计费倍率（1 CNY = X USD）
+// 且网关币种为 CNY 时，按计费价格除以倍率换算；未配置时保持 price 直付。
+func calculateSubscriptionGatewayBaseAmount(amount, cnyToUsdMultiplier float64, currency string) float64 {
+	multiplier := normalizeSubscriptionCNYToUSDMultiplier(cnyToUsdMultiplier)
+	if multiplier <= 0 || currency != payment.DefaultPaymentCurrency {
 		return amount
 	}
 	return decimal.NewFromFloat(amount).
-		Mul(decimal.NewFromFloat(rate)).
+		Div(decimal.NewFromFloat(multiplier)).
 		Round(int32(payment.CurrencyMaxFractionDigits(currency))).
 		InexactFloat64()
 }

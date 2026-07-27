@@ -61,7 +61,7 @@
           <template v-else>
             <div class="mb-7 flex flex-wrap items-center gap-3"><h2 class="text-lg font-bold text-gray-900 dark:text-white">{{ t('payment.selectPlan') }}</h2><span class="text-xs text-[#718096]">{{ t('payment.selectPlanHint') }}</span></div>
             <div v-if="checkout.plans.length === 0" class="rounded-lg bg-white py-16 text-center dark:bg-dark-800"><Icon name="gift" size="xl" class="mx-auto mb-3 text-gray-300" /><p class="text-gray-500">{{ t('payment.noPlans') }}</p></div>
-            <div v-else :class="planGridClass"><SubscriptionPlanCard v-for="plan in checkout.plans" :key="plan.id" :plan="plan" :active-subscriptions="activeSubscriptions" @select="selectPlan" /></div>
+            <div v-else :class="planGridClass"><SubscriptionPlanCard v-for="plan in checkout.plans" :key="plan.id" :plan="plan" :active-subscriptions="activeSubscriptions" :subscription-multiplier="subscriptionCnyToUsdMultiplier" @select="selectPlan" /></div>
             <div v-if="activeSubscriptions.length" class="mt-7"><p class="mb-3 px-2 text-[15px] font-bold text-gray-900 dark:text-white">{{ t('payment.activeSubscription') }}</p><div class="space-y-2"><div v-for="sub in activeSubscriptions" :key="sub.id" class="flex min-h-[72px] items-center gap-3 rounded-lg border border-[#e3e8eb] border-l-4 border-l-[#0fad76] bg-white px-5 py-3 shadow-[0_8px_28px_rgba(28,55,64,0.05)] dark:border-dark-700 dark:border-l-emerald-500 dark:bg-dark-800"><div class="min-w-0 flex-1"><div class="flex items-center gap-2"><span class="truncate text-sm font-bold text-gray-900 dark:text-white">{{ sub.group?.name || t('payment.groupFallback', { id: sub.group_id }) }}</span><span :class="['shrink-0 rounded px-2 py-1 text-[10px] font-semibold', platformBadgeLightClass(sub.group?.platform || '')]">{{ platformLabel(sub.group?.platform || '') }}</span></div><div class="mt-1 flex flex-wrap gap-x-3 text-[11px] text-[#687386]"><span>{{ t('payment.planCard.rate') }}: ×{{ sub.group?.rate_multiplier ?? 1 }}</span><span v-if="subscriptionHasPeakRate(sub)">{{ t('payment.planCard.peakRate') }}: {{ subscriptionPeakRateLabel(sub) }}</span><span v-if="sub.expires_at" class="font-bold text-[#07885b]">{{ t('userSubscriptions.daysRemaining', { days: getDaysRemaining(sub.expires_at) }) }}</span><span v-else>{{ t('userSubscriptions.noExpiration') }}</span></div></div><span class="shrink-0 rounded-full bg-[#dff5e9] px-3 py-1.5 text-[10px] font-bold text-[#07885b]">{{ t('userSubscriptions.status.active') }}</span></div></div></div>
           </template>
         </div>
@@ -86,7 +86,7 @@
             </button>
             <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{{ t('payment.selectPlan') }}</h3>
             <div class="space-y-4">
-              <SubscriptionPlanCard v-for="plan in renewalPlans" :key="plan.id" :plan="plan" :active-subscriptions="activeSubscriptions" @select="selectPlanFromModal" />
+              <SubscriptionPlanCard v-for="plan in renewalPlans" :key="plan.id" :plan="plan" :active-subscriptions="activeSubscriptions" :subscription-multiplier="subscriptionCnyToUsdMultiplier" @select="selectPlanFromModal" />
             </div>
           </div>
         </div>
@@ -360,7 +360,7 @@ function onPaymentSettled() {
 // All checkout data from single API call
 const checkout = ref<CheckoutInfoResponse>({
   methods: {}, global_min: 0, global_max: 0,
-  plans: [], balance_disabled: false, balance_recharge_multiplier: 1, subscription_usd_to_cny_rate: 0, recharge_fee_rate: 0, help_text: '', help_image_url: '', stripe_publishable_key: '',
+  plans: [], balance_disabled: false, balance_recharge_multiplier: 1, subscription_cny_to_usd_multiplier: 0, recharge_fee_rate: 0, help_text: '', help_image_url: '', stripe_publishable_key: '',
 })
 
 const tabs = computed(() => {
@@ -398,10 +398,10 @@ const balanceRechargeMultiplier = computed(() => {
   const multiplier = checkout.value.balance_recharge_multiplier
   return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1
 })
-// 订阅 CNY 换算汇率（1 USD = X CNY）。0 = 未配置，订阅保持 price 直付（与后端 opt-in 条件严格镜像）。
-const subscriptionUsdToCnyRate = computed(() => {
-  const rate = checkout.value.subscription_usd_to_cny_rate
-  return Number.isFinite(rate) && rate > 0 ? rate : 0
+// 订阅计费倍率（1 CNY = X USD）。0 = 未配置，订阅保持 price 直付。
+const subscriptionCnyToUsdMultiplier = computed(() => {
+  const multiplier = checkout.value.subscription_cny_to_usd_multiplier
+  return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 0
 })
 const creditedAmount = computed(() => Math.round((validAmount.value * balanceRechargeMultiplier.value) * 100) / 100)
 
@@ -474,9 +474,9 @@ function ceilPaymentAmount(value: number, currency: string): number {
 }
 
 function subscriptionPaymentAmountForCurrency(value: number, currency: string): number {
-  const rate = subscriptionUsdToCnyRate.value
-  if (rate <= 0 || currency !== DEFAULT_PAYMENT_CURRENCY) return roundPaymentAmount(value, currency)
-  return roundPaymentAmount(value * rate, currency)
+  const multiplier = subscriptionCnyToUsdMultiplier.value
+  if (multiplier <= 0 || currency !== DEFAULT_PAYMENT_CURRENCY) return roundPaymentAmount(value, currency)
+  return roundPaymentAmount(value / multiplier, currency)
 }
 
 function formatSelectedPaymentAmount(value: number): string {

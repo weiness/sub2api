@@ -180,6 +180,20 @@ func (_c *SubscriptionPlanCreate) SetNillableSortOrder(v *int) *SubscriptionPlan
 	return _c
 }
 
+// SetBaseSoldCount sets the "base_sold_count" field.
+func (_c *SubscriptionPlanCreate) SetBaseSoldCount(v int) *SubscriptionPlanCreate {
+	_c.mutation.SetBaseSoldCount(v)
+	return _c
+}
+
+// SetNillableBaseSoldCount sets the "base_sold_count" field if the given value is not nil.
+func (_c *SubscriptionPlanCreate) SetNillableBaseSoldCount(v *int) *SubscriptionPlanCreate {
+	if v != nil {
+		_c.SetBaseSoldCount(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *SubscriptionPlanCreate) SetCreatedAt(v time.Time) *SubscriptionPlanCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -279,6 +293,10 @@ func (_c *SubscriptionPlanCreate) defaults() {
 		v := subscriptionplan.DefaultSortOrder
 		_c.mutation.SetSortOrder(v)
 	}
+	if _, ok := _c.mutation.BaseSoldCount(); !ok {
+		v := subscriptionplan.DefaultBaseSoldCount
+		_c.mutation.SetBaseSoldCount(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := subscriptionplan.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -346,6 +364,14 @@ func (_c *SubscriptionPlanCreate) check() error {
 	}
 	if _, ok := _c.mutation.SortOrder(); !ok {
 		return &ValidationError{Name: "sort_order", err: errors.New(`ent: missing required field "SubscriptionPlan.sort_order"`)}
+	}
+	if _, ok := _c.mutation.BaseSoldCount(); !ok {
+		return &ValidationError{Name: "base_sold_count", err: errors.New(`ent: missing required field "SubscriptionPlan.base_sold_count"`)}
+	}
+	if v, ok := _c.mutation.BaseSoldCount(); ok {
+		if err := subscriptionplan.BaseSoldCountValidator(v); err != nil {
+			return &ValidationError{Name: "base_sold_count", err: fmt.Errorf(`ent: validator failed for field "SubscriptionPlan.base_sold_count": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "SubscriptionPlan.created_at"`)}
@@ -431,6 +457,10 @@ func (_c *SubscriptionPlanCreate) createSpec() (*SubscriptionPlan, *sqlgraph.Cre
 	if value, ok := _c.mutation.SortOrder(); ok {
 		_spec.SetField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
 		_node.SortOrder = value
+	}
+	if value, ok := _c.mutation.BaseSoldCount(); ok {
+		_spec.SetField(subscriptionplan.FieldBaseSoldCount, field.TypeInt, value)
+		_node.BaseSoldCount = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(subscriptionplan.FieldCreatedAt, field.TypeTime, value)
@@ -681,6 +711,24 @@ func (u *SubscriptionPlanUpsert) UpdateSortOrder() *SubscriptionPlanUpsert {
 // AddSortOrder adds v to the "sort_order" field.
 func (u *SubscriptionPlanUpsert) AddSortOrder(v int) *SubscriptionPlanUpsert {
 	u.Add(subscriptionplan.FieldSortOrder, v)
+	return u
+}
+
+// SetBaseSoldCount sets the "base_sold_count" field.
+func (u *SubscriptionPlanUpsert) SetBaseSoldCount(v int) *SubscriptionPlanUpsert {
+	u.Set(subscriptionplan.FieldBaseSoldCount, v)
+	return u
+}
+
+// UpdateBaseSoldCount sets the "base_sold_count" field to the value that was provided on create.
+func (u *SubscriptionPlanUpsert) UpdateBaseSoldCount() *SubscriptionPlanUpsert {
+	u.SetExcluded(subscriptionplan.FieldBaseSoldCount)
+	return u
+}
+
+// AddBaseSoldCount adds v to the "base_sold_count" field.
+func (u *SubscriptionPlanUpsert) AddBaseSoldCount(v int) *SubscriptionPlanUpsert {
+	u.Add(subscriptionplan.FieldBaseSoldCount, v)
 	return u
 }
 
@@ -962,6 +1010,27 @@ func (u *SubscriptionPlanUpsertOne) AddSortOrder(v int) *SubscriptionPlanUpsertO
 func (u *SubscriptionPlanUpsertOne) UpdateSortOrder() *SubscriptionPlanUpsertOne {
 	return u.Update(func(s *SubscriptionPlanUpsert) {
 		s.UpdateSortOrder()
+	})
+}
+
+// SetBaseSoldCount sets the "base_sold_count" field.
+func (u *SubscriptionPlanUpsertOne) SetBaseSoldCount(v int) *SubscriptionPlanUpsertOne {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.SetBaseSoldCount(v)
+	})
+}
+
+// AddBaseSoldCount adds v to the "base_sold_count" field.
+func (u *SubscriptionPlanUpsertOne) AddBaseSoldCount(v int) *SubscriptionPlanUpsertOne {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.AddBaseSoldCount(v)
+	})
+}
+
+// UpdateBaseSoldCount sets the "base_sold_count" field to the value that was provided on create.
+func (u *SubscriptionPlanUpsertOne) UpdateBaseSoldCount() *SubscriptionPlanUpsertOne {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.UpdateBaseSoldCount()
 	})
 }
 
@@ -1411,6 +1480,27 @@ func (u *SubscriptionPlanUpsertBulk) AddSortOrder(v int) *SubscriptionPlanUpsert
 func (u *SubscriptionPlanUpsertBulk) UpdateSortOrder() *SubscriptionPlanUpsertBulk {
 	return u.Update(func(s *SubscriptionPlanUpsert) {
 		s.UpdateSortOrder()
+	})
+}
+
+// SetBaseSoldCount sets the "base_sold_count" field.
+func (u *SubscriptionPlanUpsertBulk) SetBaseSoldCount(v int) *SubscriptionPlanUpsertBulk {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.SetBaseSoldCount(v)
+	})
+}
+
+// AddBaseSoldCount adds v to the "base_sold_count" field.
+func (u *SubscriptionPlanUpsertBulk) AddBaseSoldCount(v int) *SubscriptionPlanUpsertBulk {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.AddBaseSoldCount(v)
+	})
+}
+
+// UpdateBaseSoldCount sets the "base_sold_count" field to the value that was provided on create.
+func (u *SubscriptionPlanUpsertBulk) UpdateBaseSoldCount() *SubscriptionPlanUpsertBulk {
+	return u.Update(func(s *SubscriptionPlanUpsert) {
+		s.UpdateBaseSoldCount()
 	})
 }
 

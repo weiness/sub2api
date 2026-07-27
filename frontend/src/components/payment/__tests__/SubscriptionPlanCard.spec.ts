@@ -31,7 +31,7 @@ const i18n = createI18n({
   },
 });
 
-const mountPlanCard = (groupPlatform: string, overrides: Partial<SubscriptionPlan> = {}) =>
+const mountPlanCard = (groupPlatform: string, overrides: Partial<SubscriptionPlan> = {}, subscriptionMultiplier = 0) =>
   mount(SubscriptionPlanCard, {
     props: {
       plan: {
@@ -51,6 +51,7 @@ const mountPlanCard = (groupPlatform: string, overrides: Partial<SubscriptionPla
         sold_count: 0,
         ...overrides,
       },
+      subscriptionMultiplier,
     },
     global: { plugins: [i18n, createPinia()] },
   });
@@ -98,6 +99,16 @@ describe("SubscriptionPlanCard", () => {
     });
 
     expect(wrapper.find('[data-test="plan-discount"]').attributes('data-discount-percent')).toBe("51");
+  });
+
+  it("displays customer-paid CNY prices without mutating billing prices", () => {
+    const plan = { price: 100, original_price: 200 };
+    const wrapper = mountPlanCard("openai", plan, 10);
+
+    expect(wrapper.find('[data-test="plan-price"]').text()).toBe('10.00');
+    expect(wrapper.text()).toContain('¥10.00CNY');
+    expect(wrapper.text()).toContain('¥20.00CNY');
+    expect(plan).toEqual({ price: 100, original_price: 200 });
   });
 
   it("keeps peak-rate details out of the compact catalog card", () => {

@@ -604,10 +604,12 @@ export default {
         balanceRechargeMultiplier: 'Balance Recharge Multiplier',
         balanceRechargeMultiplierHint: 'How many USD balance the user receives for each 1 CNY paid',
         balanceRechargePreview: 'Preview: 1 CNY = {usd} USD',
-        subscriptionUsdToCnyRate: 'Subscription USD to CNY Rate',
-        subscriptionUsdToCnyRateHint:
-          'CNY charged per 1 USD of plan price on CNY channels (e.g. 7.15). 0 or empty = disabled, plan price is charged as-is. When enabled, all plan prices must be set in USD',
-        subscriptionUsdToCnyRateDisabled: 'Disabled (price charged as-is)',
+        subscriptionCnyToUsdMultiplier: 'Subscription Billing Multiplier',
+        subscriptionCnyToUsdMultiplierHint:
+          'For CNY payment channels, the USD billing price represented by each 1 CNY paid. Enter the customer-paid CNY amount on the plan form; the system stores its USD billing value and uses that value for affiliate rebates.',
+        subscriptionCnyToUsdMultiplierDisabled: 'Disabled (price charged as-is)',
+        subscriptionCnyToUsdMultiplierPreview: 'Preview: 1 CNY = {usd} USD billing price',
+        subscriptionCnyToUsdMultiplierExample: 'Customer pays ¥10.00; stored billing price is ${billing}',
         rechargeFeeRate: 'Recharge Fee Rate',
         rechargeFeeRateHint: 'Percentage of service fee charged on top of recharge amount, 0 means no fee',
         rechargeFeePreview: 'Preview: Recharge 100, fee {fee}',

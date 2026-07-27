@@ -103,6 +103,18 @@ func TestValidatePlanRequired_ValidOriginalPrice(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestValidatePlanBaseSoldCount(t *testing.T) {
+	require.NoError(t, validatePlanBaseSoldCount(0))
+	require.NoError(t, validatePlanBaseSoldCount(4))
+	require.Error(t, validatePlanBaseSoldCount(-1))
+}
+
+func TestValidatePlanPatch_NegativeBaseSoldCount(t *testing.T) {
+	err := validatePlanPatch(UpdatePlanRequest{BaseSoldCount: ptrInt(-1)})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "base sold count")
+}
+
 // --- validatePlanPatch tests ---
 
 func TestValidatePlanPatch_NegativeOriginalPrice(t *testing.T) {

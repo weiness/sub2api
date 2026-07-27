@@ -1887,12 +1887,18 @@ func init() {
 	subscriptionplanDescSortOrder := subscriptionplanFields[12].Descriptor()
 	// subscriptionplan.DefaultSortOrder holds the default value on creation for the sort_order field.
 	subscriptionplan.DefaultSortOrder = subscriptionplanDescSortOrder.Default.(int)
+	// subscriptionplanDescBaseSoldCount is the schema descriptor for base_sold_count field.
+	subscriptionplanDescBaseSoldCount := subscriptionplanFields[13].Descriptor()
+	// subscriptionplan.DefaultBaseSoldCount holds the default value on creation for the base_sold_count field.
+	subscriptionplan.DefaultBaseSoldCount = subscriptionplanDescBaseSoldCount.Default.(int)
+	// subscriptionplan.BaseSoldCountValidator is a validator for the base_sold_count field. It is called by the builders before save.
+	subscriptionplan.BaseSoldCountValidator = subscriptionplanDescBaseSoldCount.Validators[0].(func(int) error)
 	// subscriptionplanDescCreatedAt is the schema descriptor for created_at field.
-	subscriptionplanDescCreatedAt := subscriptionplanFields[13].Descriptor()
+	subscriptionplanDescCreatedAt := subscriptionplanFields[14].Descriptor()
 	// subscriptionplan.DefaultCreatedAt holds the default value on creation for the created_at field.
 	subscriptionplan.DefaultCreatedAt = subscriptionplanDescCreatedAt.Default.(func() time.Time)
 	// subscriptionplanDescUpdatedAt is the schema descriptor for updated_at field.
-	subscriptionplanDescUpdatedAt := subscriptionplanFields[14].Descriptor()
+	subscriptionplanDescUpdatedAt := subscriptionplanFields[15].Descriptor()
 	// subscriptionplan.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	subscriptionplan.DefaultUpdatedAt = subscriptionplanDescUpdatedAt.Default.(func() time.Time)
 	// subscriptionplan.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

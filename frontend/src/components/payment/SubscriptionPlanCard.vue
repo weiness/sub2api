@@ -17,15 +17,15 @@
     <div v-else class="mb-5 mt-2 min-h-8" />
 
     <div :class="['flex min-w-0 items-end gap-1', plan.recommended ? 'pr-12' : '']">
-      <span class="pb-1 text-sm text-gray-500 dark:text-gray-400">{{ planCurrencySymbol }}</span>
-      <span data-test="plan-price" :class="['font-extrabold leading-none tabular-nums', priceSizeClass, textClass]">{{ plan.price }}</span>
-      <span v-if="plan.currency" class="pb-1 text-xs text-gray-500 dark:text-gray-400">{{ plan.currency }}</span>
+      <span class="pb-1 text-sm text-gray-500 dark:text-gray-400">{{ displayCurrencySymbol }}</span>
+      <span data-test="plan-price" :class="['font-extrabold leading-none tabular-nums', priceSizeClass, textClass]">{{ displayPriceText }}</span>
+      <span class="pb-1 text-xs text-gray-500 dark:text-gray-400">{{ displayCurrency }}</span>
       <span data-test="plan-validity" class="whitespace-nowrap pb-1 text-xs text-gray-400 dark:text-dark-500">/ {{ validitySuffix }}</span>
       <span v-if="plan.recommended" data-test="recommended-badge" class="subscription-recommend-badge">{{ t('payment.recommended') }}</span>
     </div>
 
     <div v-if="plan.original_price" class="mt-2 flex min-h-6 items-center gap-2 text-xs">
-      <span class="text-gray-400 line-through dark:text-dark-500">{{ planCurrencySymbol }}{{ plan.original_price }}<template v-if="plan.currency"> {{ plan.currency }}</template></span>
+      <span class="text-gray-400 line-through dark:text-dark-500">{{ displayCurrencySymbol }}{{ displayOriginalPriceText }}{{ displayCurrency }}</span>
       <span v-if="discountPercent" data-test="plan-discount" :data-discount-percent="discountPercent" class="rounded bg-orange-50 px-1.5 py-0.5 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
         {{ t('payment.planCard.savePercent', { percent: discountPercent }) }}
       </span>
@@ -77,7 +77,7 @@ import { planValiditySuffix } from './validity'
 import { currencySymbol } from './currency'
 import { platformBadgeLightClass, platformTextClass, platformButtonClass, platformLabel } from '@/utils/platformColors'
 
-const props = defineProps<{ plan: SubscriptionPlan; activeSubscriptions?: UserSubscription[] }>()
+const props = defineProps<{ plan: SubscriptionPlan; activeSubscriptions?: UserSubscription[]; subscriptionMultiplier?: number }>()
 const emit = defineEmits<{ select: [plan: SubscriptionPlan] }>()
 const { t } = useI18n()
 const platform = computed(() => props.plan.group_platform || '')
@@ -87,10 +87,16 @@ const textClass = computed(() => platformTextClass(platform.value))
 const btnClass = computed(() => platformButtonClass(platform.value))
 const pLabel = computed(() => platformLabel(platform.value))
 const discountPercent = computed(() => !props.plan.original_price || props.plan.original_price <= props.plan.price ? 0 : Math.round((1 - props.plan.price / props.plan.original_price) * 100))
-const planCurrencySymbol = computed(() => currencySymbol(props.plan.currency || 'USD'))
+const multiplier = computed(() => Number.isFinite(props.subscriptionMultiplier) && Number(props.subscriptionMultiplier) > 0 ? Number(props.subscriptionMultiplier) : 0)
+const displayCurrency = computed(() => multiplier.value > 0 ? 'CNY' : props.plan.currency || 'USD')
+const displayCurrencySymbol = computed(() => currencySymbol(displayCurrency.value))
+const displayPrice = computed(() => multiplier.value > 0 ? props.plan.price / multiplier.value : props.plan.price)
+const displayOriginalPrice = computed(() => multiplier.value > 0 ? (props.plan.original_price || 0) / multiplier.value : props.plan.original_price || 0)
+const displayPriceText = computed(() => multiplier.value > 0 ? displayPrice.value.toFixed(2) : String(displayPrice.value))
+const displayOriginalPriceText = computed(() => multiplier.value > 0 ? displayOriginalPrice.value.toFixed(2) : String(displayOriginalPrice.value))
 const validitySuffix = computed(() => planValiditySuffix(props.plan, t))
 const modelScopeLabels = computed(() => platform.value !== 'antigravity' ? [] : (props.plan.supported_model_scopes || []).map(s => ({ claude: 'Claude', gemini_text: 'Gemini', gemini_image: 'Imagen' })[s] || s))
-const priceSizeClass = computed(() => String(props.plan.price).replace('.', '').length >= 5 ? 'text-[26px]' : 'text-[30px]')
+const priceSizeClass = computed(() => displayPriceText.value.replace('.', '').length >= 5 ? 'text-[26px]' : 'text-[30px]')
 </script>
 
 <style scoped>

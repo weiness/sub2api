@@ -39,6 +39,8 @@ const (
 	FieldRecommended = "recommended"
 	// FieldSortOrder holds the string denoting the sort_order field in the database.
 	FieldSortOrder = "sort_order"
+	// FieldBaseSoldCount holds the string denoting the base_sold_count field in the database.
+	FieldBaseSoldCount = "base_sold_count"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -63,6 +65,7 @@ var Columns = []string{
 	FieldForSale,
 	FieldRecommended,
 	FieldSortOrder,
+	FieldBaseSoldCount,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -104,6 +107,10 @@ var (
 	DefaultRecommended bool
 	// DefaultSortOrder holds the default value on creation for the "sort_order" field.
 	DefaultSortOrder int
+	// DefaultBaseSoldCount holds the default value on creation for the "base_sold_count" field.
+	DefaultBaseSoldCount int
+	// BaseSoldCountValidator is a validator for the "base_sold_count" field. It is called by the builders before save.
+	BaseSoldCountValidator func(int) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -183,6 +190,11 @@ func ByRecommended(opts ...sql.OrderTermOption) OrderOption {
 // BySortOrder orders the results by the sort_order field.
 func BySortOrder(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSortOrder, opts...).ToFunc()
+}
+
+// ByBaseSoldCount orders the results by the base_sold_count field.
+func ByBaseSoldCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBaseSoldCount, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

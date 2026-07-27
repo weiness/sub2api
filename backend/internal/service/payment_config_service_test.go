@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 
@@ -235,6 +236,61 @@ func TestParsePaymentConfig(t *testing.T) {
 			t.Fatalf("expected empty EnabledTypes for empty string, got %v", cfg.EnabledTypes)
 		}
 	})
+}
+
+func TestPaymentConfigSubscriptionCNYToUSDMultiplier(t *testing.T) {
+	t.Parallel()
+
+	svc := &PaymentConfigService{}
+	if got := svc.parsePaymentConfig(map[string]string{SettingSubscriptionCNYToUSDMultiplier: "10"}).SubscriptionCNYToUSDMultiplier; got != 10 {
+		t.Fatalf("SubscriptionCNYToUSDMultiplier = %v, want 10", got)
+	}
+	if got := svc.parsePaymentConfig(map[string]string{SettingSubscriptionCNYToUSDMultiplier: "0"}).SubscriptionCNYToUSDMultiplier; got != 0 {
+		t.Fatalf("disabled SubscriptionCNYToUSDMultiplier = %v, want 0", got)
+	}
+	if got := svc.parsePaymentConfig(map[string]string{"SUBSCRIPTION_USD_TO_CNY_RATE": "0.1"}).SubscriptionCNYToUSDMultiplier; got != 0 {
+		t.Fatalf("legacy setting must not be read, got %v", got)
+	}
+}
+
+func TestUpdatePaymentConfigValidatesSubscriptionCNYToUSDMultiplier(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		value   float64
+		wantErr bool
+	}{
+		{name: "enabled", value: 10},
+		{name: "disabled", value: 0},
+		{name: "negative", value: -1, wantErr: true},
+		{name: "nan", value: math.NaN(), wantErr: true},
+		{name: "positive infinity", value: math.Inf(1), wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &paymentConfigSettingRepoStub{values: map[string]string{}}
+			svc := &PaymentConfigService{settingRepo: repo}
+			err := svc.UpdatePaymentConfig(context.Background(), UpdatePaymentConfigRequest{SubscriptionCNYToUSDMultiplier: &tt.value})
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected validation error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("UpdatePaymentConfig returned error: %v", err)
+			}
+			want := "10"
+			if tt.value == 0 {
+				want = ""
+			}
+			if got := repo.values[SettingSubscriptionCNYToUSDMultiplier]; got != want {
+				t.Fatalf("stored multiplier = %q, want %q", got, want)
+			}
+		})
+	}
 }
 
 func TestGetMinimumActiveGroupRateMultiplier(t *testing.T) {
