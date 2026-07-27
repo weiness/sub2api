@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>阅读状态图标候选预览</title>
+  <link rel="stylesheet" href="../themes/default.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); }
+    button { font: inherit; }
+    .page { width: min(1040px, calc(100% - 32px)); margin: 0 auto; padding: 52px 0 80px; transition: max-width .2s ease; }
+    header { margin-bottom: 28px; }
+    h1 { margin: 0 0 10px; font-size: 26px; }
+    header p { max-width: 720px; margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.7; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .candidate {
+      display: flex; min-height: 178px; flex-direction: column; align-items: center; justify-content: center;
+      border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-surface);
+      padding: 22px; cursor: pointer; box-shadow: 0 1px 2px rgba(15,23,42,.04); transition: all .16s ease;
+    }
+    .candidate:hover, .candidate.selected { border-color: #93c5fd; box-shadow: 0 12px 30px rgba(37,99,235,.12); transform: translateY(-2px); }
+    .candidate.selected { background: #f8fbff; }
+    .icon-button {
+      display: grid; width: 46px; height: 46px; margin-bottom: 14px; place-items: center;
+      border: 0; border-radius: 11px; background: transparent; color: #6b7280; transition: all .16s ease;
+    }
+    .candidate:hover .icon-button, .candidate.selected .icon-button { background: #eff6ff; color: var(--color-primary); }
+    svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    .name { margin-bottom: 5px; font-size: 14px; font-weight: 650; }
+    .meaning { color: #6b7280; font-size: 12px; text-align: center; }
+    .tag { margin-top: 11px; border-radius: 999px; background: #f3f4f6; padding: 4px 8px; color: #6b7280; font: 11px ui-monospace, monospace; }
+    .candidate.recommended .tag { background: #dbeafe; color: #1d4ed8; }
+    .detail {
+      display: none; align-items: center; gap: 18px; margin-top: 22px; border: 1px solid #bfdbfe;
+      border-radius: 14px; background: #eff6ff; padding: 18px 20px; color: #1e3a8a;
+    }
+    .detail.show { display: flex; animation: enter .18s ease; }
+    .detail-icon { display: grid; width: 52px; height: 52px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: white; color: var(--color-primary); }
+    .detail-icon svg { width: 27px; height: 27px; }
+    .detail strong { display: block; margin-bottom: 5px; }
+    .detail p { margin: 0; font-size: 13px; line-height: 1.6; }
+    #sketch-tools { position: fixed; right: 12px; bottom: 12px; z-index: 99; border-radius: 8px; background: rgba(0,0,0,.75); padding: 8px 10px; color: white; font: 12px system-ui; opacity: .45; transition: opacity .2s; }
+    #sketch-tools:hover { opacity: 1; }
+    #sketch-tools button { border: 0; border-radius: 4px; margin-left: 4px; padding: 3px 6px; cursor: pointer; }
+    @keyframes enter { from { opacity: 0; transform: translateY(5px); } }
+    @media (max-width: 760px) { .grid { grid-template-columns: repeat(2, minmax(0,1fr)); } .page { padding-top: 28px; } }
+    @media (max-width: 440px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="page" id="viewport">
+    <header>
+      <h1>“查看阅读状态”图标候选</h1>
+      <p>这里只展示尚未确定的阅读状态图标。点击任意候选可以高亮并查看语义说明；图标均来自项目现有的 <code>Icon.vue</code>。</p>
+    </header>
+
+    <section class="grid">
+      <article class="candidate recommended" data-name="Users" data-copy="强调查看已读和未读的具体用户，与阅读状态弹窗中的用户明细最匹配。">
+        <div class="icon-button"><svg viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
+        <div class="name">用户组</div><div class="meaning">查看阅读用户明细</div><span class="tag">users · 推荐</span>
+      </article>
+
+      <article class="candidate" data-name="Chart Bar" data-copy="经典柱状统计图，最容易理解成阅读数据或阅读率统计，适合已读/未读数量视角。">
+        <div class="icon-button"><svg viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+        <div class="name">柱状统计</div><div class="meaning">查看阅读数据统计</div><span class="tag">chartBar</span>
+      </article>
+
+      <article class="candidate" data-name="Chart" data-copy="三根独立柱子的统计图，轮廓更规整，但同样偏向汇总统计而不是用户列表。">
+        <div class="icon-button"><svg viewBox="0 0 24 24"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25A1.125 1.125 0 0116.5 19.875V4.125z"/></svg></div>
+        <div class="name">独立柱状图</div><div class="meaning">查看阅读量统计</div><span class="tag">chart</span>
+      </article>
+
+      <article class="candidate" data-name="Check Circle" data-copy="直接表达已读或完成，但可能被误认为公告已启用、审核通过或操作成功。">
+        <div class="icon-button"><svg viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+        <div class="name">圆形勾选</div><div class="meaning">查看已读状态</div><span class="tag">checkCircle</span>
+      </article>
+
+      <article class="candidate" data-name="Clipboard" data-copy="可以理解为阅读记录或名单，但也容易被理解为复制、任务清单或审计记录。">
+        <div class="icon-button"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
+        <div class="name">阅读记录</div><div class="meaning">查看阅读记录列表</div><span class="tag">clipboard</span>
+      </article>
+
+      <article class="candidate" data-name="Document" data-copy="强调公告对应的阅读记录文档，语义温和，但对“已读/未读”的表达不够直接。">
+        <div class="icon-button"><svg viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+        <div class="name">状态文档</div><div class="meaning">查看公告阅读记录</div><span class="tag">document</span>
+      </article>
+    </section>
+
+    <section class="detail" id="detail">
+      <div class="detail-icon" id="detail-icon"></div>
+      <div><strong id="detail-name"></strong><p id="detail-copy"></p></div>
+    </section>
+  </main>
+
+  <div id="sketch-tools">视口 <button onclick="setWidth('375px')">手机</button><button onclick="setWidth('768px')">平板</button><button onclick="setWidth('1040px')">桌面</button></div>
+  <script>
+    document.querySelectorAll('.candidate').forEach(card => card.addEventListener('click', () => {
+      document.querySelectorAll('.candidate').forEach(item => item.classList.remove('selected'));
+      card.classList.add('selected');
+      document.getElementById('detail-icon').innerHTML = card.querySelector('svg').outerHTML;
+      document.getElementById('detail-name').textContent = card.dataset.name;
+      document.getElementById('detail-copy').textContent = card.dataset.copy;
+      document.getElementById('detail').classList.add('show');
+    }));
+    function setWidth(width) { document.getElementById('viewport').style.maxWidth = width; }
+  </script>
+</body>
+</html>
