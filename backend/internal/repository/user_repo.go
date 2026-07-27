@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,6 +81,9 @@ func (r *userRepository) create(ctx context.Context, userIn *service.User, guard
 	}
 
 	lockKeys := []string{normalizedEmailUniquenessLockKey(userIn.Email)}
+	if registrationIPLimitEnabled(userIn) {
+		lockKeys = append(lockKeys, "registration-ip:"+userIn.RegistrationIP)
+	}
 	if guardEmailAlias {
 		// 别名变体的字面量不同，唯一索引无法兜底；用收件箱身份锁把同一收件箱的并发注册串行化。
 		lockKeys = append(lockKeys, emailAliasUniquenessLockKey(userIn.Email))
@@ -94,6 +98,10 @@ func (r *userRepository) create(ctx context.Context, userIn *service.User, guard
 		return err
 	}
 	defer releaseEmailLock()
+
+	if err := enforceRegistrationIPLimit(txCtx, txClient, userIn); err != nil {
+		return err
+	}
 
 	if err := ensureNormalizedEmailAvailableWithClient(txCtx, txClient, 0, userIn.Email); err != nil {
 		return err
@@ -119,6 +127,7 @@ func (r *userRepository) create(ctx context.Context, userIn *service.User, guard
 		SetConcurrency(userIn.Concurrency).
 		SetStatus(userIn.Status).
 		SetSignupSource(userSignupSourceOrDefault(userIn.SignupSource)).
+		SetRegistrationIP(userIn.RegistrationIP).
 		SetNillableLastLoginAt(userIn.LastLoginAt).
 		SetNillableLastActiveAt(userIn.LastActiveAt).
 		SetRpmLimit(userIn.RPMLimit).
@@ -1215,10 +1224,65 @@ func applyUserEntityToService(dst *service.User, src *dbent.User) {
 	}
 	dst.ID = src.ID
 	dst.SignupSource = src.SignupSource
+	dst.RegistrationIP = src.RegistrationIP
 	dst.LastLoginAt = src.LastLoginAt
 	dst.LastActiveAt = src.LastActiveAt
 	dst.CreatedAt = src.CreatedAt
 	dst.UpdatedAt = src.UpdatedAt
+}
+
+func registrationIPLimitEnabled(user *service.User) bool {
+	if user == nil || strings.TrimSpace(user.RegistrationIP) == "" {
+		return false
+	}
+	limits := user.RegistrationIPLimits
+	return limits.Daily > 0 || limits.Weekly > 0 || limits.Monthly > 0
+}
+
+func enforceRegistrationIPLimit(ctx context.Context, client *dbent.Client, user *service.User) error {
+	if !registrationIPLimitEnabled(user) {
+		return nil
+	}
+
+	now := user.RegistrationIPLimits.Now
+	if now.IsZero() {
+		now = time.Now()
+	}
+	localNow := now.In(time.Local)
+	dayStart := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, time.Local)
+	weekdayOffset := (int(localNow.Weekday()) + 6) % 7
+	weekStart := dayStart.AddDate(0, 0, -weekdayOffset)
+	monthStart := time.Date(localNow.Year(), localNow.Month(), 1, 0, 0, 0, 0, time.Local)
+
+	checks := []struct {
+		window string
+		limit  int
+		start  time.Time
+	}{
+		{window: "day", limit: user.RegistrationIPLimits.Daily, start: dayStart},
+		{window: "week", limit: user.RegistrationIPLimits.Weekly, start: weekStart},
+		{window: "month", limit: user.RegistrationIPLimits.Monthly, start: monthStart},
+	}
+	queryCtx := mixins.SkipSoftDelete(ctx)
+	for _, check := range checks {
+		if check.limit <= 0 {
+			continue
+		}
+		count, err := client.User.Query().Where(
+			dbuser.RegistrationIPEQ(user.RegistrationIP),
+			dbuser.CreatedAtGTE(check.start.UTC()),
+		).Count(queryCtx)
+		if err != nil {
+			return err
+		}
+		if count >= check.limit {
+			return service.ErrRegistrationIPLimitExceeded.WithMetadata(map[string]string{
+				"window": check.window,
+				"limit":  strconv.Itoa(check.limit),
+			})
+		}
+	}
+	return nil
 }
 
 func userSignupSourceOrDefault(signupSource string) string {

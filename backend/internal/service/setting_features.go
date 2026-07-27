@@ -41,6 +41,22 @@ func (s *SettingService) GetRegistrationEmailSuffixWhitelist(ctx context.Context
 	return ParseRegistrationEmailSuffixWhitelist(value)
 }
 
+func (s *SettingService) GetRegistrationIPLimits(ctx context.Context) RegistrationIPLimits {
+	return RegistrationIPLimits{
+		Daily:   s.getNonNegativeIntSetting(ctx, SettingKeyRegistrationIPDailyLimit),
+		Weekly:  s.getNonNegativeIntSetting(ctx, SettingKeyRegistrationIPWeeklyLimit),
+		Monthly: s.getNonNegativeIntSetting(ctx, SettingKeyRegistrationIPMonthlyLimit),
+	}
+}
+
+func (s *SettingService) getNonNegativeIntSetting(ctx context.Context, key string) int {
+	value, err := s.settingRepo.GetValue(ctx, key)
+	if err != nil {
+		return 0
+	}
+	return parseNonNegativeInt(value)
+}
+
 // IsPromoCodeEnabled 检查是否启用优惠码功能
 func (s *SettingService) IsPromoCodeEnabled(ctx context.Context) bool {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeyPromoCodeEnabled)

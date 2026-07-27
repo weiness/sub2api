@@ -135,6 +135,15 @@ export default {
         auditRetention: 'Audit Log Retention (days)',
         auditRetentionHint: 'Audit logs older than this are cleaned up automatically. Set to 0 to keep them forever (manual clear only).'
       },
+      registrationIpLimit: {
+        title: 'Registration IP Limits',
+        description: 'Limit successful registrations from one IP per calendar day, week, and month. Empty or 0 means unlimited.',
+        daily: 'Daily limit',
+        weekly: 'Weekly limit',
+        monthly: 'Monthly limit',
+        unlimited: 'Unlimited',
+        nonNegativeError: 'Registration IP limits must be non-negative integers.'
+      },
       turnstile: {
         title: 'Cloudflare Turnstile',
         description: 'Bot protection for login and registration',

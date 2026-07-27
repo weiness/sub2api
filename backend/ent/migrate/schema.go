@@ -1803,6 +1803,7 @@ var (
 		{Name: "totp_enabled", Type: field.TypeBool, Default: false},
 		{Name: "totp_enabled_at", Type: field.TypeTime, Nullable: true},
 		{Name: "signup_source", Type: field.TypeString, Default: "email"},
+		{Name: "registration_ip", Type: field.TypeString, Size: 45, Default: ""},
 		{Name: "last_login_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "last_active_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "balance_notify_enabled", Type: field.TypeBool, Default: true},

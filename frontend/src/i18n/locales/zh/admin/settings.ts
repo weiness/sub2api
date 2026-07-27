@@ -135,6 +135,15 @@ export default {
         auditRetention: '操作日志保留天数',
         auditRetentionHint: '超过该天数的操作日志将被自动清理；填 0 表示永久保留（仅支持手动清空）。'
       },
+      registrationIpLimit: {
+        title: '注册 IP 限制',
+        description: '限制同一 IP 在自然日、自然周和自然月内成功注册的账号数量。空值或 0 表示不限制。',
+        daily: '每日上限',
+        weekly: '每周上限',
+        monthly: '每月上限',
+        unlimited: '不限制',
+        nonNegativeError: '注册 IP 限制必须是大于或等于 0 的整数。'
+      },
       turnstile: {
         title: 'Cloudflare Turnstile',
         description: '登录和注册的机器人防护',

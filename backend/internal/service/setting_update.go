@@ -52,6 +52,9 @@ func (s *SettingService) UpdateSettingsWithAuthSourceDefaults(ctx context.Contex
 }
 
 func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, settings *SystemSettings) (map[string]string, error) {
+	if settings.RegistrationIPDailyLimit < 0 || settings.RegistrationIPWeeklyLimit < 0 || settings.RegistrationIPMonthlyLimit < 0 {
+		return nil, infraerrors.BadRequest("INVALID_REGISTRATION_IP_LIMIT", "registration IP limits must be non-negative")
+	}
 	if err := s.validateDefaultSubscriptionGroups(ctx, settings.DefaultSubscriptions); err != nil {
 		return nil, err
 	}
@@ -122,6 +125,9 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 		return nil, fmt.Errorf("marshal registration email suffix whitelist: %w", err)
 	}
 	updates[SettingKeyRegistrationEmailSuffixWhitelist] = string(registrationEmailSuffixWhitelistJSON)
+	updates[SettingKeyRegistrationIPDailyLimit] = strconv.Itoa(settings.RegistrationIPDailyLimit)
+	updates[SettingKeyRegistrationIPWeeklyLimit] = strconv.Itoa(settings.RegistrationIPWeeklyLimit)
+	updates[SettingKeyRegistrationIPMonthlyLimit] = strconv.Itoa(settings.RegistrationIPMonthlyLimit)
 	updates[SettingKeyPromoCodeEnabled] = strconv.FormatBool(settings.PromoCodeEnabled)
 	updates[SettingKeyPasswordResetEnabled] = strconv.FormatBool(settings.PasswordResetEnabled)
 	updates[SettingKeyFrontendURL] = settings.FrontendURL

@@ -159,10 +159,14 @@ func (s *AuthService) RegisterOAuthEmailAccount(
 		Status:       StatusActive,
 		SignupSource: signupSource,
 	}
+	s.applyRegistrationIPPolicy(ctx, user)
 
 	if err := s.userRepo.CreateWithEmailAliasGuard(ctx, user); err != nil {
 		if errors.Is(err, ErrEmailExists) {
 			return nil, nil, ErrEmailExists
+		}
+		if errors.Is(err, ErrRegistrationIPLimitExceeded) {
+			return nil, nil, err
 		}
 		slog.Error("oauth email register: userRepo.Create failed", "email", email, "signup_source", signupSource, "error", err.Error())
 		return nil, nil, ErrServiceUnavailable
@@ -242,10 +246,14 @@ func (s *AuthService) RegisterVerifiedOAuthEmailAccount(
 		Status:       StatusActive,
 		SignupSource: signupSource,
 	}
+	s.applyRegistrationIPPolicy(ctx, user)
 
 	if err := s.userRepo.CreateWithEmailAliasGuard(ctx, user); err != nil {
 		if errors.Is(err, ErrEmailExists) {
 			return nil, nil, ErrEmailExists
+		}
+		if errors.Is(err, ErrRegistrationIPLimitExceeded) {
+			return nil, nil, err
 		}
 		return nil, nil, ErrServiceUnavailable
 	}

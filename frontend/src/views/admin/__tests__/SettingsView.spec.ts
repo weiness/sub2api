@@ -345,6 +345,9 @@ const baseSettingsResponse = {
   registration_enabled: true,
   email_verify_enabled: false,
   registration_email_suffix_whitelist: [],
+  registration_ip_daily_limit: 0,
+  registration_ip_weekly_limit: 0,
+  registration_ip_monthly_limit: 0,
   promo_code_enabled: true,
   invitation_code_enabled: false,
   password_reset_enabled: false,
@@ -660,6 +663,35 @@ describe("admin SettingsView payment visible method controls", () => {
     });
     fetchPublicSettings.mockResolvedValue(undefined);
     adminSettingsFetch.mockResolvedValue(undefined);
+  });
+
+  it("rejects negative registration IP limits before saving", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    await wrapper.get('[data-testid="registration_ip_daily_limit"]').setValue(-1);
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(showError).toHaveBeenCalled();
+    expect(updateSettings).not.toHaveBeenCalled();
+  });
+
+  it("normalizes empty registration IP limits to zero", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    await wrapper.get('[data-testid="registration_ip_daily_limit"]').setValue("");
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(updateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        registration_ip_daily_limit: 0,
+        registration_ip_weekly_limit: 0,
+        registration_ip_monthly_limit: 0,
+      }),
+    );
   });
 
   it("does not render legacy visible payment method controls", async () => {

@@ -23,6 +23,9 @@ type UpdateSettingsRequest struct {
 	RegistrationEnabled              bool                         `json:"registration_enabled"`
 	EmailVerifyEnabled               bool                         `json:"email_verify_enabled"`
 	RegistrationEmailSuffixWhitelist []string                     `json:"registration_email_suffix_whitelist"`
+	RegistrationIPDailyLimit         *int                         `json:"registration_ip_daily_limit"`
+	RegistrationIPWeeklyLimit        *int                         `json:"registration_ip_weekly_limit"`
+	RegistrationIPMonthlyLimit       *int                         `json:"registration_ip_monthly_limit"`
 	PromoCodeEnabled                 bool                         `json:"promo_code_enabled"`
 	PasswordResetEnabled             bool                         `json:"password_reset_enabled"`
 	FrontendURL                      string                       `json:"frontend_url"`
@@ -406,6 +409,22 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		stepUpEnabled = *req.StepUpEnabled
 	}
 	forwardedClientIPHeaders := append([]string(nil), previousSettings.ForwardedClientIPHeaders...)
+	registrationIPDailyLimit := previousSettings.RegistrationIPDailyLimit
+	registrationIPWeeklyLimit := previousSettings.RegistrationIPWeeklyLimit
+	registrationIPMonthlyLimit := previousSettings.RegistrationIPMonthlyLimit
+	if req.RegistrationIPDailyLimit != nil {
+		registrationIPDailyLimit = *req.RegistrationIPDailyLimit
+	}
+	if req.RegistrationIPWeeklyLimit != nil {
+		registrationIPWeeklyLimit = *req.RegistrationIPWeeklyLimit
+	}
+	if req.RegistrationIPMonthlyLimit != nil {
+		registrationIPMonthlyLimit = *req.RegistrationIPMonthlyLimit
+	}
+	if registrationIPDailyLimit < 0 || registrationIPWeeklyLimit < 0 || registrationIPMonthlyLimit < 0 {
+		response.BadRequest(c, "registration IP limits must be non-negative")
+		return
+	}
 	if req.ForwardedClientIPHeaders != nil {
 		forwardedClientIPHeaders = append([]string(nil), (*req.ForwardedClientIPHeaders)...)
 	}
@@ -1250,6 +1269,9 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		RegistrationEnabled:              req.RegistrationEnabled,
 		EmailVerifyEnabled:               req.EmailVerifyEnabled,
 		RegistrationEmailSuffixWhitelist: req.RegistrationEmailSuffixWhitelist,
+		RegistrationIPDailyLimit:         registrationIPDailyLimit,
+		RegistrationIPWeeklyLimit:        registrationIPWeeklyLimit,
+		RegistrationIPMonthlyLimit:       registrationIPMonthlyLimit,
 		PromoCodeEnabled:                 req.PromoCodeEnabled,
 		PasswordResetEnabled:             req.PasswordResetEnabled,
 		FrontendURL:                      req.FrontendURL,
@@ -1785,6 +1807,9 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		RegistrationEnabled:                                    updatedSettings.RegistrationEnabled,
 		EmailVerifyEnabled:                                     updatedSettings.EmailVerifyEnabled,
 		RegistrationEmailSuffixWhitelist:                       updatedSettings.RegistrationEmailSuffixWhitelist,
+		RegistrationIPDailyLimit:                               updatedSettings.RegistrationIPDailyLimit,
+		RegistrationIPWeeklyLimit:                              updatedSettings.RegistrationIPWeeklyLimit,
+		RegistrationIPMonthlyLimit:                             updatedSettings.RegistrationIPMonthlyLimit,
 		PromoCodeEnabled:                                       updatedSettings.PromoCodeEnabled,
 		PasswordResetEnabled:                                   updatedSettings.PasswordResetEnabled,
 		FrontendURL:                                            updatedSettings.FrontendURL,

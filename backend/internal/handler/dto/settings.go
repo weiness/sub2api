@@ -30,6 +30,9 @@ type SystemSettings struct {
 	RegistrationEnabled              bool                     `json:"registration_enabled"`
 	EmailVerifyEnabled               bool                     `json:"email_verify_enabled"`
 	RegistrationEmailSuffixWhitelist []string                 `json:"registration_email_suffix_whitelist"`
+	RegistrationIPDailyLimit         int                      `json:"registration_ip_daily_limit"`
+	RegistrationIPWeeklyLimit        int                      `json:"registration_ip_weekly_limit"`
+	RegistrationIPMonthlyLimit       int                      `json:"registration_ip_monthly_limit"`
 	PromoCodeEnabled                 bool                     `json:"promo_code_enabled"`
 	PasswordResetEnabled             bool                     `json:"password_reset_enabled"`
 	FrontendURL                      string                   `json:"frontend_url"`

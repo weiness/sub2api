@@ -15,6 +15,9 @@ type SystemSettings struct {
 	RegistrationEnabled              bool
 	EmailVerifyEnabled               bool
 	RegistrationEmailSuffixWhitelist []string
+	RegistrationIPDailyLimit         int
+	RegistrationIPWeeklyLimit        int
+	RegistrationIPMonthlyLimit       int
 	PromoCodeEnabled                 bool
 	PasswordResetEnabled             bool
 	FrontendURL                      string

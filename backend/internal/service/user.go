@@ -28,6 +28,8 @@ type User struct {
 	// value expected in JWT claims and refresh-token state.
 	TokenVersionResolved bool
 	SignupSource         string
+	RegistrationIP       string
+	RegistrationIPLimits RegistrationIPLimits
 	LastLoginAt          *time.Time
 	LastActiveAt         *time.Time
 	LastUsedAt           *time.Time
@@ -62,6 +64,15 @@ type User struct {
 
 	APIKeys       []APIKey
 	Subscriptions []UserSubscription
+}
+
+// RegistrationIPLimits controls successful account creations from one IP.
+// Zero values disable the corresponding natural-time-window limit.
+type RegistrationIPLimits struct {
+	Daily   int
+	Weekly  int
+	Monthly int
+	Now     time.Time
 }
 
 func (u *User) IsAdmin() bool {

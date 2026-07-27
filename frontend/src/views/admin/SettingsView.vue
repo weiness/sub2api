@@ -1630,6 +1630,34 @@
             </div>
           </div>
 
+          <!-- Registration IP limits -->
+          <div class="card">
+            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ t("admin.settings.registrationIpLimit.title") }}
+              </h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {{ t("admin.settings.registrationIpLimit.description") }}
+              </p>
+            </div>
+            <div class="grid gap-5 p-6 sm:grid-cols-3">
+              <label v-for="period in registrationIpLimitPeriods" :key="period.key" class="block">
+                <span class="text-sm font-medium text-gray-900 dark:text-white">
+                  {{ t(period.label) }}
+                </span>
+                <input
+                  v-model.number="form[period.key]"
+                  :data-testid="period.key"
+                  type="number"
+                  min="0"
+                  step="1"
+                  class="input mt-2 w-full"
+                  :placeholder="t('admin.settings.registrationIpLimit.unlimited')"
+                />
+              </label>
+            </div>
+          </div>
+
           <!-- API Key IP ACL Settings -->
           <div class="card">
             <div
@@ -8523,6 +8551,9 @@ const form = reactive<SettingsForm>({
   registration_enabled: true,
   email_verify_enabled: false,
   registration_email_suffix_whitelist: [],
+  registration_ip_daily_limit: 0,
+  registration_ip_weekly_limit: 0,
+  registration_ip_monthly_limit: 0,
   promo_code_enabled: true,
   invitation_code_enabled: false,
   password_reset_enabled: false,
@@ -8766,6 +8797,12 @@ const form = reactive<SettingsForm>({
   // Allow user view error requests
   allow_user_view_error_requests: false,
 });
+
+const registrationIpLimitPeriods = [
+  { key: "registration_ip_daily_limit", label: "admin.settings.registrationIpLimit.daily" },
+  { key: "registration_ip_weekly_limit", label: "admin.settings.registrationIpLimit.weekly" },
+  { key: "registration_ip_monthly_limit", label: "admin.settings.registrationIpLimit.monthly" },
+] as const;
 
 type OpenAIAdvancedSchedulerOverrideKey =
   | "openai_advanced_scheduler_lb_top_k"
@@ -9886,6 +9923,19 @@ function findDuplicateDefaultSubscription(
 async function saveSettings() {
   saving.value = true;
   try {
+    const registrationIPLimits = [
+      form.registration_ip_daily_limit,
+      form.registration_ip_weekly_limit,
+      form.registration_ip_monthly_limit,
+    ].map((value) => Number(value || 0));
+    if (registrationIPLimits.some((value) => !Number.isInteger(value) || value < 0)) {
+      appStore.showError(t("admin.settings.registrationIpLimit.nonNegativeError"));
+      return;
+    }
+    form.registration_ip_daily_limit = registrationIPLimits[0] ?? 0;
+    form.registration_ip_weekly_limit = registrationIPLimits[1] ?? 0;
+    form.registration_ip_monthly_limit = registrationIPLimits[2] ?? 0;
+
     const normalizedTableDefaultPageSize = Math.floor(
       Number(form.table_default_page_size),
     );
@@ -10039,6 +10089,9 @@ async function saveSettings() {
         registrationEmailSuffixWhitelistTags.value.map((suffix) =>
           suffix.startsWith("*.") ? suffix : `@${suffix}`,
         ),
+      registration_ip_daily_limit: form.registration_ip_daily_limit,
+      registration_ip_weekly_limit: form.registration_ip_weekly_limit,
+      registration_ip_monthly_limit: form.registration_ip_monthly_limit,
       promo_code_enabled: form.promo_code_enabled,
       invitation_code_enabled: form.invitation_code_enabled,
       password_reset_enabled: form.password_reset_enabled,

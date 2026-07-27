@@ -131,6 +131,9 @@ const (
 	SettingKeyRegistrationEnabled              = "registration_enabled"                // 是否开放注册
 	SettingKeyEmailVerifyEnabled               = "email_verify_enabled"                // 是否开启邮件验证
 	SettingKeyRegistrationEmailSuffixWhitelist = "registration_email_suffix_whitelist" // 注册邮箱后缀白名单（JSON 数组）
+	SettingKeyRegistrationIPDailyLimit         = "registration_ip_daily_limit"         // 单 IP 每日成功注册上限（0=不限制）
+	SettingKeyRegistrationIPWeeklyLimit        = "registration_ip_weekly_limit"        // 单 IP 每周成功注册上限（0=不限制）
+	SettingKeyRegistrationIPMonthlyLimit       = "registration_ip_monthly_limit"       // 单 IP 每月成功注册上限（0=不限制）
 	SettingKeyPromoCodeEnabled                 = "promo_code_enabled"                  // 是否启用优惠码功能
 	SettingKeyPasswordResetEnabled             = "password_reset_enabled"              // 是否启用忘记密码功能（需要先开启邮件验证）
 	SettingKeyFrontendURL                      = "frontend_url"                        // 前端基础URL，用于生成邮件中的重置密码链接

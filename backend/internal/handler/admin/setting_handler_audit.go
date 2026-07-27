@@ -41,6 +41,15 @@ func diffSettings(before *service.SystemSettings, after *service.SystemSettings,
 	if !equalStringSlice(before.RegistrationEmailSuffixWhitelist, after.RegistrationEmailSuffixWhitelist) {
 		changed = append(changed, "registration_email_suffix_whitelist")
 	}
+	if before.RegistrationIPDailyLimit != after.RegistrationIPDailyLimit {
+		changed = append(changed, "registration_ip_daily_limit")
+	}
+	if before.RegistrationIPWeeklyLimit != after.RegistrationIPWeeklyLimit {
+		changed = append(changed, "registration_ip_weekly_limit")
+	}
+	if before.RegistrationIPMonthlyLimit != after.RegistrationIPMonthlyLimit {
+		changed = append(changed, "registration_ip_monthly_limit")
+	}
 	if before.PromoCodeEnabled != after.PromoCodeEnabled {
 		changed = append(changed, "promo_code_enabled")
 	}
