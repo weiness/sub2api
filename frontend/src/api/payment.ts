@@ -44,6 +44,7 @@ export interface LandingPaymentData {
   payment_enabled: boolean
   balance_disabled: boolean
   balance_recharge_multiplier: number
+  subscription_cny_to_usd_multiplier: number
   minimum_group_rate_multiplier: number
   recharge_currency: string
   credited_currency?: string

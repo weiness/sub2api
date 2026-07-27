@@ -138,6 +138,7 @@ export default {
       registrationIpLimit: {
         title: '注册 IP 限制',
         description: '限制同一 IP 在自然日、自然周和自然月内成功注册的账号数量。空值或 0 表示不限制。',
+        enabled: '启用注册 IP 限制',
         daily: '每日上限',
         weekly: '每周上限',
         monthly: '每月上限',

@@ -158,10 +158,10 @@
                 <div class="plan-price-row">
                   <div class="plan-price-main">
                     <div class="offer-price">
-                      <span>{{ currencySymbol(selectedPlan.currency) }}</span><b>{{ formatNumber(selectedPlan.price) }}</b><span>/ {{ validityLabel(selectedPlan) }}</span>
+                      <span>{{ selectedPlanCurrencySymbol }}</span><b>{{ formatNumber(selectedPlanDisplayPrice) }}</b><span>/ {{ validityLabel(selectedPlan) }}</span>
                     </div>
                     <div v-if="selectedPlan.original_price && planDiscount" class="plan-saving">
-                      <span>原价 {{ currencySymbol(selectedPlan.currency) }}{{ formatNumber(selectedPlan.original_price) }}</span>
+                      <span>原价 {{ selectedPlanCurrencySymbol }}{{ formatNumber(selectedPlanDisplayOriginalPrice) }}</span>
                       <strong>立省 {{ planDiscount }}%</strong>
                     </div>
                   </div>
@@ -252,6 +252,7 @@ import { paymentAPI, type LandingPaymentData, type LandingPlan } from '@/api/pay
 import { listPublicFAQs } from '@/api/faqs'
 import type { FAQ } from '@/types'
 import Icon from '@/components/icons/Icon.vue'
+import { normalizeSubscriptionMultiplier, subscriptionDisplayPrice } from '@/components/payment/subscriptionPricing'
 import { renderFAQMarkdown } from '@/utils/faqMarkdown'
 import { sanitizeUrl } from '@/utils/url'
 
@@ -299,6 +300,20 @@ const selectedPlan = computed(() => {
   const plans = landing.value?.plans || []
   return plans.find((plan) => plan.recommended) || plans[0] || null
 })
+const subscriptionMultiplier = computed(() => {
+  return normalizeSubscriptionMultiplier(landing.value?.subscription_cny_to_usd_multiplier)
+})
+const selectedPlanDisplayPrice = computed(() => {
+  const price = selectedPlan.value?.price || 0
+  return subscriptionDisplayPrice(price, subscriptionMultiplier.value)
+})
+const selectedPlanDisplayOriginalPrice = computed(() => {
+  const price = selectedPlan.value?.original_price || 0
+  return subscriptionDisplayPrice(price, subscriptionMultiplier.value)
+})
+const selectedPlanCurrencySymbol = computed(() => subscriptionMultiplier.value > 0
+  ? currencySymbol('CNY')
+  : currencySymbol(selectedPlan.value?.currency))
 const planDiscount = computed(() => {
   const plan = selectedPlan.value
   if (!plan?.original_price || plan.original_price <= plan.price) return 0

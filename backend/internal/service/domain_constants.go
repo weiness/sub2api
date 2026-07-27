@@ -131,6 +131,7 @@ const (
 	SettingKeyRegistrationEnabled              = "registration_enabled"                // 是否开放注册
 	SettingKeyEmailVerifyEnabled               = "email_verify_enabled"                // 是否开启邮件验证
 	SettingKeyRegistrationEmailSuffixWhitelist = "registration_email_suffix_whitelist" // 注册邮箱后缀白名单（JSON 数组）
+	SettingKeyRegistrationIPLimitEnabled       = "registration_ip_limit_enabled"       // 是否启用单 IP 注册数量限制
 	SettingKeyRegistrationIPDailyLimit         = "registration_ip_daily_limit"         // 单 IP 每日成功注册上限（0=不限制）
 	SettingKeyRegistrationIPWeeklyLimit        = "registration_ip_weekly_limit"        // 单 IP 每周成功注册上限（0=不限制）
 	SettingKeyRegistrationIPMonthlyLimit       = "registration_ip_monthly_limit"       // 单 IP 每月成功注册上限（0=不限制）

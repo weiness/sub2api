@@ -75,6 +75,7 @@ import type { UserSubscription } from '@/types'
 import Icon from '@/components/icons/Icon.vue'
 import { planValiditySuffix } from './validity'
 import { currencySymbol } from './currency'
+import { normalizeSubscriptionMultiplier, subscriptionDisplayPrice } from './subscriptionPricing'
 import { platformBadgeLightClass, platformTextClass, platformButtonClass, platformLabel } from '@/utils/platformColors'
 
 const props = defineProps<{ plan: SubscriptionPlan; activeSubscriptions?: UserSubscription[]; subscriptionMultiplier?: number }>()
@@ -87,11 +88,11 @@ const textClass = computed(() => platformTextClass(platform.value))
 const btnClass = computed(() => platformButtonClass(platform.value))
 const pLabel = computed(() => platformLabel(platform.value))
 const discountPercent = computed(() => !props.plan.original_price || props.plan.original_price <= props.plan.price ? 0 : Math.round((1 - props.plan.price / props.plan.original_price) * 100))
-const multiplier = computed(() => Number.isFinite(props.subscriptionMultiplier) && Number(props.subscriptionMultiplier) > 0 ? Number(props.subscriptionMultiplier) : 0)
+const multiplier = computed(() => normalizeSubscriptionMultiplier(props.subscriptionMultiplier))
 const displayCurrency = computed(() => multiplier.value > 0 ? 'CNY' : props.plan.currency || 'USD')
 const displayCurrencySymbol = computed(() => currencySymbol(displayCurrency.value))
-const displayPrice = computed(() => multiplier.value > 0 ? props.plan.price / multiplier.value : props.plan.price)
-const displayOriginalPrice = computed(() => multiplier.value > 0 ? (props.plan.original_price || 0) / multiplier.value : props.plan.original_price || 0)
+const displayPrice = computed(() => subscriptionDisplayPrice(props.plan.price, multiplier.value))
+const displayOriginalPrice = computed(() => subscriptionDisplayPrice(props.plan.original_price || 0, multiplier.value))
 const displayPriceText = computed(() => multiplier.value > 0 ? displayPrice.value.toFixed(2) : String(displayPrice.value))
 const displayOriginalPriceText = computed(() => multiplier.value > 0 ? displayOriginalPrice.value.toFixed(2) : String(displayOriginalPrice.value))
 const validitySuffix = computed(() => planValiditySuffix(props.plan, t))

@@ -180,15 +180,16 @@ func (h *PaymentHandler) GetLandingData(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{
-		"payment_enabled":               cfg.Enabled,
-		"balance_disabled":              cfg.BalanceDisabled,
-		"balance_recharge_multiplier":   cfg.BalanceRechargeMultiplier,
-		"minimum_group_rate_multiplier": minimumGroupRateMultiplier,
-		"recharge_currency":             currency,
-		"credited_currency":             "USD",
-		"example_amount":                exampleAmount,
-		"example_credited_amount":       exampleAmount * cfg.BalanceRechargeMultiplier,
-		"plans":                         publicPlans,
+		"payment_enabled":                    cfg.Enabled,
+		"balance_disabled":                   cfg.BalanceDisabled,
+		"balance_recharge_multiplier":        cfg.BalanceRechargeMultiplier,
+		"subscription_cny_to_usd_multiplier": cfg.SubscriptionCNYToUSDMultiplier,
+		"minimum_group_rate_multiplier":      minimumGroupRateMultiplier,
+		"recharge_currency":                  currency,
+		"credited_currency":                  "USD",
+		"example_amount":                     exampleAmount,
+		"example_credited_amount":            exampleAmount * cfg.BalanceRechargeMultiplier,
+		"plans":                              publicPlans,
 	})
 }
 

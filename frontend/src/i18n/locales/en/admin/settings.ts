@@ -138,6 +138,7 @@ export default {
       registrationIpLimit: {
         title: 'Registration IP Limits',
         description: 'Limit successful registrations from one IP per calendar day, week, and month. Empty or 0 means unlimited.',
+        enabled: 'Enable registration IP limits',
         daily: 'Daily limit',
         weekly: 'Weekly limit',
         monthly: 'Monthly limit',

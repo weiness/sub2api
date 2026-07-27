@@ -362,11 +362,13 @@ func TestSettingService_UpdateSettings_RegistrationIPLimits(t *testing.T) {
 	svc := NewSettingService(repo, &config.Config{})
 
 	err := svc.UpdateSettings(context.Background(), &SystemSettings{
+		RegistrationIPLimitEnabled: true,
 		RegistrationIPDailyLimit:   2,
 		RegistrationIPWeeklyLimit:  8,
 		RegistrationIPMonthlyLimit: 20,
 	})
 	require.NoError(t, err)
+	require.Equal(t, "true", repo.updates[SettingKeyRegistrationIPLimitEnabled])
 	require.Equal(t, "2", repo.updates[SettingKeyRegistrationIPDailyLimit])
 	require.Equal(t, "8", repo.updates[SettingKeyRegistrationIPWeeklyLimit])
 	require.Equal(t, "20", repo.updates[SettingKeyRegistrationIPMonthlyLimit])

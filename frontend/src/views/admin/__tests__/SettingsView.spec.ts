@@ -357,6 +357,7 @@ const baseSettingsResponse = {
   registration_enabled: true,
   email_verify_enabled: false,
   registration_email_suffix_whitelist: [],
+  registration_ip_limit_enabled: false,
   registration_ip_daily_limit: 0,
   registration_ip_weekly_limit: 0,
   registration_ip_monthly_limit: 0,
@@ -681,6 +682,7 @@ describe("admin SettingsView payment visible method controls", () => {
     const wrapper = mountView();
     await flushPromises();
 
+    await wrapper.get('[data-testid="registration_ip_limit_enabled"]').setValue(true);
     await wrapper.get('[data-testid="registration_ip_daily_limit"]').setValue(-1);
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();
@@ -693,15 +695,49 @@ describe("admin SettingsView payment visible method controls", () => {
     const wrapper = mountView();
     await flushPromises();
 
+    await wrapper.get('[data-testid="registration_ip_limit_enabled"]').setValue(true);
     await wrapper.get('[data-testid="registration_ip_daily_limit"]').setValue("");
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();
 
     expect(updateSettings).toHaveBeenCalledWith(
       expect.objectContaining({
+        registration_ip_limit_enabled: true,
         registration_ip_daily_limit: 0,
         registration_ip_weekly_limit: 0,
         registration_ip_monthly_limit: 0,
+      }),
+    );
+  });
+
+  it("hides configured registration IP limits while disabled and restores them when enabled", async () => {
+    getSettings.mockResolvedValueOnce({
+      ...baseSettingsResponse,
+      registration_ip_limit_enabled: false,
+      registration_ip_daily_limit: 2,
+      registration_ip_weekly_limit: 8,
+      registration_ip_monthly_limit: 20,
+    });
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="registration_ip_daily_limit"]').exists()).toBe(false);
+    const toggle = wrapper.get('[data-testid="registration_ip_limit_enabled"]');
+    await toggle.setValue(true);
+    expect(
+      (wrapper.get('[data-testid="registration_ip_daily_limit"]').element as HTMLInputElement).value,
+    ).toBe("2");
+    await toggle.setValue(false);
+    expect(wrapper.find('[data-testid="registration_ip_daily_limit"]').exists()).toBe(false);
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(updateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        registration_ip_limit_enabled: false,
+        registration_ip_daily_limit: 2,
+        registration_ip_weekly_limit: 8,
+        registration_ip_monthly_limit: 20,
       }),
     );
   });

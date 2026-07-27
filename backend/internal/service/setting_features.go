@@ -42,11 +42,19 @@ func (s *SettingService) GetRegistrationEmailSuffixWhitelist(ctx context.Context
 }
 
 func (s *SettingService) GetRegistrationIPLimits(ctx context.Context) RegistrationIPLimits {
+	if !s.IsRegistrationIPLimitEnabled(ctx) {
+		return RegistrationIPLimits{}
+	}
 	return RegistrationIPLimits{
 		Daily:   s.getNonNegativeIntSetting(ctx, SettingKeyRegistrationIPDailyLimit),
 		Weekly:  s.getNonNegativeIntSetting(ctx, SettingKeyRegistrationIPWeeklyLimit),
 		Monthly: s.getNonNegativeIntSetting(ctx, SettingKeyRegistrationIPMonthlyLimit),
 	}
+}
+
+func (s *SettingService) IsRegistrationIPLimitEnabled(ctx context.Context) bool {
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyRegistrationIPLimitEnabled)
+	return err == nil && value == "true"
 }
 
 func (s *SettingService) getNonNegativeIntSetting(ctx context.Context, key string) int {

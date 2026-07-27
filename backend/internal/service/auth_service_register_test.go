@@ -304,9 +304,10 @@ func TestAuthService_Register_SnapshotsPlatformQuotaDefaults(t *testing.T) {
 func TestAuthService_RegisterAttachesTrustedRegistrationIPPolicy(t *testing.T) {
 	repo := &userRepoStub{nextID: 78}
 	authService := newAuthService(repo, map[string]string{
-		SettingKeyRegistrationEnabled:       "true",
-		SettingKeyRegistrationIPDailyLimit:  "2",
-		SettingKeyRegistrationIPWeeklyLimit: "8",
+		SettingKeyRegistrationEnabled:        "true",
+		SettingKeyRegistrationIPLimitEnabled: "true",
+		SettingKeyRegistrationIPDailyLimit:   "2",
+		SettingKeyRegistrationIPWeeklyLimit:  "8",
 	}, nil, nil)
 	ctx := WithSessionBinding(context.Background(), &SessionBinding{IP: "::ffff:203.0.113.10"})
 
@@ -321,14 +322,32 @@ func TestAuthService_RegisterAttachesTrustedRegistrationIPPolicy(t *testing.T) {
 func TestAuthService_RegisterReturnsRegistrationIPLimitError(t *testing.T) {
 	repo := &userRepoStub{createErr: ErrRegistrationIPLimitExceeded}
 	authService := newAuthService(repo, map[string]string{
-		SettingKeyRegistrationEnabled:      "true",
-		SettingKeyRegistrationIPDailyLimit: "1",
+		SettingKeyRegistrationEnabled:        "true",
+		SettingKeyRegistrationIPLimitEnabled: "true",
+		SettingKeyRegistrationIPDailyLimit:   "1",
 	}, nil, nil)
 	ctx := WithSessionBinding(context.Background(), &SessionBinding{IP: "203.0.113.10"})
 
 	_, _, err := authService.Register(ctx, "limited@test.com", "password")
 	require.ErrorIs(t, err, ErrRegistrationIPLimitExceeded)
 	require.Equal(t, "REGISTRATION_IP_LIMIT_EXCEEDED", infraerrors.Reason(err))
+}
+
+func TestAuthService_RegisterIgnoresRegistrationIPLimitsWhenDisabled(t *testing.T) {
+	repo := &userRepoStub{nextID: 79}
+	authService := newAuthService(repo, map[string]string{
+		SettingKeyRegistrationEnabled:        "true",
+		SettingKeyRegistrationIPLimitEnabled: "false",
+		SettingKeyRegistrationIPDailyLimit:   "1",
+	}, nil, nil)
+	ctx := WithSessionBinding(context.Background(), &SessionBinding{IP: "203.0.113.11"})
+
+	_, user, err := authService.Register(ctx, "ip-policy-disabled@test.com", "password")
+	require.NoError(t, err)
+	require.Equal(t, "203.0.113.11", user.RegistrationIP)
+	require.Zero(t, user.RegistrationIPLimits.Daily)
+	require.Zero(t, user.RegistrationIPLimits.Weekly)
+	require.Zero(t, user.RegistrationIPLimits.Monthly)
 }
 
 func TestAuthService_Register_DoesNotSnapshotOnDisabled(t *testing.T) {

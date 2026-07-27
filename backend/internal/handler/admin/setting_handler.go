@@ -128,6 +128,7 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		RegistrationEnabled:                                    settings.RegistrationEnabled,
 		EmailVerifyEnabled:                                     settings.EmailVerifyEnabled,
 		RegistrationEmailSuffixWhitelist:                       settings.RegistrationEmailSuffixWhitelist,
+		RegistrationIPLimitEnabled:                             settings.RegistrationIPLimitEnabled,
 		RegistrationIPDailyLimit:                               settings.RegistrationIPDailyLimit,
 		RegistrationIPWeeklyLimit:                              settings.RegistrationIPWeeklyLimit,
 		RegistrationIPMonthlyLimit:                             settings.RegistrationIPMonthlyLimit,

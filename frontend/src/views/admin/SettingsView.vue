@@ -1632,29 +1632,38 @@
 
           <!-- Registration IP limits -->
           <div class="card">
-            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ t("admin.settings.registrationIpLimit.title") }}
-              </h2>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {{ t("admin.settings.registrationIpLimit.description") }}
-              </p>
+            <div class="flex items-center justify-between gap-4 border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  {{ t("admin.settings.registrationIpLimit.title") }}
+                </h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {{ t("admin.settings.registrationIpLimit.description") }}
+                </p>
+              </div>
+              <Toggle
+                v-model="form.registration_ip_limit_enabled"
+                data-testid="registration_ip_limit_enabled"
+                :aria-label="t('admin.settings.registrationIpLimit.enabled')"
+              />
             </div>
-            <div class="grid gap-5 p-6 sm:grid-cols-3">
-              <label v-for="period in registrationIpLimitPeriods" :key="period.key" class="block">
-                <span class="text-sm font-medium text-gray-900 dark:text-white">
-                  {{ t(period.label) }}
-                </span>
-                <input
-                  v-model.number="form[period.key]"
-                  :data-testid="period.key"
-                  type="number"
-                  min="0"
-                  step="1"
-                  class="input mt-2 w-full"
-                  :placeholder="t('admin.settings.registrationIpLimit.unlimited')"
-                />
-              </label>
+            <div v-if="form.registration_ip_limit_enabled" class="p-6">
+              <div class="grid gap-5 sm:grid-cols-3">
+                <label v-for="period in registrationIpLimitPeriods" :key="period.key" class="block">
+                  <span class="text-sm font-medium text-gray-900 dark:text-white">
+                    {{ t(period.label) }}
+                  </span>
+                  <input
+                    v-model.number="form[period.key]"
+                    :data-testid="period.key"
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="input mt-2 w-full"
+                    :placeholder="t('admin.settings.registrationIpLimit.unlimited')"
+                  />
+                </label>
+              </div>
             </div>
           </div>
 
@@ -8769,6 +8778,7 @@ const form = reactive<SettingsForm>({
   registration_enabled: true,
   email_verify_enabled: false,
   registration_email_suffix_whitelist: [],
+  registration_ip_limit_enabled: false,
   registration_ip_daily_limit: 0,
   registration_ip_weekly_limit: 0,
   registration_ip_monthly_limit: 0,
@@ -10307,6 +10317,7 @@ async function saveSettings() {
         registrationEmailSuffixWhitelistTags.value.map((suffix) =>
           suffix.startsWith("*.") ? suffix : `@${suffix}`,
         ),
+      registration_ip_limit_enabled: form.registration_ip_limit_enabled,
       registration_ip_daily_limit: form.registration_ip_daily_limit,
       registration_ip_weekly_limit: form.registration_ip_weekly_limit,
       registration_ip_monthly_limit: form.registration_ip_monthly_limit,

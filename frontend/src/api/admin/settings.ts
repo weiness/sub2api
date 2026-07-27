@@ -360,6 +360,7 @@ export interface SystemSettings {
   registration_enabled: boolean;
   email_verify_enabled: boolean;
   registration_email_suffix_whitelist: string[];
+  registration_ip_limit_enabled: boolean;
   registration_ip_daily_limit: number;
   registration_ip_weekly_limit: number;
   registration_ip_monthly_limit: number;
@@ -674,6 +675,7 @@ export interface UpdateSettingsRequest {
   registration_enabled?: boolean;
   email_verify_enabled?: boolean;
   registration_email_suffix_whitelist?: string[];
+  registration_ip_limit_enabled?: boolean;
   registration_ip_daily_limit?: number;
   registration_ip_weekly_limit?: number;
   registration_ip_monthly_limit?: number;

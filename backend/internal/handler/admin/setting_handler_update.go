@@ -25,6 +25,7 @@ type UpdateSettingsRequest struct {
 	RegistrationEnabled              bool                         `json:"registration_enabled"`
 	EmailVerifyEnabled               bool                         `json:"email_verify_enabled"`
 	RegistrationEmailSuffixWhitelist []string                     `json:"registration_email_suffix_whitelist"`
+	RegistrationIPLimitEnabled       *bool                        `json:"registration_ip_limit_enabled"`
 	RegistrationIPDailyLimit         *int                         `json:"registration_ip_daily_limit"`
 	RegistrationIPWeeklyLimit        *int                         `json:"registration_ip_weekly_limit"`
 	RegistrationIPMonthlyLimit       *int                         `json:"registration_ip_monthly_limit"`
@@ -469,6 +470,10 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		stepUpEnabled = *req.StepUpEnabled
 	}
 	forwardedClientIPHeaders := append([]string(nil), previousSettings.ForwardedClientIPHeaders...)
+	registrationIPLimitEnabled := previousSettings.RegistrationIPLimitEnabled
+	if req.RegistrationIPLimitEnabled != nil {
+		registrationIPLimitEnabled = *req.RegistrationIPLimitEnabled
+	}
 	registrationIPDailyLimit := previousSettings.RegistrationIPDailyLimit
 	registrationIPWeeklyLimit := previousSettings.RegistrationIPWeeklyLimit
 	registrationIPMonthlyLimit := previousSettings.RegistrationIPMonthlyLimit
@@ -1329,6 +1334,7 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		RegistrationEnabled:              req.RegistrationEnabled,
 		EmailVerifyEnabled:               req.EmailVerifyEnabled,
 		RegistrationEmailSuffixWhitelist: req.RegistrationEmailSuffixWhitelist,
+		RegistrationIPLimitEnabled:       registrationIPLimitEnabled,
 		RegistrationIPDailyLimit:         registrationIPDailyLimit,
 		RegistrationIPWeeklyLimit:        registrationIPWeeklyLimit,
 		RegistrationIPMonthlyLimit:       registrationIPMonthlyLimit,
@@ -1867,6 +1873,7 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		RegistrationEnabled:                                    updatedSettings.RegistrationEnabled,
 		EmailVerifyEnabled:                                     updatedSettings.EmailVerifyEnabled,
 		RegistrationEmailSuffixWhitelist:                       updatedSettings.RegistrationEmailSuffixWhitelist,
+		RegistrationIPLimitEnabled:                             updatedSettings.RegistrationIPLimitEnabled,
 		RegistrationIPDailyLimit:                               updatedSettings.RegistrationIPDailyLimit,
 		RegistrationIPWeeklyLimit:                              updatedSettings.RegistrationIPWeeklyLimit,
 		RegistrationIPMonthlyLimit:                             updatedSettings.RegistrationIPMonthlyLimit,

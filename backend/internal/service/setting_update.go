@@ -172,6 +172,7 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 		return nil, fmt.Errorf("marshal registration email suffix whitelist: %w", err)
 	}
 	updates[SettingKeyRegistrationEmailSuffixWhitelist] = string(registrationEmailSuffixWhitelistJSON)
+	updates[SettingKeyRegistrationIPLimitEnabled] = strconv.FormatBool(settings.RegistrationIPLimitEnabled)
 	updates[SettingKeyRegistrationIPDailyLimit] = strconv.Itoa(settings.RegistrationIPDailyLimit)
 	updates[SettingKeyRegistrationIPWeeklyLimit] = strconv.Itoa(settings.RegistrationIPWeeklyLimit)
 	updates[SettingKeyRegistrationIPMonthlyLimit] = strconv.Itoa(settings.RegistrationIPMonthlyLimit)
