@@ -299,8 +299,9 @@ func (s *AuthService) FinalizeOAuthEmailAccount(
 	return nil
 }
 
-// RollbackOAuthEmailAccountCreation removes a partially-created local account
-// and restores any invitation code already consumed by that account.
+// RollbackOAuthEmailAccountCreation removes only the provisional account created
+// by the current OAuth flow. It is an internal compensation path, not a user
+// account-deletion capability.
 func (s *AuthService) RollbackOAuthEmailAccountCreation(ctx context.Context, userID int64, invitationCode string) error {
 	if s == nil || s.userRepo == nil || userID <= 0 {
 		return ErrServiceUnavailable

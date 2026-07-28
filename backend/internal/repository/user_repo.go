@@ -81,6 +81,9 @@ func (r *userRepository) create(ctx context.Context, userIn *service.User, guard
 	}
 
 	lockKeys := []string{normalizedEmailUniquenessLockKey(userIn.Email)}
+	if userIn.Phone != nil {
+		lockKeys = append(lockKeys, "phone:"+*userIn.Phone)
+	}
 	if registrationIPLimitEnabled(userIn) {
 		lockKeys = append(lockKeys, "registration-ip:"+userIn.RegistrationIP)
 	}
@@ -106,6 +109,15 @@ func (r *userRepository) create(ctx context.Context, userIn *service.User, guard
 	if err := ensureNormalizedEmailAvailableWithClient(txCtx, txClient, 0, userIn.Email); err != nil {
 		return err
 	}
+	if userIn.Phone != nil {
+		exists, err := r.ExistsByPhone(txCtx, *userIn.Phone, 0)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return service.ErrPhoneExists
+		}
+	}
 
 	if guardEmailAlias {
 		aliasExists, err := existsByEmailAliasWithClient(txCtx, txClient, userIn.Email)
@@ -119,6 +131,7 @@ func (r *userRepository) create(ctx context.Context, userIn *service.User, guard
 
 	created, err := txClient.User.Create().
 		SetEmail(userIn.Email).
+		SetNillablePhone(userIn.Phone).
 		SetUsername(userIn.Username).
 		SetNotes(userIn.Notes).
 		SetPasswordHash(userIn.PasswordHash).
@@ -214,6 +227,14 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*service
 	return out, nil
 }
 
+func (r *userRepository) ExistsByPhone(ctx context.Context, phone string, excludeUserID int64) (bool, error) {
+	predicates := []predicate.User{dbuser.PhoneEQ(phone)}
+	if excludeUserID > 0 {
+		predicates = append(predicates, dbuser.IDNEQ(excludeUserID))
+	}
+	return r.client.User.Query().Where(predicates...).Exist(ctx)
+}
+
 func (r *userRepository) Update(ctx context.Context, userIn *service.User) error {
 	if userIn == nil {
 		return nil
@@ -240,11 +261,15 @@ func (r *userRepository) Update(ctx context.Context, userIn *service.User) error
 		}
 	}
 
+	lockKeys := []string{normalizedEmailUniquenessLockKey(userIn.Email)}
+	if userIn.Phone != nil {
+		lockKeys = append(lockKeys, "phone:"+*userIn.Phone)
+	}
 	releaseEmailLock, err := lockRepositoryScopedKeys(
 		txCtx,
 		txClient,
 		txAwareSQLExecutor(txCtx, r.sql, r.client),
-		normalizedEmailUniquenessLockKey(userIn.Email),
+		lockKeys...,
 	)
 	if err != nil {
 		return err
@@ -253,6 +278,15 @@ func (r *userRepository) Update(ctx context.Context, userIn *service.User) error
 
 	if err := ensureNormalizedEmailAvailableWithClient(txCtx, txClient, userIn.ID, userIn.Email); err != nil {
 		return err
+	}
+	if userIn.Phone != nil {
+		exists, err := r.ExistsByPhone(txCtx, *userIn.Phone, userIn.ID)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return service.ErrPhoneExists
+		}
 	}
 
 	existing, err := clientFromContext(txCtx, txClient).User.Get(txCtx, userIn.ID)
@@ -263,6 +297,7 @@ func (r *userRepository) Update(ctx context.Context, userIn *service.User) error
 
 	updateOp := txClient.User.UpdateOneID(userIn.ID).
 		SetEmail(userIn.Email).
+		SetNillablePhone(userIn.Phone).
 		SetUsername(userIn.Username).
 		SetNotes(userIn.Notes).
 		SetPasswordHash(userIn.PasswordHash).
@@ -287,6 +322,9 @@ func (r *userRepository) Update(ctx context.Context, userIn *service.User) error
 	}
 	if userIn.BalanceNotifyThreshold == nil {
 		updateOp = updateOp.ClearBalanceNotifyThreshold()
+	}
+	if userIn.Phone == nil {
+		updateOp = updateOp.ClearPhone()
 	}
 	updated, err := updateOp.Save(txCtx)
 	if err != nil {
@@ -450,6 +488,19 @@ func (r *userRepository) deleteUser(ctx context.Context, exec *dbent.Client, id 
 			Exec(ctx); err != nil {
 			return translatePersistenceError(err, service.ErrUserNotFound, nil)
 		}
+	}
+
+	// 手机号是可重新分配的注册凭证。删除用户时在同一事务内释放号码，
+	// 避免软删除记录继续占用手机号或泄露已删除用户的绑定信息。
+	cleared, err := exec.User.Update().
+		Where(dbuser.IDEQ(id)).
+		ClearPhone().
+		Save(ctx)
+	if err != nil {
+		return translatePersistenceError(err, service.ErrUserNotFound, nil)
+	}
+	if cleared == 0 {
+		return service.ErrUserNotFound
 	}
 
 	affected, err := exec.User.Delete().Where(dbuser.IDEQ(id)).Exec(ctx)
@@ -1223,6 +1274,7 @@ func applyUserEntityToService(dst *service.User, src *dbent.User) {
 		return
 	}
 	dst.ID = src.ID
+	dst.Phone = src.Phone
 	dst.SignupSource = src.SignupSource
 	dst.RegistrationIP = src.RegistrationIP
 	dst.LastLoginAt = src.LastLoginAt

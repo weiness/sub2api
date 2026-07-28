@@ -40806,6 +40806,8 @@ func (m *SubscriptionPlanMutation) BaseSoldCount() (r int, exists bool) {
 }
 
 // OldBaseSoldCount returns the old "base_sold_count" field's value of the SubscriptionPlan entity.
+// If the SubscriptionPlan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *SubscriptionPlanMutation) OldBaseSoldCount(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBaseSoldCount is only allowed on UpdateOne operations")
@@ -41245,6 +41247,8 @@ func (m *SubscriptionPlanMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedValidityDays()
 	case subscriptionplan.FieldSortOrder:
 		return m.AddedSortOrder()
+	case subscriptionplan.FieldBaseSoldCount:
+		return m.AddedBaseSoldCount()
 	}
 	return nil, false
 }
@@ -41288,6 +41292,13 @@ func (m *SubscriptionPlanMutation) AddField(name string, value ent.Value) error 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSortOrder(v)
+		return nil
+	case subscriptionplan.FieldBaseSoldCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBaseSoldCount(v)
 		return nil
 	}
 	return fmt.Errorf("unknown SubscriptionPlan numeric field %s", name)
@@ -41363,6 +41374,9 @@ func (m *SubscriptionPlanMutation) ResetField(name string) error {
 		return nil
 	case subscriptionplan.FieldSortOrder:
 		m.ResetSortOrder()
+		return nil
+	case subscriptionplan.FieldBaseSoldCount:
+		m.ResetBaseSoldCount()
 		return nil
 	case subscriptionplan.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -47923,6 +47937,7 @@ type UserMutation struct {
 	addconcurrency                *int
 	status                        *string
 	username                      *string
+	phone                         *string
 	notes                         *string
 	totp_secret_encrypted         *string
 	totp_enabled                  *bool
@@ -48550,6 +48565,55 @@ func (m *UserMutation) OldUsername(ctx context.Context) (v string, err error) {
 // ResetUsername resets all changes to the "username" field.
 func (m *UserMutation) ResetUsername() {
 	m.username = nil
+}
+
+// SetPhone sets the "phone" field.
+func (m *UserMutation) SetPhone(s string) {
+	m.phone = &s
+}
+
+// Phone returns the value of the "phone" field in the mutation.
+func (m *UserMutation) Phone() (r string, exists bool) {
+	v := m.phone
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPhone returns the old "phone" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPhone(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPhone is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPhone requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPhone: %w", err)
+	}
+	return oldValue.Phone, nil
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (m *UserMutation) ClearPhone() {
+	m.phone = nil
+	m.clearedFields[user.FieldPhone] = struct{}{}
+}
+
+// PhoneCleared returns if the "phone" field was cleared in this mutation.
+func (m *UserMutation) PhoneCleared() bool {
+	_, ok := m.clearedFields[user.FieldPhone]
+	return ok
+}
+
+// ResetPhone resets all changes to the "phone" field.
+func (m *UserMutation) ResetPhone() {
+	m.phone = nil
+	delete(m.clearedFields, user.FieldPhone)
 }
 
 // SetNotes sets the "notes" field.
@@ -49918,7 +49982,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 25)
+	fields := make([]string, 0, 26)
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -49951,6 +50015,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.username != nil {
 		fields = append(fields, user.FieldUsername)
+	}
+	if m.phone != nil {
+		fields = append(fields, user.FieldPhone)
 	}
 	if m.notes != nil {
 		fields = append(fields, user.FieldNotes)
@@ -50024,6 +50091,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case user.FieldUsername:
 		return m.Username()
+	case user.FieldPhone:
+		return m.Phone()
 	case user.FieldNotes:
 		return m.Notes()
 	case user.FieldTotpSecretEncrypted:
@@ -50083,6 +50152,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldStatus(ctx)
 	case user.FieldUsername:
 		return m.OldUsername(ctx)
+	case user.FieldPhone:
+		return m.OldPhone(ctx)
 	case user.FieldNotes:
 		return m.OldNotes(ctx)
 	case user.FieldTotpSecretEncrypted:
@@ -50196,6 +50267,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUsername(v)
+		return nil
+	case user.FieldPhone:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPhone(v)
 		return nil
 	case user.FieldNotes:
 		v, ok := value.(string)
@@ -50403,6 +50481,9 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldDeletedAt) {
 		fields = append(fields, user.FieldDeletedAt)
 	}
+	if m.FieldCleared(user.FieldPhone) {
+		fields = append(fields, user.FieldPhone)
+	}
 	if m.FieldCleared(user.FieldTotpSecretEncrypted) {
 		fields = append(fields, user.FieldTotpSecretEncrypted)
 	}
@@ -50434,6 +50515,9 @@ func (m *UserMutation) ClearField(name string) error {
 	switch name {
 	case user.FieldDeletedAt:
 		m.ClearDeletedAt()
+		return nil
+	case user.FieldPhone:
+		m.ClearPhone()
 		return nil
 	case user.FieldTotpSecretEncrypted:
 		m.ClearTotpSecretEncrypted()
@@ -50490,6 +50574,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldUsername:
 		m.ResetUsername()
+		return nil
+	case user.FieldPhone:
+		m.ResetPhone()
 		return nil
 	case user.FieldNotes:
 		m.ResetNotes()

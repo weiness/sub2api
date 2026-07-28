@@ -25,11 +25,40 @@ func (s *SettingService) IsRegistrationEnabled(ctx context.Context) bool {
 
 // IsEmailVerifyEnabled 检查是否开启邮件验证
 func (s *SettingService) IsEmailVerifyEnabled(ctx context.Context) bool {
-	value, err := s.settingRepo.GetValue(ctx, SettingKeyEmailVerifyEnabled)
+	return s.IsRegistrationVerificationEnabled(ctx) && s.GetRegistrationVerificationType(ctx) == RegistrationVerificationEmail
+}
+
+func (s *SettingService) IsRegistrationVerificationEnabled(ctx context.Context) bool {
+	values, err := s.settingRepo.GetMultiple(ctx, []string{SettingKeyRegistrationVerificationEnabled, SettingKeyEmailVerifyEnabled})
+	return err == nil && registrationVerificationEnabled(values)
+}
+
+func (s *SettingService) GetRegistrationVerificationType(ctx context.Context) string {
+	values, err := s.settingRepo.GetMultiple(ctx, []string{SettingKeyRegistrationVerificationType})
 	if err != nil {
-		return false
+		return RegistrationVerificationEmail
 	}
-	return value == "true"
+	return registrationVerificationType(values)
+}
+
+func (s *SettingService) IsSMSVerificationEnabled(ctx context.Context) bool {
+	return s.IsRegistrationVerificationEnabled(ctx) && s.GetRegistrationVerificationType(ctx) == RegistrationVerificationSMS
+}
+
+func (s *SettingService) GetSMSSettings(ctx context.Context) (int, int, int, int, []SMSChannelConfig) {
+	values, err := s.settingRepo.GetMultiple(ctx, []string{SettingKeySMSCodeTTLMinutes, SettingKeySMSResendCooldownSeconds, SettingKeySMSDailyLimit, SettingKeySMSMaxVerifyAttempts, SettingKeySMSChannels})
+	if err != nil {
+		return 15, 60, 5, 5, nil
+	}
+	return positiveIntOrDefault(values[SettingKeySMSCodeTTLMinutes], 15), positiveIntOrDefault(values[SettingKeySMSResendCooldownSeconds], 60), positiveIntOrDefault(values[SettingKeySMSDailyLimit], 5), positiveIntOrDefault(values[SettingKeySMSMaxVerifyAttempts], 5), parseSMSChannels(values[SettingKeySMSChannels])
+}
+
+func (s *SettingService) GetBotProtection(ctx context.Context) (bool, string, string) {
+	values, err := s.settingRepo.GetMultiple(ctx, []string{SettingKeyBotProtectionEnabled, SettingKeyBotProtectionProvider, SettingKeyGraphicalCaptchaType, SettingKeyTurnstileEnabled})
+	if err != nil {
+		return false, BotProtectionTurnstile, "slide"
+	}
+	return botProtectionEnabled(values), botProtectionProvider(values), normalizeGraphicalCaptchaType(values[SettingKeyGraphicalCaptchaType])
 }
 
 // GetRegistrationEmailSuffixWhitelist returns normalized registration email suffix whitelist.

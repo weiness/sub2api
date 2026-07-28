@@ -74,6 +74,43 @@ func (s *UserRepoSuite) mustCreateGroup(name string) *service.Group {
 	return groupEntityToService(g)
 }
 
+func (s *UserRepoSuite) TestPhoneCanBeReusedAfterUserDeletion() {
+	phone := "+8613800000000"
+	deletedUser := s.mustCreateUser(&service.User{Phone: &phone})
+
+	exists, err := s.repo.ExistsByPhone(s.ctx, phone, 0)
+	s.Require().NoError(err)
+	s.True(exists)
+
+	s.Require().NoError(s.repo.Delete(s.ctx, deletedUser.ID))
+
+	exists, err = s.repo.ExistsByPhone(s.ctx, phone, 0)
+	s.Require().NoError(err)
+	s.False(exists, "soft-deleted users must not reserve phone numbers")
+
+	deletedRecord, err := s.repo.GetByIDIncludeDeleted(s.ctx, deletedUser.ID)
+	s.Require().NoError(err)
+	s.Nil(deletedRecord.Phone, "deleting a user must clear the stored phone number")
+
+	replacement := s.mustCreateUser(&service.User{Phone: &phone})
+	s.NotZero(replacement.ID)
+}
+
+func (s *UserRepoSuite) TestPhoneCanBeReusedAfterAdminClearsIt() {
+	phone := "+8613900000000"
+	user := s.mustCreateUser(&service.User{Phone: &phone})
+
+	user.Phone = nil
+	s.Require().NoError(s.repo.Update(s.ctx, user))
+
+	exists, err := s.repo.ExistsByPhone(s.ctx, phone, 0)
+	s.Require().NoError(err)
+	s.False(exists)
+
+	replacement := s.mustCreateUser(&service.User{Phone: &phone})
+	s.NotZero(replacement.ID)
+}
+
 func (s *UserRepoSuite) mustCreateSubscription(userID, groupID int64, mutate func(*dbent.UserSubscriptionCreate)) *dbent.UserSubscription {
 	s.T().Helper()
 

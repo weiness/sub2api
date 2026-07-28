@@ -458,6 +458,33 @@ export async function sendVerifyCode(
   return data
 }
 
+export async function sendSMSCode(request: { phone: string; turnstile_token?: string; captcha_proof?: string }): Promise<SendVerifyCodeResponse> {
+	const { data } = await apiClient.post<SendVerifyCodeResponse>('/auth/send-sms-code', request)
+	return data
+}
+
+export interface CaptchaChallenge {
+	id: string
+	type: 'slide' | 'drag' | 'rotate' | 'click'
+	image: string
+	thumb: string
+	thumb_x?: number
+	thumb_y?: number
+	thumb_width?: number
+	thumb_height?: number
+	thumb_size?: number
+}
+
+export async function createCaptchaChallenge(action: string, target: string): Promise<CaptchaChallenge> {
+	const { data } = await apiClient.post<CaptchaChallenge>('/auth/captcha/challenge', { action, target })
+	return data
+}
+
+export async function verifyCaptchaChallenge(id: string, answer: Record<string, unknown>): Promise<string> {
+	const { data } = await apiClient.post<{ captcha_proof: string }>('/auth/captcha/verify', { id, answer })
+	return data.captcha_proof
+}
+
 export async function sendPendingOAuthVerifyCode(
   request: SendVerifyCodeRequest
 ): Promise<PendingOAuthSendVerifyCodeResponse> {
@@ -512,6 +539,7 @@ export async function validateInvitationCode(code: string): Promise<ValidateInvi
 export interface ForgotPasswordRequest {
   email: string
   turnstile_token?: string
+  captcha_proof?: string
 }
 
 /**
@@ -674,6 +702,9 @@ export const authAPI = {
   clearAuthToken,
   getPublicSettings,
   sendVerifyCode,
+	sendSMSCode,
+	createCaptchaChallenge,
+	verifyCaptchaChallenge,
   sendPendingOAuthVerifyCode,
   validatePromoCode,
   validateInvitationCode,

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"strings"
 	"sync"
@@ -51,7 +52,10 @@ type RegisterRequest struct {
 	Email          string `json:"email" binding:"required,email"`
 	Password       string `json:"password" binding:"required,min=6"`
 	VerifyCode     string `json:"verify_code"`
+	Phone          string `json:"phone"`
+	SMSCode        string `json:"sms_code"`
 	TurnstileToken string `json:"turnstile_token"`
+	CaptchaProof   string `json:"captcha_proof"`
 	PromoCode      string `json:"promo_code"`      // 注册优惠码
 	InvitationCode string `json:"invitation_code"` // 邀请码
 	AffCode        string `json:"aff_code"`        // 邀请返利码
@@ -61,6 +65,13 @@ type RegisterRequest struct {
 type SendVerifyCodeRequest struct {
 	Email          string `json:"email" binding:"required,email"`
 	TurnstileToken string `json:"turnstile_token"`
+	CaptchaProof   string `json:"captcha_proof"`
+}
+
+type SendSMSCodeRequest struct {
+	Phone          string `json:"phone" binding:"required"`
+	TurnstileToken string `json:"turnstile_token"`
+	CaptchaProof   string `json:"captcha_proof"`
 }
 
 // SendVerifyCodeResponse 发送验证码响应
@@ -74,6 +85,17 @@ type LoginRequest struct {
 	Email          string `json:"email" binding:"required,email"`
 	Password       string `json:"password" binding:"required"`
 	TurnstileToken string `json:"turnstile_token"`
+	CaptchaProof   string `json:"captcha_proof"`
+}
+
+type CaptchaChallengeRequest struct {
+	Action string `json:"action" binding:"required"`
+	Target string `json:"target" binding:"required"`
+}
+
+type CaptchaVerifyRequest struct {
+	ID     string                `json:"id" binding:"required"`
+	Answer service.CaptchaAnswer `json:"answer"`
 }
 
 // AuthResponse 认证响应格式（匹配前端期望）
@@ -166,16 +188,22 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	// Turnstile 验证（邮箱验证码注册场景避免重复校验一次性 token）
-	if err := h.authService.VerifyTurnstileForRegister(c.Request.Context(), req.TurnstileToken, ip.GetClientIP(c), req.VerifyCode); err != nil {
+	completedCode := req.VerifyCode
+	if completedCode == "" {
+		completedCode = req.SMSCode
+	}
+	if err := h.authService.VerifyBotProtectionForRegister(c.Request.Context(), req.TurnstileToken, req.CaptchaProof, req.Email, ip.GetClientIP(c), completedCode); err != nil {
 		response.ErrorFrom(c, err)
 		return
 	}
 
-	_, user, err := h.authService.RegisterWithVerification(
+	_, user, err := h.authService.RegisterWithContactVerification(
 		c.Request.Context(),
 		req.Email,
 		req.Password,
+		req.Phone,
 		req.VerifyCode,
+		req.SMSCode,
 		req.PromoCode,
 		req.InvitationCode,
 		req.AffCode,
@@ -188,6 +216,52 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	h.respondWithTokenPair(c, user)
 }
 
+func (h *AuthHandler) SendSMSCode(c *gin.Context) {
+	var req SendSMSCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	if err := h.authService.VerifyBotProtection(c.Request.Context(), req.TurnstileToken, req.CaptchaProof, "registration_sms", req.Phone, ip.GetClientIP(c)); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	result, err := h.authService.SendSMSRegistrationCode(c.Request.Context(), req.Phone)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, SendVerifyCodeResponse{Message: "Verification code sent successfully", Countdown: result.Countdown})
+}
+
+func (h *AuthHandler) CreateCaptchaChallenge(c *gin.Context) {
+	var req CaptchaChallengeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	challenge, err := h.authService.CreateGraphicalCaptcha(c.Request.Context(), req.Action, req.Target, ip.GetClientIP(c))
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, challenge)
+}
+
+func (h *AuthHandler) VerifyCaptchaChallenge(c *gin.Context) {
+	var req CaptchaVerifyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	proof, err := h.authService.VerifyGraphicalCaptcha(c.Request.Context(), req.ID, req.Answer, ip.GetClientIP(c))
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"captcha_proof": proof})
+}
+
 // SendVerifyCode 发送邮箱验证码
 // POST /api/v1/auth/send-verify-code
 func (h *AuthHandler) SendVerifyCode(c *gin.Context) {
@@ -198,12 +272,16 @@ func (h *AuthHandler) SendVerifyCode(c *gin.Context) {
 	}
 
 	// Turnstile 验证
-	if err := h.authService.VerifyTurnstile(c.Request.Context(), req.TurnstileToken, ip.GetClientIP(c)); err != nil {
+	if err := h.authService.VerifyBotProtection(c.Request.Context(), req.TurnstileToken, req.CaptchaProof, "registration_email", req.Email, ip.GetClientIP(c)); err != nil {
 		response.ErrorFrom(c, err)
 		return
 	}
 
 	result, err := h.authService.SendVerifyCodeAsync(c.Request.Context(), req.Email, c.GetHeader("Accept-Language"))
+	if errors.Is(err, service.ErrEmailExists) {
+		response.Success(c, SendVerifyCodeResponse{Message: "Verification code sent successfully", Countdown: 60})
+		return
+	}
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
@@ -225,7 +303,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	// Turnstile 验证
-	if err := h.authService.VerifyTurnstile(c.Request.Context(), req.TurnstileToken, ip.GetClientIP(c)); err != nil {
+	if err := h.authService.VerifyBotProtection(c.Request.Context(), req.TurnstileToken, req.CaptchaProof, "login", req.Email, ip.GetClientIP(c)); err != nil {
 		response.ErrorFrom(c, err)
 		return
 	}
@@ -571,6 +649,7 @@ func (h *AuthHandler) ValidateInvitationCode(c *gin.Context) {
 type ForgotPasswordRequest struct {
 	Email          string `json:"email" binding:"required,email"`
 	TurnstileToken string `json:"turnstile_token"`
+	CaptchaProof   string `json:"captcha_proof"`
 }
 
 // ForgotPasswordResponse 忘记密码响应
@@ -587,8 +666,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	// Turnstile 验证
-	if err := h.authService.VerifyTurnstile(c.Request.Context(), req.TurnstileToken, ip.GetClientIP(c)); err != nil {
+	if err := h.authService.VerifyBotProtection(c.Request.Context(), req.TurnstileToken, req.CaptchaProof, "password_reset", req.Email, ip.GetClientIP(c)); err != nil {
 		response.ErrorFrom(c, err)
 		return
 	}

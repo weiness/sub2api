@@ -172,6 +172,20 @@ func (_c *UserCreate) SetNillableUsername(v *string) *UserCreate {
 	return _c
 }
 
+// SetPhone sets the "phone" field.
+func (_c *UserCreate) SetPhone(v string) *UserCreate {
+	_c.mutation.SetPhone(v)
+	return _c
+}
+
+// SetNillablePhone sets the "phone" field if the given value is not nil.
+func (_c *UserCreate) SetNillablePhone(v *string) *UserCreate {
+	if v != nil {
+		_c.SetPhone(*v)
+	}
+	return _c
+}
+
 // SetNotes sets the "notes" field.
 func (_c *UserCreate) SetNotes(v string) *UserCreate {
 	_c.mutation.SetNotes(v)
@@ -734,6 +748,11 @@ func (_c *UserCreate) check() error {
 			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.Phone(); ok {
+		if err := user.PhoneValidator(v); err != nil {
+			return &ValidationError{Name: "phone", err: fmt.Errorf(`ent: validator failed for field "User.phone": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Notes(); !ok {
 		return &ValidationError{Name: "notes", err: errors.New(`ent: missing required field "User.notes"`)}
 	}
@@ -841,6 +860,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 		_node.Username = value
+	}
+	if value, ok := _c.mutation.Phone(); ok {
+		_spec.SetField(user.FieldPhone, field.TypeString, value)
+		_node.Phone = &value
 	}
 	if value, ok := _c.mutation.Notes(); ok {
 		_spec.SetField(user.FieldNotes, field.TypeString, value)
@@ -1306,6 +1329,24 @@ func (u *UserUpsert) UpdateUsername() *UserUpsert {
 	return u
 }
 
+// SetPhone sets the "phone" field.
+func (u *UserUpsert) SetPhone(v string) *UserUpsert {
+	u.Set(user.FieldPhone, v)
+	return u
+}
+
+// UpdatePhone sets the "phone" field to the value that was provided on create.
+func (u *UserUpsert) UpdatePhone() *UserUpsert {
+	u.SetExcluded(user.FieldPhone)
+	return u
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (u *UserUpsert) ClearPhone() *UserUpsert {
+	u.SetNull(user.FieldPhone)
+	return u
+}
+
 // SetNotes sets the "notes" field.
 func (u *UserUpsert) SetNotes(v string) *UserUpsert {
 	u.Set(user.FieldNotes, v)
@@ -1732,6 +1773,27 @@ func (u *UserUpsertOne) SetUsername(v string) *UserUpsertOne {
 func (u *UserUpsertOne) UpdateUsername() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateUsername()
+	})
+}
+
+// SetPhone sets the "phone" field.
+func (u *UserUpsertOne) SetPhone(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetPhone(v)
+	})
+}
+
+// UpdatePhone sets the "phone" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdatePhone() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdatePhone()
+	})
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (u *UserUpsertOne) ClearPhone() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearPhone()
 	})
 }
 
@@ -2363,6 +2425,27 @@ func (u *UserUpsertBulk) SetUsername(v string) *UserUpsertBulk {
 func (u *UserUpsertBulk) UpdateUsername() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateUsername()
+	})
+}
+
+// SetPhone sets the "phone" field.
+func (u *UserUpsertBulk) SetPhone(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetPhone(v)
+	})
+}
+
+// UpdatePhone sets the "phone" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdatePhone() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdatePhone()
+	})
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (u *UserUpsertBulk) ClearPhone() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearPhone()
 	})
 }
 

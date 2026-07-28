@@ -27,6 +27,8 @@ var (
 	ErrInvalidCredentials          = infraerrors.Unauthorized("INVALID_CREDENTIALS", "invalid email or password")
 	ErrUserNotActive               = infraerrors.Forbidden("USER_NOT_ACTIVE", "user is not active")
 	ErrEmailExists                 = infraerrors.Conflict("EMAIL_EXISTS", "email already exists")
+	ErrPhoneExists                 = infraerrors.Conflict("PHONE_EXISTS", "phone number already exists")
+	ErrInvalidPhone                = infraerrors.BadRequest("INVALID_PHONE", "invalid mainland China phone number")
 	ErrEmailReserved               = infraerrors.BadRequest("EMAIL_RESERVED", "email is reserved")
 	ErrInvalidToken                = infraerrors.Unauthorized("INVALID_TOKEN", "invalid token")
 	ErrTokenExpired                = infraerrors.Unauthorized("TOKEN_EXPIRED", "token has expired")
@@ -37,6 +39,7 @@ var (
 	ErrRefreshTokenExpired         = infraerrors.Unauthorized("REFRESH_TOKEN_EXPIRED", "refresh token has expired")
 	ErrRefreshTokenReused          = infraerrors.Unauthorized("REFRESH_TOKEN_REUSED", "refresh token has been reused")
 	ErrEmailVerifyRequired         = infraerrors.BadRequest("EMAIL_VERIFY_REQUIRED", "email verification is required")
+	ErrSMSVerifyRequired           = infraerrors.BadRequest("SMS_VERIFY_REQUIRED", "SMS verification is required")
 	ErrEmailSuffixNotAllowed       = infraerrors.BadRequest("EMAIL_SUFFIX_NOT_ALLOWED", "email suffix is not allowed")
 	ErrRegDisabled                 = infraerrors.Forbidden("REGISTRATION_DISABLED", "registration is currently disabled")
 	ErrServiceUnavailable          = infraerrors.ServiceUnavailable("SERVICE_UNAVAILABLE", "service temporarily unavailable")
@@ -74,12 +77,65 @@ type AuthService struct {
 	cfg                   *config.Config
 	settingService        *SettingService
 	emailService          *EmailService
+	smsService            *SMSService
+	graphicalCaptcha      *GraphicalCaptchaService
 	turnstileService      *TurnstileService
 	emailQueueService     *EmailQueueService
 	promoService          *PromoService
 	affiliateService      *AffiliateService
 	defaultSubAssigner    DefaultSubscriptionAssigner
 	userPlatformQuotaRepo UserPlatformQuotaRepository
+}
+
+func (s *AuthService) SetSMSService(smsService *SMSService) { s.smsService = smsService }
+func (s *AuthService) SetGraphicalCaptchaService(captcha *GraphicalCaptchaService) {
+	s.graphicalCaptcha = captcha
+}
+
+func (s *AuthService) SendSMSRegistrationCode(ctx context.Context, phone string) (*SMSSendResult, error) {
+	if s.smsService == nil {
+		return nil, ErrSMSNotConfigured
+	}
+	return s.smsService.SendRegistrationCode(ctx, phone)
+}
+
+func (s *AuthService) SendPhoneBindingCode(ctx context.Context, userID int64, phone string) (*SMSSendResult, error) {
+	if s.smsService == nil {
+		return nil, ErrSMSNotConfigured
+	}
+	return s.smsService.SendBindingCode(ctx, userID, phone)
+}
+
+func (s *AuthService) BindPhone(ctx context.Context, userID int64, phone, code string) (*User, error) {
+	if s.smsService == nil {
+		return nil, ErrSMSNotConfigured
+	}
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user.Phone != nil {
+		return nil, ErrPhoneExists
+	}
+	normalized, err := NormalizeMainlandPhone(phone)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.smsService.VerifyBindingCode(ctx, normalized, code); err != nil {
+		return nil, err
+	}
+	exists, err := phoneExists(ctx, s.userRepo, normalized, userID)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, ErrPhoneExists
+	}
+	user.Phone = &normalized
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 type DefaultSubscriptionAssigner interface {
@@ -140,6 +196,10 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (str
 
 // RegisterWithVerification 用户注册（支持邮件验证、优惠码、邀请码和邀请返利码），返回token和用户。
 func (s *AuthService) RegisterWithVerification(ctx context.Context, email, password, verifyCode, promoCode, invitationCode, affiliateCode string) (string, *User, error) {
+	return s.RegisterWithContactVerification(ctx, email, password, "", verifyCode, "", promoCode, invitationCode, affiliateCode)
+}
+
+func (s *AuthService) RegisterWithContactVerification(ctx context.Context, email, password, phone, emailCode, smsCode, promoCode, invitationCode, affiliateCode string) (string, *User, error) {
 	// 检查是否开放注册（默认关闭：settingService 未配置时不允许注册）
 	if s.settingService == nil || !s.settingService.IsRegistrationEnabled(ctx) {
 		return "", nil, ErrRegDisabled
@@ -181,13 +241,37 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 			logger.LegacyPrintf("service.auth", "%s", "[Auth] Email verification enabled but email service not configured, rejecting registration")
 			return "", nil, ErrServiceUnavailable
 		}
-		if verifyCode == "" {
+		if emailCode == "" {
 			return "", nil, ErrEmailVerifyRequired
 		}
 		// 验证邮箱验证码
-		if err := s.emailService.VerifyCode(ctx, email, verifyCode); err != nil {
+		if err := s.emailService.VerifyCode(ctx, email, emailCode); err != nil {
 			return "", nil, fmt.Errorf("verify code: %w", err)
 		}
+	}
+	var normalizedPhone *string
+	if s.settingService != nil && s.settingService.IsSMSVerificationEnabled(ctx) {
+		if s.smsService == nil {
+			return "", nil, ErrServiceUnavailable
+		}
+		value, err := NormalizeMainlandPhone(phone)
+		if err != nil {
+			return "", nil, err
+		}
+		if strings.TrimSpace(smsCode) == "" {
+			return "", nil, ErrSMSVerifyRequired
+		}
+		if err := s.smsService.VerifyRegistrationCode(ctx, value, smsCode); err != nil {
+			return "", nil, err
+		}
+		exists, err := phoneExists(ctx, s.userRepo, value, 0)
+		if err != nil {
+			return "", nil, ErrServiceUnavailable
+		}
+		if exists {
+			return "", nil, ErrPhoneExists
+		}
+		normalizedPhone = &value
 	}
 
 	// 检查邮箱是否已存在（含 +别名 / Gmail 点号变体归一化，防止单个收件箱批量派生注册）
@@ -217,6 +301,7 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 	// 创建用户
 	user := &User{
 		Email:        email,
+		Phone:        normalizedPhone,
 		PasswordHash: hashedPassword,
 		Role:         RoleUser,
 		Balance:      grantPlan.Balance,
@@ -387,6 +472,44 @@ func (s *AuthService) VerifyTurnstileForRegister(ctx context.Context, token, rem
 		return nil
 	}
 	return s.VerifyTurnstile(ctx, token, remoteIP)
+}
+
+func (s *AuthService) VerifyBotProtection(ctx context.Context, turnstileToken, captchaProof, action, target, remoteIP string) error {
+	if s.settingService == nil {
+		return nil
+	}
+	enabled, provider, _ := s.settingService.GetBotProtection(ctx)
+	if !enabled {
+		return nil
+	}
+	if provider == BotProtectionGraphical {
+		if s.graphicalCaptcha == nil {
+			return ErrTurnstileNotConfigured
+		}
+		return s.graphicalCaptcha.ConsumeProof(ctx, captchaProof, action, target, remoteIP)
+	}
+	return s.VerifyTurnstile(ctx, turnstileToken, remoteIP)
+}
+
+func (s *AuthService) VerifyBotProtectionForRegister(ctx context.Context, turnstileToken, captchaProof, email, remoteIP, completedCode string) error {
+	if s.settingService != nil && s.settingService.IsRegistrationVerificationEnabled(ctx) && strings.TrimSpace(completedCode) != "" {
+		return nil
+	}
+	return s.VerifyBotProtection(ctx, turnstileToken, captchaProof, "register", email, remoteIP)
+}
+
+func (s *AuthService) CreateGraphicalCaptcha(ctx context.Context, action, target, remoteIP string) (*CaptchaChallengeResponse, error) {
+	if s.graphicalCaptcha == nil {
+		return nil, ErrTurnstileNotConfigured
+	}
+	return s.graphicalCaptcha.Create(ctx, action, target, remoteIP)
+}
+
+func (s *AuthService) VerifyGraphicalCaptcha(ctx context.Context, id string, answer CaptchaAnswer, remoteIP string) (string, error) {
+	if s.graphicalCaptcha == nil {
+		return "", ErrTurnstileNotConfigured
+	}
+	return s.graphicalCaptcha.Verify(ctx, id, answer, remoteIP)
 }
 
 // VerifyTurnstile 验证Turnstile token
@@ -1115,7 +1238,7 @@ func inferLegacySignupSource(email string) string {
 }
 
 func (s *AuthService) validateRegistrationEmailPolicy(ctx context.Context, email string) error {
-	if s.settingService == nil {
+	if s.settingService == nil || !s.settingService.IsRegistrationVerificationEnabled(ctx) {
 		return nil
 	}
 	whitelist := s.settingService.GetRegistrationEmailSuffixWhitelist(ctx)

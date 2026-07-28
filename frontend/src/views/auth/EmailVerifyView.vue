@@ -142,6 +142,14 @@
         {{ t('auth.backToRegistration') }}
       </button>
     </template>
+
+    <GraphicalCaptchaModal
+      :open="captchaOpen"
+      action="registration_email"
+      :target="email"
+      @close="captchaOpen = false"
+      @verified="onCaptchaVerified"
+    />
   </AuthLayout>
 </template>
 
@@ -152,6 +160,7 @@ import { useI18n } from 'vue-i18n'
 import { AuthLayout } from '@/components/layout'
 import Icon from '@/components/icons/Icon.vue'
 import TurnstileWidget from '@/components/TurnstileWidget.vue'
+import GraphicalCaptchaModal from '@/components/GraphicalCaptchaModal.vue'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
   persistOAuthTokenContext,
@@ -230,6 +239,9 @@ const hasRegisterData = ref<boolean>(false)
 // Public settings
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
+const graphicalCaptchaEnabled = ref(false)
+const captchaOpen = ref(false)
+const captchaProof = ref('')
 const siteName = ref<string>('Sub2API')
 const registrationEmailSuffixWhitelist = ref<string[]>([])
 
@@ -296,7 +308,8 @@ onMounted(async () => {
   // Load public settings
   try {
     const settings = await getPublicSettings()
-    turnstileEnabled.value = settings.turnstile_enabled
+    turnstileEnabled.value = settings.bot_protection_enabled && settings.bot_protection_provider === 'turnstile'
+    graphicalCaptchaEnabled.value = settings.bot_protection_enabled && settings.bot_protection_provider === 'graphical'
     turnstileSiteKey.value = settings.turnstile_site_key || ''
     siteName.value = settings.site_name || 'Sub2API'
     registrationEmailSuffixWhitelist.value = normalizeRegistrationEmailSuffixWhitelist(
@@ -308,7 +321,8 @@ onMounted(async () => {
 
   // Auto-send verification code if we have valid data
   if (hasRegisterData.value) {
-    await sendCode()
+    if (graphicalCaptchaEnabled.value) captchaOpen.value = true
+    else await sendCode()
   }
 })
 
@@ -415,7 +429,8 @@ async function sendCode(): Promise<void> {
       email: email.value,
       [pendingAuthTokenField.value]: pendingAuthToken.value || undefined,
       // 优先使用重发时新获取的 token（因为初始 token 可能已被使用）
-      turnstile_token: resendTurnstileToken.value || initialTurnstileToken.value || undefined
+      turnstile_token: resendTurnstileToken.value || initialTurnstileToken.value || undefined,
+      captcha_proof: captchaProof.value || undefined
     } as Parameters<typeof sendVerifyCode>[0]
     const response = isPendingOAuthFlow()
       ? await sendPendingOAuthVerifyCode(requestPayload)
@@ -443,6 +458,7 @@ async function sendCode(): Promise<void> {
     initialTurnstileToken.value = ''
     showResendTurnstile.value = false
     resendTurnstileToken.value = ''
+	 captchaProof.value = ''
   } catch (error: unknown) {
     errorMessage.value = buildAuthErrorMessage(error, {
       fallback: t('auth.sendCodeFailed')
@@ -450,6 +466,7 @@ async function sendCode(): Promise<void> {
 
     appStore.showError(errorMessage.value)
   } finally {
+	captchaProof.value = ''
     isSendingCode.value = false
   }
 }
@@ -457,6 +474,7 @@ async function sendCode(): Promise<void> {
 // ==================== Handlers ====================
 
 async function handleResendCode(): Promise<void> {
+	if (graphicalCaptchaEnabled.value) { captchaOpen.value = true; return }
   // If turnstile is enabled and we haven't shown it yet, show it
   if (turnstileEnabled.value && !showResendTurnstile.value) {
     showResendTurnstile.value = true
@@ -470,6 +488,12 @@ async function handleResendCode(): Promise<void> {
   }
 
   await sendCode()
+}
+
+async function onCaptchaVerified(proof: string): Promise<void> {
+	captchaOpen.value = false
+	captchaProof.value = proof
+	await sendCode()
 }
 
 function validateForm(): boolean {

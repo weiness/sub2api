@@ -359,6 +359,8 @@ export interface SystemSettings {
   // Registration settings
   registration_enabled: boolean;
   email_verify_enabled: boolean;
+  registration_verification_enabled: boolean;
+  registration_verification_type: "email" | "sms";
   registration_email_suffix_whitelist: string[];
   registration_ip_limit_enabled: boolean;
   registration_ip_daily_limit: number;
@@ -460,6 +462,14 @@ export interface SystemSettings {
   turnstile_enabled: boolean;
   turnstile_site_key: string;
   turnstile_secret_key_configured: boolean;
+  bot_protection_enabled: boolean;
+  bot_protection_provider: "turnstile" | "graphical";
+  graphical_captcha_type: "slide" | "drag" | "rotate" | "click";
+  sms_code_ttl_minutes: number;
+  sms_resend_cooldown_seconds: number;
+  sms_daily_limit: number;
+  sms_max_verify_attempts: number;
+  sms_channels: SMSChannelConfig[];
   api_key_acl_trust_forwarded_ip: boolean;
   forwarded_client_ip_headers: string[];
 
@@ -674,6 +684,8 @@ export interface SystemSettings {
 export interface UpdateSettingsRequest {
   registration_enabled?: boolean;
   email_verify_enabled?: boolean;
+  registration_verification_enabled?: boolean;
+  registration_verification_type?: "email" | "sms";
   registration_email_suffix_whitelist?: string[];
   registration_ip_limit_enabled?: boolean;
   registration_ip_daily_limit?: number;
@@ -770,6 +782,14 @@ export interface UpdateSettingsRequest {
   turnstile_enabled?: boolean;
   turnstile_site_key?: string;
   turnstile_secret_key?: string;
+  bot_protection_enabled?: boolean;
+  bot_protection_provider?: "turnstile" | "graphical";
+  graphical_captcha_type?: "slide" | "drag" | "rotate" | "click";
+  sms_code_ttl_minutes?: number;
+  sms_resend_cooldown_seconds?: number;
+  sms_daily_limit?: number;
+  sms_max_verify_attempts?: number;
+  sms_channels?: SMSChannelConfig[];
   api_key_acl_trust_forwarded_ip?: boolean;
   forwarded_client_ip_headers?: string[];
   linuxdo_connect_enabled?: boolean;
@@ -1021,6 +1041,31 @@ export async function sendTestEmail(
   const { data } = await apiClient.post<{ message: string }>(
     "/admin/settings/send-test-email",
     request,
+  );
+  return data;
+}
+
+export interface SMSVariable {
+  name: string;
+  value: string;
+}
+
+export interface SMSChannelConfig {
+  id: string;
+  name: string;
+  provider: "spug";
+  enabled: boolean;
+  template_id: string;
+  variables: SMSVariable[];
+}
+
+export async function sendTestSMS(
+  phone: string,
+  channel: SMSChannelConfig,
+): Promise<{ message: string; request_id?: string }> {
+  const { data } = await apiClient.post<{ message: string; request_id?: string }>(
+    "/admin/settings/test-sms",
+    { phone, channel },
   );
   return data;
 }
@@ -1465,6 +1510,7 @@ export const settingsAPI = {
   updateSettings,
   testSmtpConnection,
   sendTestEmail,
+  sendTestSMS,
   getEmailTemplates,
   getEmailTemplate,
   updateEmailTemplate,

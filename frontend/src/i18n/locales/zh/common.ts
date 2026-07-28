@@ -278,6 +278,8 @@ export default {
     invitationCodeInvalid: '邀请码无效或已被使用',
     invitationCodeValidating: '正在验证邀请码...',
     invitationCodeInvalidCannotRegister: '邀请码无效，请检查后重试',
+    optionalInvitationCodeAction: '有邀请码？',
+    hideInvitationCode: '收起邀请码',
     oauthOrContinue: '或使用其他继续',
     linuxdo: {
       signIn: '使用 Linux.do 登录',

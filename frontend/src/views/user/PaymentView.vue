@@ -7,9 +7,15 @@
       <template v-else>
         <div v-if="tabs.length > 1 && paymentPhase === 'select' && !isConfirming" class="border-b border-[#dce8e3] dark:border-dark-600">
           <div class="flex w-full items-end gap-0.5">
-            <button v-for="tab in tabs" :key="tab.key" class="relative min-h-[52px] min-w-0 flex-1 rounded-t-lg border-0 px-8 py-3 text-[15px] font-bold outline-none transition-colors focus:outline-none sm:min-w-[162px] sm:flex-none"
+            <button v-for="tab in tabs" :key="tab.key" :data-test="`purchase-tab-${tab.key}`" class="relative flex min-h-[60px] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-t-lg border-0 px-3 py-2.5 text-[15px] font-bold outline-none transition-colors focus:outline-none sm:min-w-[280px] sm:flex-none sm:flex-row sm:gap-2.5 sm:px-8 sm:text-base md:min-w-[320px]"
               :class="activeTab === tab.key ? 'z-10 -mb-px bg-[#f7f9f8] text-[#07885b] after:absolute after:-bottom-px after:left-0 after:right-0 after:h-0.5 after:bg-[#f7f9f8] after:content-[\'\'] dark:bg-dark-800 dark:text-emerald-300 dark:after:bg-dark-800' : 'bg-[#eef1f1] text-[#667085] hover:bg-[#e8edeb] dark:bg-dark-900 dark:text-gray-400'"
-              @click="selectTab(tab.key)">{{ tab.label }}</button>
+              @click="selectTab(tab.key)">
+              <span class="flex items-center gap-2 whitespace-nowrap leading-5">
+                {{ tab.label }}
+                <Icon :name="tab.key === 'recharge' ? 'gift' : 'tag'" size="sm" :class="tab.key === 'recharge' ? 'text-emerald-500' : 'text-orange-500'" />
+              </span>
+              <span v-if="tab.offer" :data-test="`tab-offer-${tab.key}`" :data-offer-value="tab.offerValue" :class="['block whitespace-nowrap rounded px-2.5 py-0.5 text-[11px] font-semibold leading-4 sm:text-xs', tab.key === 'recharge' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300']">{{ tab.offer }}</span>
+            </button>
           </div>
         </div>
         <!-- Payment in progress (shared by recharge and subscription) -->
@@ -136,6 +142,7 @@ import PaymentStatusPanel from '@/components/payment/PaymentStatusPanel.vue'
 import PurchaseConfirmPanel from '@/components/payment/PurchaseConfirmPanel.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { DEFAULT_PAYMENT_CURRENCY, formatPaymentAmount, normalizePaymentCurrency } from '@/components/payment/currency'
+import { subscriptionDiscountPercent } from '@/components/payment/subscriptionPricing'
 import type { PaymentMethodOption } from '@/components/payment/PaymentMethodSelector.vue'
 import { buildPaymentErrorToastMessage, describePaymentScenarioError } from './paymentUx'
 import { hasWechatResumeQuery, parseWechatResumeRoute, stripWechatResumeQuery } from './paymentWechatResume'
@@ -363,10 +370,33 @@ const checkout = ref<CheckoutInfoResponse>({
   plans: [], balance_disabled: false, balance_recharge_multiplier: 1, subscription_cny_to_usd_multiplier: 0, recharge_fee_rate: 0, help_text: '', help_image_url: '', stripe_publishable_key: '',
 })
 
+const maximumPlanDiscount = computed(() => {
+  const discounts = checkout.value.plans
+    .map(plan => subscriptionDiscountPercent(plan.price, plan.original_price, subscriptionCnyToUsdMultiplier.value))
+    .filter(discount => discount > 0)
+  return discounts.length ? Math.max(...discounts) : 0
+})
+
+function formatOfferNumber(value: number): string {
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
+}
+
 const tabs = computed(() => {
-  const result: { key: 'recharge' | 'subscription'; label: string }[] = []
-  if (!checkout.value.balance_disabled) result.push({ key: 'recharge', label: t('payment.tabTopUp') })
-  result.push({ key: 'subscription', label: t('payment.tabSubscribe') })
+  const result: { key: PurchaseTab; label: string; offer: string; offerValue: number }[] = []
+  if (!checkout.value.balance_disabled) {
+    result.push({
+      key: 'recharge',
+      label: t('payment.tabTopUp'),
+      offer: t('payment.tabTopUpOffer', { multiplier: formatOfferNumber(balanceRechargeMultiplier.value) }),
+      offerValue: balanceRechargeMultiplier.value,
+    })
+  }
+  result.push({
+    key: 'subscription',
+    label: t('payment.tabSubscribe'),
+    offer: maximumPlanDiscount.value ? t('payment.tabSubscribeOffer', { percent: maximumPlanDiscount.value }) : '',
+    offerValue: maximumPlanDiscount.value,
+  })
   return result
 })
 

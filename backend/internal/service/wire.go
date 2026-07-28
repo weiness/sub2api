@@ -44,6 +44,29 @@ func ProvideEmailQueueService(emailService *EmailService) *EmailQueueService {
 	return NewEmailQueueService(emailService, 3)
 }
 
+func ProvideWiredAuthService(
+	entClient *dbent.Client,
+	userRepo UserRepository,
+	redeemRepo RedeemCodeRepository,
+	refreshTokenCache RefreshTokenCache,
+	cfg *config.Config,
+	settingService *SettingService,
+	emailService *EmailService,
+	turnstileService *TurnstileService,
+	emailQueueService *EmailQueueService,
+	promoService *PromoService,
+	defaultSubAssigner DefaultSubscriptionAssigner,
+	affiliateService *AffiliateService,
+	userPlatformQuotaRepo UserPlatformQuotaRepository,
+	smsService *SMSService,
+	graphicalCaptcha *GraphicalCaptchaService,
+) *AuthService {
+	svc := NewAuthService(entClient, userRepo, redeemRepo, refreshTokenCache, cfg, settingService, emailService, turnstileService, emailQueueService, promoService, defaultSubAssigner, affiliateService, userPlatformQuotaRepo)
+	svc.SetSMSService(smsService)
+	svc.SetGraphicalCaptchaService(graphicalCaptcha)
+	return svc
+}
+
 // ProvideOAuthRefreshAPI creates OAuthRefreshAPI with the default lock TTL.
 func ProvideOAuthRefreshAPI(accountRepo AccountRepository, tokenCache GeminiTokenCache) *OAuthRefreshAPI {
 	return NewOAuthRefreshAPI(accountRepo, tokenCache)
@@ -678,7 +701,7 @@ func ProvideAPIKeyService(
 // ProviderSet is the Wire provider set for all services
 var ProviderSet = wire.NewSet(
 	// Core services
-	NewAuthService,
+	ProvideWiredAuthService,
 	NewUserService,
 	ProvideAPIKeyService,
 	ProvideAPIKeyAuthCacheInvalidator,
@@ -744,6 +767,8 @@ var ProviderSet = wire.NewSet(
 	ProvideOpsCleanupService,
 	ProvideOpsScheduledReportService,
 	NewEmailService,
+	NewSMSService,
+	NewGraphicalCaptchaService,
 	NewNotificationEmailService,
 	ProvideEmailQueueService,
 	NewTurnstileService,

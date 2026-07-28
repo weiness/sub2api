@@ -462,6 +462,8 @@ func TestAuthService_Register_EmailSuffixNotAllowed(t *testing.T) {
 	repo := &userRepoStub{}
 	service := newAuthService(repo, map[string]string{
 		SettingKeyRegistrationEnabled:              "true",
+		SettingKeyRegistrationVerificationEnabled:  "true",
+		SettingKeyRegistrationVerificationType:     RegistrationVerificationSMS,
 		SettingKeyRegistrationEmailSuffixWhitelist: `["@example.com","@company.com"]`,
 	}, nil, nil)
 
@@ -476,13 +478,43 @@ func TestAuthService_Register_EmailSuffixNotAllowed(t *testing.T) {
 }
 
 func TestAuthService_Register_EmailSuffixAllowed(t *testing.T) {
-	repo := &userRepoStub{nextID: 8}
+	repo := &userRepoStub{}
 	service := newAuthService(repo, map[string]string{
 		SettingKeyRegistrationEnabled:              "true",
+		SettingKeyRegistrationVerificationEnabled:  "true",
+		SettingKeyRegistrationVerificationType:     RegistrationVerificationSMS,
 		SettingKeyRegistrationEmailSuffixWhitelist: `["example.com"]`,
 	}, nil, nil)
 
-	_, user, err := service.Register(context.Background(), "user@example.com", "password")
+	err := service.validateRegistrationEmailPolicy(context.Background(), "user@example.com")
+	require.NoError(t, err)
+}
+
+func TestAuthService_RegistrationEmailSuffixWhitelistAppliesToAllVerificationTypes(t *testing.T) {
+	for _, verificationType := range []string{RegistrationVerificationEmail, RegistrationVerificationSMS} {
+		t.Run(verificationType, func(t *testing.T) {
+			service := newAuthService(&userRepoStub{}, map[string]string{
+				SettingKeyRegistrationEnabled:              "true",
+				SettingKeyRegistrationVerificationEnabled:  "true",
+				SettingKeyRegistrationVerificationType:     verificationType,
+				SettingKeyRegistrationEmailSuffixWhitelist: `["@example.com"]`,
+			}, nil, nil)
+
+			err := service.validateRegistrationEmailPolicy(context.Background(), "user@other.com")
+			require.ErrorIs(t, err, ErrEmailSuffixNotAllowed)
+		})
+	}
+}
+
+func TestAuthService_Register_EmailSuffixWhitelistDisabledWithRegistrationVerification(t *testing.T) {
+	repo := &userRepoStub{nextID: 8}
+	service := newAuthService(repo, map[string]string{
+		SettingKeyRegistrationEnabled:              "true",
+		SettingKeyRegistrationVerificationEnabled:  "false",
+		SettingKeyRegistrationEmailSuffixWhitelist: `["@example.com"]`,
+	}, nil, nil)
+
+	_, user, err := service.Register(context.Background(), "user@other.com", "password")
 	require.NoError(t, err)
 	require.NotNil(t, user)
 	require.Equal(t, int64(8), user.ID)
@@ -492,6 +524,8 @@ func TestAuthService_SendVerifyCode_EmailSuffixNotAllowed(t *testing.T) {
 	repo := &userRepoStub{}
 	service := newAuthService(repo, map[string]string{
 		SettingKeyRegistrationEnabled:              "true",
+		SettingKeyRegistrationVerificationEnabled:  "true",
+		SettingKeyRegistrationVerificationType:     RegistrationVerificationSMS,
 		SettingKeyRegistrationEmailSuffixWhitelist: `["@example.com","@company.com"]`,
 	}, nil, nil)
 

@@ -245,6 +245,51 @@ async function mountSubscriptionConfirm(options: Parameters<typeof checkoutInfoW
   return wrapper
 }
 
+async function mountPurchaseTabs(checkout: Partial<CheckoutInfoResponse>) {
+  routeState.path = '/purchase'
+  routeState.hash = ''
+  routeState.query = {}
+  routerReplace.mockReset().mockResolvedValue(undefined)
+  getCheckoutInfo.mockReset().mockResolvedValue(checkoutInfoFixture(checkout))
+
+  const wrapper = shallowMount(PaymentView, {
+    global: {
+      stubs: {
+        AppLayout: { template: '<div><slot /></div>' },
+        Teleport: true,
+        Transition: false,
+      },
+    },
+  })
+  await flushPromises()
+  return wrapper
+}
+
+describe('PaymentView tab offers', () => {
+  it('shows the live recharge multiplier and the maximum valid plan discount', async () => {
+    const wrapper = await mountPurchaseTabs({
+      balance_recharge_multiplier: 10,
+      subscription_cny_to_usd_multiplier: 10,
+      plans: [
+        checkoutInfoWithPlansFixture({ plan: { id: 1, price: 49.51, original_price: 100 } }).data.plans[0],
+        checkoutInfoWithPlansFixture({ plan: { id: 2, price: 20, original_price: 100 } }).data.plans[0],
+        checkoutInfoWithPlansFixture({ plan: { id: 3, price: 80, original_price: 0 } }).data.plans[0],
+      ],
+    })
+
+    expect(wrapper.get('[data-test="tab-offer-recharge"]').attributes('data-offer-value')).toBe('10')
+    expect(wrapper.get('[data-test="tab-offer-subscription"]').attributes('data-offer-value')).toBe('80')
+  })
+
+  it('hides the subscription offer when no plan has an effective discount', async () => {
+    const wrapper = await mountPurchaseTabs({
+      plans: [checkoutInfoWithPlansFixture({ plan: { price: 100, original_price: 100 } }).data.plans[0]],
+    })
+
+    expect(wrapper.find('[data-test="tab-offer-subscription"]').exists()).toBe(false)
+  })
+})
+
 describe('PaymentView recharge confirmation', () => {
   it('does not create an order until the user confirms payment', async () => {
     routeState.path = '/purchase'
@@ -432,17 +477,13 @@ describe('PaymentView subscription confirmation amounts', () => {
     const wrapper = await mountSubscriptionConfirm()
 
     expect(wrapper.find('[data-test="subscription-plan-info"]').exists()).toBe(true)
-    expect(wrapper.findAll('button').filter(button =>
-      ['payment.tabTopUp', 'payment.tabSubscribe'].includes(button.text()),
-    )).toHaveLength(0)
+    expect(wrapper.findAll('[data-test^="purchase-tab-"]')).toHaveLength(0)
 
     reactiveRouteState.value!.hash = ''
     await flushPromises()
 
     expect(wrapper.find('[data-test="subscription-plan-info"]').exists()).toBe(false)
-    expect(wrapper.findAll('button').filter(button =>
-      ['payment.tabTopUp', 'payment.tabSubscribe'].includes(button.text()),
-    )).toHaveLength(2)
+    expect(wrapper.findAll('[data-test^="purchase-tab-"]')).toHaveLength(2)
   })
 })
 

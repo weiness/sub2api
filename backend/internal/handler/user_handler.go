@@ -7,12 +7,62 @@ import (
 
 	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
 	"github.com/Wei-Shaw/sub2api/internal/handler/quotaview"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/ip"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
+
+type PhoneBindingRequest struct {
+	Phone          string `json:"phone" binding:"required"`
+	Code           string `json:"code"`
+	TurnstileToken string `json:"turnstile_token"`
+	CaptchaProof   string `json:"captcha_proof"`
+}
+
+func (h *UserHandler) SendPhoneBindingCode(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	var req PhoneBindingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	if err := h.authService.VerifyBotProtection(c.Request.Context(), req.TurnstileToken, req.CaptchaProof, "phone_binding", req.Phone, ip.GetClientIP(c)); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	result, err := h.authService.SendPhoneBindingCode(c.Request.Context(), subject.UserID, req.Phone)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"message": "Verification code sent successfully", "countdown": result.Countdown})
+}
+
+func (h *UserHandler) BindPhone(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	var req PhoneBindingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	user, err := h.authService.BindPhone(c.Request.Context(), subject.UserID, req.Phone, req.Code)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, dto.UserFromService(user))
+}
 
 // UserHandler handles user-related requests
 type UserHandler struct {

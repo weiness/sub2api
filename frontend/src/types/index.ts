@@ -67,6 +67,7 @@ export interface User {
   id: number
   username: string
   email: string
+	phone?: string | null
   avatar_url?: string | null
   avatar_source?: string | UserProfileSourceContext | null
   username_source?: string | UserProfileSourceContext | null
@@ -115,13 +116,17 @@ export interface LoginRequest {
   email: string
   password: string
   turnstile_token?: string
+	captcha_proof?: string
 }
 
 export interface RegisterRequest {
   email: string
   password: string
   verify_code?: string
+	phone?: string
+	sms_code?: string
   turnstile_token?: string
+	captcha_proof?: string
   promo_code?: string
   invitation_code?: string
   aff_code?: string
@@ -156,6 +161,7 @@ export interface AffiliateTransferResponse {
 export interface SendVerifyCodeRequest {
   email: string
   turnstile_token?: string
+	captcha_proof?: string
   pending_auth_token?: string
   pending_oauth_token?: string
 }
@@ -190,6 +196,8 @@ export interface LoginAgreementDocument {
 export interface PublicSettings {
   registration_enabled: boolean
   email_verify_enabled: boolean
+	registration_verification_enabled: boolean
+	registration_verification_type: 'email' | 'sms'
   force_email_on_third_party_signup: boolean
   registration_email_suffix_whitelist: string[]
   promo_code_enabled: boolean
@@ -202,6 +210,9 @@ export interface PublicSettings {
   login_agreement_documents?: LoginAgreementDocument[]
   turnstile_enabled: boolean
   turnstile_site_key: string
+	bot_protection_enabled: boolean
+	bot_protection_provider: 'turnstile' | 'graphical'
+	graphical_captcha_type: 'slide' | 'drag' | 'rotate' | 'click'
   site_name: string
   site_logo: string
   site_subtitle: string
@@ -1865,6 +1876,7 @@ export interface ApiKeyUsageTrendPoint {
 
 export interface UpdateUserRequest {
   email?: string
+	phone?: string
   password?: string
   username?: string
   notes?: string

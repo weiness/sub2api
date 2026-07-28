@@ -279,6 +279,8 @@ export default {
     invitationCodeInvalid: 'Invalid or used invitation code',
     invitationCodeValidating: 'Validating invitation code...',
     invitationCodeInvalidCannotRegister: 'Invalid invitation code. Please check and try again',
+    optionalInvitationCodeAction: 'Have an invitation code?',
+    hideInvitationCode: 'Hide invitation code',
     oauthOrContinue: 'or continue with others',
     linuxdo: {
       signIn: 'Continue with Linux.do',

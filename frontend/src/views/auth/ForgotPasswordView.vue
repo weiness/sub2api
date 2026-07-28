@@ -122,6 +122,13 @@
       </p>
     </template>
   </AuthLayout>
+  <GraphicalCaptchaModal
+    :open="captchaOpen"
+    action="password_reset"
+    :target="formData.email"
+    @close="captchaOpen = false"
+    @verified="onCaptchaVerified"
+  />
 </template>
 
 <script setup lang="ts">
@@ -130,6 +137,7 @@ import { useI18n } from 'vue-i18n'
 import { AuthLayout } from '@/components/layout'
 import Icon from '@/components/icons/Icon.vue'
 import TurnstileWidget from '@/components/TurnstileWidget.vue'
+import GraphicalCaptchaModal from '@/components/GraphicalCaptchaModal.vue'
 import { useAppStore } from '@/stores'
 import { getPublicSettings, forgotPassword } from '@/api/auth'
 
@@ -148,6 +156,9 @@ const errorMessage = ref<string>('')
 // Public settings
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
+const graphicalCaptchaEnabled = ref(false)
+const captchaOpen = ref(false)
+const captchaProof = ref('')
 
 // Turnstile
 const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
@@ -175,7 +186,8 @@ watch(validationToastMessage, (value, previousValue) => {
 onMounted(async () => {
   try {
     const settings = await getPublicSettings()
-    turnstileEnabled.value = settings.turnstile_enabled
+    turnstileEnabled.value = settings.bot_protection_enabled && settings.bot_protection_provider === 'turnstile'
+    graphicalCaptchaEnabled.value = settings.bot_protection_enabled && settings.bot_protection_provider === 'graphical'
     turnstileSiteKey.value = settings.turnstile_site_key || ''
   } catch (error) {
     console.error('Failed to load public settings:', error)
@@ -234,12 +246,18 @@ async function handleSubmit(): Promise<void> {
     return
   }
 
+  if (graphicalCaptchaEnabled.value && !captchaProof.value) {
+    captchaOpen.value = true
+    return
+  }
+
   isLoading.value = true
 
   try {
     await forgotPassword({
       email: formData.email,
-      turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined
+      turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined,
+      captcha_proof: graphicalCaptchaEnabled.value ? captchaProof.value : undefined
     })
 
     isSubmitted.value = true
@@ -263,8 +281,15 @@ async function handleSubmit(): Promise<void> {
 
     appStore.showError(errorMessage.value)
   } finally {
+    captchaProof.value = ''
     isLoading.value = false
   }
+}
+
+function onCaptchaVerified(proof: string): void {
+  captchaProof.value = proof
+  captchaOpen.value = false
+  void handleSubmit()
 }
 </script>
 

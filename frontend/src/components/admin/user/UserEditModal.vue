@@ -30,6 +30,20 @@
         <input v-model="form.username" type="text" class="input" />
       </div>
       <div>
+        <label class="input-label">手机号</label>
+        <div class="flex">
+          <span class="flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm dark:border-dark-500 dark:bg-dark-700">+86</span>
+          <input
+            v-model="form.phone"
+            type="tel"
+            inputmode="numeric"
+            maxlength="11"
+            class="input rounded-l-none"
+            placeholder="留空可清除绑定"
+          />
+        </div>
+      </div>
+      <div>
         <label class="input-label">{{ t('admin.users.form.roleLabel') }}</label>
         <select v-model="form.role" class="input">
           <option value="user">{{ t('admin.users.roles.user') }}</option>
@@ -90,11 +104,11 @@ const emit = defineEmits(['close', 'success'])
 const { t } = useI18n(); const appStore = useAppStore(); const { copyToClipboard } = useClipboard()
 
 const submitting = ref(false); const passwordCopied = ref(false)
-const form = reactive({ email: '', password: '', username: '', notes: '', role: 'user', concurrency: 1, rpm_limit: 0, customAttributes: {} as UserAttributeValuesMap })
+const form = reactive({ email: '', phone: '', password: '', username: '', notes: '', role: 'user', concurrency: 1, rpm_limit: 0, customAttributes: {} as UserAttributeValuesMap })
 
 watch(() => props.user, (u) => {
   if (u) {
-    Object.assign(form, { email: u.email, password: '', username: u.username || '', notes: u.notes || '', role: u.role || 'user', concurrency: u.concurrency, rpm_limit: u.rpm_limit ?? 0, customAttributes: {} })
+    Object.assign(form, { email: u.email, phone: (u.phone || '').replace(/^\+86/, ''), password: '', username: u.username || '', notes: u.notes || '', role: u.role || 'user', concurrency: u.concurrency, rpm_limit: u.rpm_limit ?? 0, customAttributes: {} })
     passwordCopied.value = false
   }
 }, { immediate: true })
@@ -121,10 +135,14 @@ const handleUpdateUser = async () => {
     appStore.showError(t('admin.users.concurrencyMin'))
     return
   }
+  if (form.phone && !/^1[3-9]\d{9}$/.test(form.phone)) {
+    appStore.showError('请输入有效的 11 位中国大陆手机号')
+    return
+  }
   const userId = props.user.id
   submitting.value = true
   try {
-    const data: any = { email: form.email, username: form.username, notes: form.notes, role: form.role, concurrency: form.concurrency, rpm_limit: form.rpm_limit }
+    const data: any = { email: form.email, phone: form.phone ? `+86${form.phone}` : '', username: form.username, notes: form.notes, role: form.role, concurrency: form.concurrency, rpm_limit: form.rpm_limit }
     if (form.password.trim()) data.password = form.password.trim()
     // 提升为管理员属敏感操作：后端返回 STEP_UP_REQUIRED 时弹 TOTP 验证并重试
     await stepUp.run(() => adminAPI.users.update(userId, data))

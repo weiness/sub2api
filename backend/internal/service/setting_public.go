@@ -158,6 +158,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 	keys := []string{
 		SettingKeyRegistrationEnabled,
 		SettingKeyEmailVerifyEnabled,
+		SettingKeyRegistrationVerificationEnabled,
+		SettingKeyRegistrationVerificationType,
 		SettingKeyForceEmailOnThirdPartySignup,
 		SettingKeyRegistrationEmailSuffixWhitelist,
 		SettingKeyPromoCodeEnabled,
@@ -170,6 +172,9 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeyLoginAgreementDocuments,
 		SettingKeyTurnstileEnabled,
 		SettingKeyTurnstileSiteKey,
+		SettingKeyBotProtectionEnabled,
+		SettingKeyBotProtectionProvider,
+		SettingKeyGraphicalCaptchaType,
 		SettingKeyAPIKeyACLTrustForwardedIP,
 		SettingKeySiteName,
 		SettingKeySiteLogo,
@@ -285,6 +290,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 	return &PublicSettings{
 		RegistrationEnabled:              settings[SettingKeyRegistrationEnabled] == "true",
 		EmailVerifyEnabled:               emailVerifyEnabled,
+		RegistrationVerificationEnabled:  registrationVerificationEnabled(settings),
+		RegistrationVerificationType:     registrationVerificationType(settings),
 		ForceEmailOnThirdPartySignup:     settings[SettingKeyForceEmailOnThirdPartySignup] == "true",
 		RegistrationEmailSuffixWhitelist: registrationEmailSuffixWhitelist,
 		PromoCodeEnabled:                 settings[SettingKeyPromoCodeEnabled] != "false", // 默认启用
@@ -298,6 +305,9 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		LoginAgreementDocuments:          loginAgreementDocuments,
 		TurnstileEnabled:                 settings[SettingKeyTurnstileEnabled] == "true",
 		TurnstileSiteKey:                 settings[SettingKeyTurnstileSiteKey],
+		BotProtectionEnabled:             botProtectionEnabled(settings),
+		BotProtectionProvider:            botProtectionProvider(settings),
+		GraphicalCaptchaType:             normalizeGraphicalCaptchaType(settings[SettingKeyGraphicalCaptchaType]),
 		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, "Sub2API"),
 		SiteLogo:                         settings[SettingKeySiteLogo],
 		SiteSubtitle:                     s.getStringOrDefault(settings, SettingKeySiteSubtitle, "Subscription to API Conversion Platform"),

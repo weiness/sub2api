@@ -75,6 +75,21 @@ func TestAdminService_UpdateUser_RoleOmittedKeepsExisting(t *testing.T) {
 	require.Equal(t, RoleAdmin, updated.Role, "未提供 role 时不应改变现有角色")
 }
 
+func TestAdminService_UpdateUser_EmptyPhoneClearsBinding(t *testing.T) {
+	phone := "+8613800000000"
+	base := &userRepoStub{user: &User{ID: 42, Email: "u@example.com", Phone: &phone, Role: RoleUser}}
+	repo := &rpmUserRepoStub{userRepoStub: base}
+	svc := &adminServiceImpl{userRepo: repo, redeemCodeRepo: &redeemRepoStub{}}
+	emptyPhone := ""
+
+	updated, err := svc.UpdateUser(context.Background(), 42, &UpdateUserInput{Phone: &emptyPhone})
+
+	require.NoError(t, err)
+	require.Nil(t, updated.Phone)
+	require.NotNil(t, repo.lastUpdated)
+	require.Nil(t, repo.lastUpdated.Phone)
+}
+
 func TestAdminService_UpdateUser_InvalidRoleRejected(t *testing.T) {
 	base := &userRepoStub{user: &User{ID: 42, Email: "u@example.com", Role: RoleUser}}
 	repo := &rpmUserRepoStub{userRepoStub: base}

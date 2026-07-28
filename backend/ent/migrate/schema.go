@@ -1799,6 +1799,7 @@ var (
 		{Name: "concurrency", Type: field.TypeInt, Default: 5},
 		{Name: "status", Type: field.TypeString, Size: 20, Default: "active"},
 		{Name: "username", Type: field.TypeString, Size: 100, Default: ""},
+		{Name: "phone", Type: field.TypeString, Nullable: true, Size: 16},
 		{Name: "notes", Type: field.TypeString, Default: "", SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "totp_secret_encrypted", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "totp_enabled", Type: field.TypeBool, Default: false},
@@ -1829,6 +1830,14 @@ var (
 				Name:    "user_deleted_at",
 				Unique:  false,
 				Columns: []*schema.Column{UsersColumns[3]},
+			},
+			{
+				Name:    "user_phone",
+				Unique:  true,
+				Columns: []*schema.Column{UsersColumns[12]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "phone IS NOT NULL AND phone <> ''",
+				},
 			},
 		},
 	}

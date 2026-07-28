@@ -101,6 +101,16 @@ describe("SubscriptionPlanCard", () => {
     expect(wrapper.find('[data-test="plan-discount"]').attributes('data-discount-percent')).toBe("51");
   });
 
+  it("calculates the discount from converted customer-paid prices", () => {
+    const wrapper = mountPlanCard("openai", {
+      price: 94.51,
+      original_price: 100,
+    }, 10);
+
+    expect(wrapper.find('[data-test="plan-price"]').text()).toBe('9.45');
+    expect(wrapper.find('[data-test="plan-discount"]').attributes('data-discount-percent')).toBe("6");
+  });
+
   it("displays customer-paid CNY prices without mutating billing prices", () => {
     const plan = { price: 100, original_price: 200 };
     const wrapper = mountPlanCard("openai", plan, 10);

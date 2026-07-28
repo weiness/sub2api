@@ -356,6 +356,8 @@ const ImageUploadStub = defineComponent({
 const baseSettingsResponse = {
   registration_enabled: true,
   email_verify_enabled: false,
+  registration_verification_enabled: false,
+  registration_verification_type: "email",
   registration_email_suffix_whitelist: [],
   registration_ip_limit_enabled: false,
   registration_ip_daily_limit: 0,
@@ -740,6 +742,29 @@ describe("admin SettingsView payment visible method controls", () => {
         registration_ip_monthly_limit: 20,
       }),
     );
+  });
+
+  it("shows the verification method and email suffix whitelist only when registration verification is enabled", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+    await openSecurityTab(wrapper);
+
+    expect(wrapper.find('[data-testid="registration-email-suffix-whitelist"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="registration-verification-email"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="registration-verification-sms"]').exists()).toBe(false);
+
+    await wrapper.get('[data-testid="registration-verification-enabled"]').setValue(true);
+    expect(wrapper.find('[data-testid="registration-verification-email"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="registration-verification-sms"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="registration-email-suffix-whitelist"]').exists()).toBe(true);
+
+    await wrapper.get('[data-testid="registration-verification-sms"]').setValue("sms");
+    expect(wrapper.find('[data-testid="registration-email-suffix-whitelist"]').exists()).toBe(true);
+
+    await wrapper.get('[data-testid="registration-verification-enabled"]').setValue(false);
+    expect(wrapper.find('[data-testid="registration-verification-email"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="registration-verification-sms"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="registration-email-suffix-whitelist"]').exists()).toBe(false);
   });
 
   it("renders panel rate limit card and saves settings", async () => {

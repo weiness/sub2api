@@ -39,6 +39,8 @@ type User struct {
 	Status string `json:"status,omitempty"`
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
+	// Phone holds the value of the "phone" field.
+	Phone *string `json:"phone,omitempty"`
 	// Notes holds the value of the "notes" field.
 	Notes string `json:"notes,omitempty"`
 	// TotpSecretEncrypted holds the value of the "totp_secret_encrypted" field.
@@ -245,7 +247,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case user.FieldID, user.FieldConcurrency, user.FieldRpmLimit:
 			values[i] = new(sql.NullInt64)
-		case user.FieldEmail, user.FieldPasswordHash, user.FieldRole, user.FieldStatus, user.FieldUsername, user.FieldNotes, user.FieldTotpSecretEncrypted, user.FieldSignupSource, user.FieldRegistrationIP, user.FieldBalanceNotifyThresholdType, user.FieldBalanceNotifyExtraEmails:
+		case user.FieldEmail, user.FieldPasswordHash, user.FieldRole, user.FieldStatus, user.FieldUsername, user.FieldPhone, user.FieldNotes, user.FieldTotpSecretEncrypted, user.FieldSignupSource, user.FieldRegistrationIP, user.FieldBalanceNotifyThresholdType, user.FieldBalanceNotifyExtraEmails:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldDeletedAt, user.FieldTotpEnabledAt, user.FieldLastLoginAt, user.FieldLastActiveAt:
 			values[i] = new(sql.NullTime)
@@ -336,6 +338,13 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field username", values[i])
 			} else if value.Valid {
 				_m.Username = value.String
+			}
+		case user.FieldPhone:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field phone", values[i])
+			} else if value.Valid {
+				_m.Phone = new(string)
+				*_m.Phone = value.String
 			}
 		case user.FieldNotes:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -566,6 +575,11 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("username=")
 	builder.WriteString(_m.Username)
+	builder.WriteString(", ")
+	if v := _m.Phone; v != nil {
+		builder.WriteString("phone=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("notes=")
 	builder.WriteString(_m.Notes)

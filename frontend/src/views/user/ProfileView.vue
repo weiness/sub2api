@@ -34,6 +34,13 @@
 
       <ProfilePasswordForm />
 
+      <ProfilePhoneBindingCard
+        :user="user"
+        :bot-protection-enabled="botProtectionEnabled"
+        :bot-protection-provider="botProtectionProvider"
+        :turnstile-site-key="turnstileSiteKey"
+      />
+
       <ProfileBalanceNotifyCard
         v-if="user && balanceLowNotifyEnabled"
         :enabled="user.balance_notify_enabled ?? true"
@@ -55,6 +62,7 @@ import { Icon } from '@/components/icons'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ProfileBalanceNotifyCard from '@/components/user/profile/ProfileBalanceNotifyCard.vue'
 import ProfileInfoCard from '@/components/user/profile/ProfileInfoCard.vue'
+import ProfilePhoneBindingCard from '@/components/user/profile/ProfilePhoneBindingCard.vue'
 import ProfilePasswordForm from '@/components/user/profile/ProfilePasswordForm.vue'
 import ProfileTotpCard from '@/components/user/profile/ProfileTotpCard.vue'
 import { isWeChatWebOAuthEnabled } from '@/api/auth'
@@ -76,6 +84,9 @@ const wechatOAuthOpenEnabled = ref<boolean | undefined>(undefined)
 const wechatOAuthMPEnabled = ref<boolean | undefined>(undefined)
 const oidcOAuthEnabled = ref(false)
 const oidcOAuthProviderName = ref('OIDC')
+const botProtectionEnabled = ref(false)
+const botProtectionProvider = ref<'turnstile' | 'graphical'>('turnstile')
+const turnstileSiteKey = ref('')
 
 onMounted(async () => {
   const profileRefresh = authStore.refreshUser().catch((error) => {
@@ -101,6 +112,9 @@ onMounted(async () => {
         : undefined
       oidcOAuthEnabled.value = settings.oidc_oauth_enabled ?? false
       oidcOAuthProviderName.value = settings.oidc_oauth_provider_name || 'OIDC'
+      botProtectionEnabled.value = settings.bot_protection_enabled
+      botProtectionProvider.value = settings.bot_protection_provider
+      turnstileSiteKey.value = settings.turnstile_site_key || ''
     })
     .catch((error) => {
       console.error('Failed to load settings:', error)

@@ -166,6 +166,13 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 
 	// 注册设置
 	updates[SettingKeyRegistrationEnabled] = strconv.FormatBool(settings.RegistrationEnabled)
+	settings.RegistrationVerificationType = normalizeRegistrationVerificationType(settings.RegistrationVerificationType)
+	settings.BotProtectionProvider = normalizeBotProtectionProvider(settings.BotProtectionProvider)
+	settings.GraphicalCaptchaType = normalizeGraphicalCaptchaType(settings.GraphicalCaptchaType)
+	updates[SettingKeyRegistrationVerificationEnabled] = strconv.FormatBool(settings.RegistrationVerificationEnabled)
+	updates[SettingKeyRegistrationVerificationType] = settings.RegistrationVerificationType
+	// 保持旧客户端和依赖邮件验证开关的功能兼容。
+	settings.EmailVerifyEnabled = settings.RegistrationVerificationEnabled && settings.RegistrationVerificationType == RegistrationVerificationEmail
 	updates[SettingKeyEmailVerifyEnabled] = strconv.FormatBool(settings.EmailVerifyEnabled)
 	registrationEmailSuffixWhitelistJSON, err := json.Marshal(settings.RegistrationEmailSuffixWhitelist)
 	if err != nil {
@@ -211,6 +218,20 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 
 	// Cloudflare Turnstile 设置（只有非空才更新密钥）
 	updates[SettingKeyTurnstileEnabled] = strconv.FormatBool(settings.TurnstileEnabled)
+	settings.TurnstileEnabled = settings.BotProtectionEnabled && settings.BotProtectionProvider == BotProtectionTurnstile
+	updates[SettingKeyTurnstileEnabled] = strconv.FormatBool(settings.TurnstileEnabled)
+	updates[SettingKeyBotProtectionEnabled] = strconv.FormatBool(settings.BotProtectionEnabled)
+	updates[SettingKeyBotProtectionProvider] = settings.BotProtectionProvider
+	updates[SettingKeyGraphicalCaptchaType] = settings.GraphicalCaptchaType
+	updates[SettingKeySMSCodeTTLMinutes] = strconv.Itoa(settings.SMSCodeTTLMinutes)
+	updates[SettingKeySMSResendCooldownSeconds] = strconv.Itoa(settings.SMSResendCooldownSeconds)
+	updates[SettingKeySMSDailyLimit] = strconv.Itoa(settings.SMSDailyLimit)
+	updates[SettingKeySMSMaxVerifyAttempts] = strconv.Itoa(settings.SMSMaxVerifyAttempts)
+	smsChannelsJSON, err := json.Marshal(settings.SMSChannels)
+	if err != nil {
+		return nil, fmt.Errorf("marshal sms channels: %w", err)
+	}
+	updates[SettingKeySMSChannels] = string(smsChannelsJSON)
 	updates[SettingKeyTurnstileSiteKey] = settings.TurnstileSiteKey
 	if settings.TurnstileSecretKey != "" {
 		updates[SettingKeyTurnstileSecretKey] = settings.TurnstileSecretKey

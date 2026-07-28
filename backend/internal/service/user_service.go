@@ -1135,17 +1135,6 @@ func (s *UserService) UpdateStatus(ctx context.Context, userID int64, status str
 	return nil
 }
 
-// Delete 删除用户（管理员功能）
-func (s *UserService) Delete(ctx context.Context, userID int64) error {
-	if s.authCacheInvalidator != nil {
-		s.authCacheInvalidator.InvalidateAuthCacheByUserID(ctx, userID)
-	}
-	if err := s.userRepo.Delete(ctx, userID); err != nil {
-		return fmt.Errorf("delete user: %w", err)
-	}
-	return nil
-}
-
 // SendNotifyEmailCode sends a verification code to the extra notification email.
 func (s *UserService) SendNotifyEmailCode(ctx context.Context, userID int64, email string, emailService *EmailService, cache EmailCache, locale ...string) error {
 	if err := checkNotifyCodeRateLimit(ctx, cache, userID, email); err != nil {

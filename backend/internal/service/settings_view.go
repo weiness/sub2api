@@ -14,6 +14,8 @@ func firstNonEmpty(values ...string) string {
 type SystemSettings struct {
 	RegistrationEnabled              bool
 	EmailVerifyEnabled               bool
+	RegistrationVerificationEnabled  bool
+	RegistrationVerificationType     string
 	RegistrationEmailSuffixWhitelist []string
 	RegistrationIPLimitEnabled       bool
 	RegistrationIPDailyLimit         int
@@ -45,8 +47,17 @@ type SystemSettings struct {
 	TurnstileSiteKey             string
 	TurnstileSecretKey           string
 	TurnstileSecretKeyConfigured bool
-	APIKeyACLTrustForwardedIP    bool
-	ForwardedClientIPHeaders     []string
+	BotProtectionEnabled         bool
+	BotProtectionProvider        string
+	GraphicalCaptchaType         string
+
+	SMSCodeTTLMinutes         int
+	SMSResendCooldownSeconds  int
+	SMSDailyLimit             int
+	SMSMaxVerifyAttempts      int
+	SMSChannels               []SMSChannelConfig
+	APIKeyACLTrustForwardedIP bool
+	ForwardedClientIPHeaders  []string
 
 	// LinuxDo Connect OAuth 登录
 	LinuxDoConnectEnabled                bool
@@ -284,6 +295,8 @@ type DefaultSubscriptionSetting struct {
 type PublicSettings struct {
 	RegistrationEnabled              bool
 	EmailVerifyEnabled               bool
+	RegistrationVerificationEnabled  bool
+	RegistrationVerificationType     string
 	ForceEmailOnThirdPartySignup     bool
 	RegistrationEmailSuffixWhitelist []string
 	PromoCodeEnabled                 bool
@@ -297,6 +310,9 @@ type PublicSettings struct {
 	LoginAgreementDocuments          []LoginAgreementDocument
 	TurnstileEnabled                 bool
 	TurnstileSiteKey                 string
+	BotProtectionEnabled             bool
+	BotProtectionProvider            string
+	GraphicalCaptchaType             string
 	SiteName                         string
 	SiteLogo                         string
 	SiteSubtitle                     string

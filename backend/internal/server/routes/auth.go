@@ -35,6 +35,8 @@ func RegisterAuthRoutes(
 		auth.POST("/register", rateLimiter.LimitWithOptions("auth-register", 5, time.Minute, middleware.RateLimitOptions{
 			FailureMode: middleware.RateLimitFailClose,
 		}), h.Auth.Register)
+		auth.POST("/captcha/challenge", rateLimiter.LimitWithOptions("auth-captcha-challenge", 20, time.Minute, middleware.RateLimitOptions{FailureMode: middleware.RateLimitFailClose}), h.Auth.CreateCaptchaChallenge)
+		auth.POST("/captcha/verify", rateLimiter.LimitWithOptions("auth-captcha-verify", 20, time.Minute, middleware.RateLimitOptions{FailureMode: middleware.RateLimitFailClose}), h.Auth.VerifyCaptchaChallenge)
 		auth.POST("/login", rateLimiter.LimitWithOptions("auth-login", 20, time.Minute, middleware.RateLimitOptions{
 			FailureMode: middleware.RateLimitFailClose,
 		}), h.Auth.Login)
@@ -44,6 +46,9 @@ func RegisterAuthRoutes(
 		auth.POST("/send-verify-code", rateLimiter.LimitWithOptions("auth-send-verify-code", 5, time.Minute, middleware.RateLimitOptions{
 			FailureMode: middleware.RateLimitFailClose,
 		}), h.Auth.SendVerifyCode)
+		auth.POST("/send-sms-code", rateLimiter.LimitWithOptions("auth-send-sms-code", 10, time.Minute, middleware.RateLimitOptions{
+			FailureMode: middleware.RateLimitFailClose,
+		}), h.Auth.SendSMSCode)
 		// Token刷新接口添加速率限制：每分钟最多 30 次（Redis 故障时 fail-close）
 		auth.POST("/refresh", rateLimiter.LimitWithOptions("refresh-token", 30, time.Minute, middleware.RateLimitOptions{
 			FailureMode: middleware.RateLimitFailClose,

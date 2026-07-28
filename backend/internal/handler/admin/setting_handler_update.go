@@ -24,6 +24,8 @@ type UpdateSettingsRequest struct {
 	// 注册设置
 	RegistrationEnabled              bool                         `json:"registration_enabled"`
 	EmailVerifyEnabled               bool                         `json:"email_verify_enabled"`
+	RegistrationVerificationEnabled  bool                         `json:"registration_verification_enabled"`
+	RegistrationVerificationType     string                       `json:"registration_verification_type"`
 	RegistrationEmailSuffixWhitelist []string                     `json:"registration_email_suffix_whitelist"`
 	RegistrationIPLimitEnabled       *bool                        `json:"registration_ip_limit_enabled"`
 	RegistrationIPDailyLimit         *int                         `json:"registration_ip_daily_limit"`
@@ -52,9 +54,17 @@ type UpdateSettingsRequest struct {
 	SMTPUseTLS   bool   `json:"smtp_use_tls"`
 
 	// Cloudflare Turnstile 设置
-	TurnstileEnabled   bool   `json:"turnstile_enabled"`
-	TurnstileSiteKey   string `json:"turnstile_site_key"`
-	TurnstileSecretKey string `json:"turnstile_secret_key"`
+	TurnstileEnabled         bool                       `json:"turnstile_enabled"`
+	TurnstileSiteKey         string                     `json:"turnstile_site_key"`
+	TurnstileSecretKey       string                     `json:"turnstile_secret_key"`
+	BotProtectionEnabled     bool                       `json:"bot_protection_enabled"`
+	BotProtectionProvider    string                     `json:"bot_protection_provider"`
+	GraphicalCaptchaType     string                     `json:"graphical_captcha_type"`
+	SMSCodeTTLMinutes        int                        `json:"sms_code_ttl_minutes"`
+	SMSResendCooldownSeconds int                        `json:"sms_resend_cooldown_seconds"`
+	SMSDailyLimit            int                        `json:"sms_daily_limit"`
+	SMSMaxVerifyAttempts     int                        `json:"sms_max_verify_attempts"`
+	SMSChannels              []service.SMSChannelConfig `json:"sms_channels"`
 
 	// API Key IP 访问控制设置
 	APIKeyACLTrustForwardedIP *bool     `json:"api_key_acl_trust_forwarded_ip"`
@@ -566,6 +576,63 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	if req.TablePageSizeOptions == nil {
 		req.TablePageSizeOptions = previousSettings.TablePageSizeOptions
 	}
+	if _, ok := sentFields["registration_verification_enabled"]; !ok {
+		req.RegistrationVerificationEnabled = previousSettings.RegistrationVerificationEnabled
+	}
+	if strings.TrimSpace(req.RegistrationVerificationType) == "" {
+		req.RegistrationVerificationType = previousSettings.RegistrationVerificationType
+	}
+	if req.RegistrationVerificationType != service.RegistrationVerificationEmail && req.RegistrationVerificationType != service.RegistrationVerificationSMS {
+		response.BadRequest(c, "registration_verification_type must be email or sms")
+		return
+	}
+	if _, ok := sentFields["bot_protection_enabled"]; !ok {
+		req.BotProtectionEnabled = previousSettings.BotProtectionEnabled
+	}
+	if strings.TrimSpace(req.BotProtectionProvider) == "" {
+		req.BotProtectionProvider = previousSettings.BotProtectionProvider
+	}
+	if req.BotProtectionProvider != service.BotProtectionTurnstile && req.BotProtectionProvider != service.BotProtectionGraphical {
+		response.BadRequest(c, "bot_protection_provider must be turnstile or graphical")
+		return
+	}
+	if req.GraphicalCaptchaType == "" {
+		req.GraphicalCaptchaType = previousSettings.GraphicalCaptchaType
+	}
+	if req.SMSCodeTTLMinutes <= 0 {
+		req.SMSCodeTTLMinutes = previousSettings.SMSCodeTTLMinutes
+	}
+	if req.SMSResendCooldownSeconds <= 0 {
+		req.SMSResendCooldownSeconds = previousSettings.SMSResendCooldownSeconds
+	}
+	if req.SMSDailyLimit <= 0 {
+		req.SMSDailyLimit = previousSettings.SMSDailyLimit
+	}
+	if req.SMSMaxVerifyAttempts <= 0 {
+		req.SMSMaxVerifyAttempts = previousSettings.SMSMaxVerifyAttempts
+	}
+	if req.SMSChannels == nil {
+		req.SMSChannels = previousSettings.SMSChannels
+	}
+	for _, channel := range req.SMSChannels {
+		if err := service.ValidateSMSChannelConfig(channel, false); err != nil {
+			response.BadRequest(c, err.Error())
+			return
+		}
+	}
+	if req.RegistrationVerificationEnabled && req.RegistrationVerificationType == service.RegistrationVerificationSMS {
+		hasEnabledChannel := false
+		for _, channel := range req.SMSChannels {
+			if channel.Enabled && channel.Provider == "spug" && strings.TrimSpace(channel.TemplateID) != "" {
+				hasEnabledChannel = true
+				break
+			}
+		}
+		if !hasEnabledChannel {
+			response.BadRequest(c, "at least one enabled SMS channel is required")
+			return
+		}
+	}
 	req.SMTPHost = strings.TrimSpace(req.SMTPHost)
 	req.SMTPUsername = strings.TrimSpace(req.SMTPUsername)
 	req.SMTPPassword = strings.TrimSpace(req.SMTPPassword)
@@ -593,6 +660,7 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	}
 
 	// Turnstile 参数验证
+	req.TurnstileEnabled = req.BotProtectionEnabled && req.BotProtectionProvider == service.BotProtectionTurnstile
 	if req.TurnstileEnabled {
 		// 检查必填字段
 		if req.TurnstileSiteKey == "" {
@@ -1333,6 +1401,8 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 
 		RegistrationEnabled:              req.RegistrationEnabled,
 		EmailVerifyEnabled:               req.EmailVerifyEnabled,
+		RegistrationVerificationEnabled:  req.RegistrationVerificationEnabled,
+		RegistrationVerificationType:     req.RegistrationVerificationType,
 		RegistrationEmailSuffixWhitelist: req.RegistrationEmailSuffixWhitelist,
 		RegistrationIPLimitEnabled:       registrationIPLimitEnabled,
 		RegistrationIPDailyLimit:         registrationIPDailyLimit,
@@ -1360,6 +1430,14 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		TurnstileEnabled:                 req.TurnstileEnabled,
 		TurnstileSiteKey:                 req.TurnstileSiteKey,
 		TurnstileSecretKey:               req.TurnstileSecretKey,
+		BotProtectionEnabled:             req.BotProtectionEnabled,
+		BotProtectionProvider:            req.BotProtectionProvider,
+		GraphicalCaptchaType:             req.GraphicalCaptchaType,
+		SMSCodeTTLMinutes:                req.SMSCodeTTLMinutes,
+		SMSResendCooldownSeconds:         req.SMSResendCooldownSeconds,
+		SMSDailyLimit:                    req.SMSDailyLimit,
+		SMSMaxVerifyAttempts:             req.SMSMaxVerifyAttempts,
+		SMSChannels:                      req.SMSChannels,
 		APIKeyACLTrustForwardedIP: func() bool {
 			if req.APIKeyACLTrustForwardedIP != nil {
 				return *req.APIKeyACLTrustForwardedIP
@@ -1872,6 +1950,8 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	payload := dto.SystemSettings{
 		RegistrationEnabled:                                    updatedSettings.RegistrationEnabled,
 		EmailVerifyEnabled:                                     updatedSettings.EmailVerifyEnabled,
+		RegistrationVerificationEnabled:                        updatedSettings.RegistrationVerificationEnabled,
+		RegistrationVerificationType:                           updatedSettings.RegistrationVerificationType,
 		RegistrationEmailSuffixWhitelist:                       updatedSettings.RegistrationEmailSuffixWhitelist,
 		RegistrationIPLimitEnabled:                             updatedSettings.RegistrationIPLimitEnabled,
 		RegistrationIPDailyLimit:                               updatedSettings.RegistrationIPDailyLimit,
@@ -1900,6 +1980,14 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		TurnstileEnabled:                                       updatedSettings.TurnstileEnabled,
 		TurnstileSiteKey:                                       updatedSettings.TurnstileSiteKey,
 		TurnstileSecretKeyConfigured:                           updatedSettings.TurnstileSecretKeyConfigured,
+		BotProtectionEnabled:                                   updatedSettings.BotProtectionEnabled,
+		BotProtectionProvider:                                  updatedSettings.BotProtectionProvider,
+		GraphicalCaptchaType:                                   updatedSettings.GraphicalCaptchaType,
+		SMSCodeTTLMinutes:                                      updatedSettings.SMSCodeTTLMinutes,
+		SMSResendCooldownSeconds:                               updatedSettings.SMSResendCooldownSeconds,
+		SMSDailyLimit:                                          updatedSettings.SMSDailyLimit,
+		SMSMaxVerifyAttempts:                                   updatedSettings.SMSMaxVerifyAttempts,
+		SMSChannels:                                            updatedSettings.SMSChannels,
 		APIKeyACLTrustForwardedIP:                              updatedSettings.APIKeyACLTrustForwardedIP,
 		ForwardedClientIPHeaders:                               updatedSettings.ForwardedClientIPHeaders,
 		LinuxDoConnectEnabled:                                  updatedSettings.LinuxDoConnectEnabled,

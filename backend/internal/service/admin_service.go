@@ -154,6 +154,7 @@ type CreateUserInput struct {
 
 type UpdateUserInput struct {
 	Email         string
+	Phone         *string
 	Password      string
 	Username      *string
 	Notes         *string

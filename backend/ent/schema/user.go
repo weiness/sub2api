@@ -62,6 +62,10 @@ func (User) Fields() []ent.Field {
 		field.String("username").
 			MaxLen(100).
 			Default(""),
+		field.String("phone").
+			MaxLen(16).
+			Optional().
+			Nillable(),
 		// wechat field migrated to user_attribute_values (see migration 019)
 		field.String("notes").
 			SchemaType(map[string]string{dialect.Postgres: "text"}).
@@ -146,5 +150,8 @@ func (User) Indexes() []ent.Index {
 		// email 字段已在 Fields() 中声明 Unique()，无需重复索引
 		index.Fields("status"),
 		index.Fields("deleted_at"),
+		index.Fields("phone").
+			Unique().
+			Annotations(entsql.IndexWhere("deleted_at IS NULL AND phone IS NOT NULL AND phone <> ''")),
 	}
 }

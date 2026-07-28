@@ -62,6 +62,16 @@ export async function changePassword(
   return data
 }
 
+export async function sendPhoneBindingCode(payload: { phone: string; turnstile_token?: string; captcha_proof?: string }): Promise<{ countdown: number }> {
+	const { data } = await apiClient.post<{ countdown: number }>('/user/phone/send-code', payload)
+	return data
+}
+
+export async function bindPhone(phone: string, code: string): Promise<User> {
+	const { data } = await apiClient.post<User>('/user/phone/bind', { phone, code })
+	return data
+}
+
 /**
  * Send verification code for adding a notify email
  * @param email - Email address to verify
@@ -198,6 +208,8 @@ export const userAPI = {
   getProfile,
   updateProfile,
   changePassword,
+	sendPhoneBindingCode,
+	bindPhone,
   sendNotifyEmailCode,
   verifyNotifyEmail,
   removeNotifyEmail,

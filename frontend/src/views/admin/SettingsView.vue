@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="mx-auto w-full max-w-7xl space-y-6">
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
         <div
@@ -1402,23 +1402,62 @@
                 <Toggle v-model="form.registration_enabled" />
               </div>
 
-              <!-- Email Verification -->
+              <!-- Registration Verification -->
               <div
                 class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
-                  <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.registration.emailVerification")
-                  }}</label>
+                  <label class="font-medium text-gray-900 dark:text-white">
+                    {{ localText("注册验证", "Registration verification") }}
+                  </label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t("admin.settings.registration.emailVerificationHint") }}
+                    {{ localText("开启后，注册必须完成所选方式的验证码校验", "Require the selected verification method during registration") }}
                   </p>
                 </div>
-                <Toggle v-model="form.email_verify_enabled" />
+                <Toggle
+                  v-model="form.registration_verification_enabled"
+                  data-testid="registration-verification-enabled"
+                />
+              </div>
+
+              <div
+                v-if="form.registration_verification_enabled"
+                class="border-t border-gray-100 pt-4 dark:border-dark-700"
+              >
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      v-model="form.registration_verification_type"
+                      data-testid="registration-verification-email"
+                      type="radio"
+                      value="email"
+                      class="h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                      {{ localText("邮箱验证", "Email verification") }}
+                    </span>
+                  </label>
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      v-model="form.registration_verification_type"
+                      data-testid="registration-verification-sms"
+                      type="radio"
+                      value="sms"
+                      class="h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                      {{ localText("手机验证", "Phone verification") }}
+                    </span>
+                  </label>
+                </div>
               </div>
 
               <!-- Email Suffix Whitelist -->
-              <div class="border-t border-gray-100 pt-4 dark:border-dark-700">
+              <div
+                v-if="form.registration_verification_enabled"
+                data-testid="registration-email-suffix-whitelist"
+                class="border-t border-gray-100 pt-4 dark:border-dark-700"
+              >
                 <label class="font-medium text-gray-900 dark:text-white">{{
                   t("admin.settings.registration.emailSuffixWhitelist")
                 }}</label>
@@ -1515,11 +1554,7 @@
                 </div>
                 <Toggle v-model="form.invitation_code_enabled" />
               </div>
-              <!-- Password Reset - Only show when email verification is enabled -->
-              <div
-                v-if="form.email_verify_enabled"
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
-              >
+              <div class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700">
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
                     t("admin.settings.registration.passwordReset")
@@ -1532,7 +1567,7 @@
               </div>
               <!-- Frontend URL - Only show when password reset is enabled -->
               <div
-                v-if="form.email_verify_enabled && form.password_reset_enabled"
+                v-if="form.password_reset_enabled"
                 class="border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <label
@@ -1945,35 +1980,62 @@
             </div>
           </div>
 
-          <!-- Cloudflare Turnstile Settings -->
+          <!-- Bot Protection Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+              data-testid="bot-protection-heading"
+              class="flex items-center justify-between gap-4 px-6 py-4"
             >
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ t("admin.settings.turnstile.title") }}
-              </h2>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {{ t("admin.settings.turnstile.description") }}
-              </p>
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  {{ localText("登录和注册的机器人防护", "Login and registration bot protection") }}
+                </h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {{ localText("启用机器人防护", "Enable bot protection") }}
+                </p>
+              </div>
+              <Toggle
+                v-model="form.bot_protection_enabled"
+                data-testid="bot-protection-enabled"
+              />
             </div>
-            <div class="space-y-5 p-6">
-              <!-- Enable Turnstile -->
-              <div class="flex items-center justify-between">
-                <div>
-                  <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.turnstile.enableTurnstile")
-                  }}</label>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t("admin.settings.turnstile.enableTurnstileHint") }}
-                  </p>
+            <div
+              v-if="form.bot_protection_enabled"
+              class="space-y-5 border-t border-gray-100 p-6 dark:border-dark-700"
+            >
+              <div>
+                <div class="inline-flex rounded-lg bg-gray-100 p-1 dark:bg-dark-700">
+                  <button
+                    type="button"
+                    class="rounded-md px-4 py-2 text-sm font-medium"
+                    :class="form.bot_protection_provider === 'turnstile' ? 'bg-white text-primary-600 shadow-sm dark:bg-dark-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-300'"
+                    @click="form.bot_protection_provider = 'turnstile'"
+                  >Cloudflare Turnstile</button>
+                  <button
+                    type="button"
+                    class="rounded-md px-4 py-2 text-sm font-medium"
+                    :class="form.bot_protection_provider === 'graphical' ? 'bg-white text-primary-600 shadow-sm dark:bg-dark-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-300'"
+                    @click="form.bot_protection_provider = 'graphical'"
+                  >{{ localText("图形验证码", "Graphical captcha") }}</button>
                 </div>
-                <Toggle v-model="form.turnstile_enabled" />
+                <div
+                  v-if="form.bot_protection_provider === 'graphical'"
+                  class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4"
+                >
+                  <label
+                    v-for="option in graphicalCaptchaOptions"
+                    :key="option.value"
+                    class="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-3 text-sm dark:border-dark-600"
+                  >
+                    <input v-model="form.graphical_captcha_type" type="radio" :value="option.value" />
+                    <span>{{ option.label }}</span>
+                  </label>
+                </div>
               </div>
 
               <!-- Turnstile Keys - Only show when enabled -->
               <div
-                v-if="form.turnstile_enabled"
+                v-if="form.bot_protection_provider === 'turnstile'"
                 class="border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div class="grid grid-cols-1 gap-6">
@@ -7527,7 +7589,7 @@
 
         <div v-show="activeTab === 'email'" class="space-y-6">
           <!-- Email disabled hint - show when email_verify_enabled is off -->
-          <div v-if="!form.email_verify_enabled" class="card">
+          <div v-if="!form.registration_verification_enabled || form.registration_verification_type !== 'email'" class="card">
             <div class="p-6">
               <div class="flex items-start gap-3">
                 <Icon
@@ -7548,7 +7610,7 @@
           </div>
 
           <!-- SMTP Settings - Only show when email verification is enabled -->
-          <div v-if="form.email_verify_enabled" class="card">
+          <div v-if="form.registration_verification_enabled && form.registration_verification_type === 'email'" class="card">
             <div
               class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
@@ -7711,7 +7773,7 @@
           </div>
 
           <!-- Send Test Email - Only show when email verification is enabled -->
-          <div v-if="form.email_verify_enabled" class="card">
+          <div v-if="form.registration_verification_enabled && form.registration_verification_type === 'email'" class="card">
             <div
               class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
@@ -7946,6 +8008,112 @@
         </div>
         <!-- /Tab: Email -->
 
+        <div v-show="activeTab === 'sms'" class="space-y-6">
+          <div class="card">
+            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ localText("短信发送规则", "SMS delivery rules") }}
+              </h2>
+            </div>
+            <div class="grid grid-cols-1 gap-5 p-6 md:grid-cols-4">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ localText("验证码有效期（分钟）", "Code TTL (minutes)") }}
+                <input v-model.number="form.sms_code_ttl_minutes" type="number" min="1" class="input mt-2" />
+              </label>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ localText("重发间隔（秒）", "Resend cooldown (seconds)") }}
+                <input v-model.number="form.sms_resend_cooldown_seconds" type="number" min="1" class="input mt-2" />
+              </label>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ localText("单手机号每日成功次数", "Daily successes per phone") }}
+                <input v-model.number="form.sms_daily_limit" type="number" min="1" class="input mt-2" />
+              </label>
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ localText("验证码最大尝试次数", "Maximum verification attempts") }}
+                <input v-model.number="form.sms_max_verify_attempts" type="number" min="1" class="input mt-2" />
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ localText("短信渠道", "SMS channels") }}
+              </h2>
+              <button type="button" class="btn btn-primary btn-sm" @click="openCreateSMSChannel">
+                <Icon name="plus" size="sm" />
+                {{ localText("添加渠道", "Add channel") }}
+              </button>
+            </div>
+
+            <div v-if="form.sms_channels.length" class="divide-y divide-gray-100 dark:divide-dark-700">
+              <div
+                v-for="(channel, channelIndex) in form.sms_channels"
+                :key="channel.id"
+                class="p-5"
+              >
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <Toggle v-model="channel.enabled" />
+                      <strong class="text-gray-900 dark:text-white">{{ channel.name }}</strong>
+                      <span class="badge" :class="channel.enabled ? 'badge-success' : 'badge-gray'">
+                        {{ channel.enabled ? localText("已启用", "Enabled") : localText("已停用", "Disabled") }}
+                      </span>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">{{ smsProviderLabel(channel.provider) }}</span>
+                    </div>
+                    <p class="mt-1 truncate font-mono text-xs text-gray-500 dark:text-gray-400">
+                      {{ localText("模板 ID", "Template ID") }}: {{ channel.template_id }}
+                    </p>
+                  </div>
+
+                  <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div class="flex sm:w-64">
+                      <span class="flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm dark:border-dark-500 dark:bg-dark-700">+86</span>
+                      <input
+                        v-model="testSMSPhone"
+                        type="tel"
+                        inputmode="numeric"
+                        maxlength="11"
+                        class="input rounded-l-none"
+                        :placeholder="localText('测试手机号', 'Test phone')"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      :disabled="testingSMSChannelID === channel.id"
+                      @click="testSMSChannel(channel)"
+                    >
+                      {{ testingSMSChannelID === channel.id ? localText("发送中", "Sending") : localText("测试发送", "Test send") }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary px-3"
+                      :title="localText('编辑渠道', 'Edit channel')"
+                      @click="openEditSMSChannel(channelIndex)"
+                    >
+                      <Icon name="edit" size="sm" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary px-3 text-red-600 dark:text-red-400"
+                      :title="localText('删除渠道', 'Delete channel')"
+                      @click="removeSMSChannel(channelIndex)"
+                    >
+                      <Icon name="trash" size="sm" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+              {{ localText("暂未配置短信渠道", "No SMS channels configured") }}
+            </div>
+          </div>
+        </div>
+        <!-- /Tab: SMS -->
+
         <!-- Tab: Backup -->
         <div v-show="activeTab === 'backup'">
           <BackupSettings />
@@ -7986,6 +8154,13 @@
           </button>
         </div>
       </form>
+
+      <SMSChannelDialog
+        :show="showSMSChannelDialog"
+        :channel="editingSMSChannel"
+        @close="showSMSChannelDialog = false"
+        @save="saveSMSChannel"
+      />
 
       <!-- Provider dialogs placed outside the settings form to prevent form submission bubbling -->
       <PaymentProviderDialog
@@ -8050,6 +8225,7 @@ import type {
   WebSearchEmulationConfig,
   WebSearchProviderConfig,
   WebSearchTestResult,
+  SMSChannelConfig,
 } from "@/api/admin/settings";
 import type {
   AdminGroup,
@@ -8064,6 +8240,7 @@ import Select from "@/components/common/Select.vue";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import PaymentProviderList from "@/components/payment/PaymentProviderList.vue";
 import PaymentProviderDialog from "@/components/payment/PaymentProviderDialog.vue";
+import SMSChannelDialog from "@/components/admin/settings/SMSChannelDialog.vue";
 import GroupBadge from "@/components/common/GroupBadge.vue";
 import GroupOptionItem from "@/components/common/GroupOptionItem.vue";
 import Toggle from "@/components/common/Toggle.vue";
@@ -8109,6 +8286,13 @@ function localText(zh: string, en: string): string {
   return isZhLocale.value ? zh : en;
 }
 
+const graphicalCaptchaOptions = computed(() => [
+  { value: "slide", label: localText("滑动拼图", "Slide puzzle") },
+  { value: "drag", label: localText("区域拖拽", "Region drag") },
+  { value: "rotate", label: localText("旋转拼图", "Rotate puzzle") },
+  { value: "click", label: localText("点选验证", "Click captcha") },
+]);
+
 const paymentGuideHref = computed(() =>
   locale.value.startsWith("zh")
     ? "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT_CN.md"
@@ -8130,6 +8314,7 @@ type SettingsTab =
   | "gateway"
   | "payment"
   | "email"
+  | "sms"
   | "backup";
 const activeTab = ref<SettingsTab>("general");
 const settingsTabs = [
@@ -8141,6 +8326,7 @@ const settingsTabs = [
   { key: "gateway" as SettingsTab, icon: "server" as const },
   { key: "payment" as SettingsTab, icon: "creditCard" as const },
   { key: "email" as SettingsTab, icon: "mail" as const },
+  { key: "sms" as SettingsTab, icon: "smartphone" as const },
   { key: "backup" as SettingsTab, icon: "database" as const },
 ];
 
@@ -8203,10 +8389,64 @@ const testingSmtp = ref(false);
 const sendingTestEmail = ref(false);
 const smtpPasswordManuallyEdited = ref(false);
 const testEmailAddress = ref("");
+const testSMSPhone = ref("");
+const testingSMSChannelID = ref("");
+const showSMSChannelDialog = ref(false);
+const editingSMSChannelIndex = ref<number | null>(null);
+const editingSMSChannel = computed(() =>
+  editingSMSChannelIndex.value === null
+    ? null
+    : form.sms_channels[editingSMSChannelIndex.value] || null,
+);
 const registrationEmailSuffixWhitelistTags = ref<string[]>([]);
 const registrationEmailSuffixWhitelistDraft = ref("");
 const forwardedClientIpHeaderDraft = ref("");
 const tablePageSizeOptionsInput = ref("10, 20, 50, 100");
+
+function openCreateSMSChannel(): void {
+  editingSMSChannelIndex.value = null;
+  showSMSChannelDialog.value = true;
+}
+
+function openEditSMSChannel(index: number): void {
+  editingSMSChannelIndex.value = index;
+  showSMSChannelDialog.value = true;
+}
+
+function saveSMSChannel(channel: SMSChannelConfig): void {
+  if (editingSMSChannelIndex.value === null) {
+    form.sms_channels.push(channel);
+  } else {
+    form.sms_channels.splice(editingSMSChannelIndex.value, 1, channel);
+  }
+  showSMSChannelDialog.value = false;
+  editingSMSChannelIndex.value = null;
+}
+
+function removeSMSChannel(index: number): void {
+  form.sms_channels.splice(index, 1);
+}
+
+function smsProviderLabel(provider: SMSChannelConfig["provider"]): string {
+  return provider === "spug" ? localText("时巴克科技", "Spug SMS") : provider;
+}
+
+async function testSMSChannel(channel: SMSChannelConfig): Promise<void> {
+  const phone = testSMSPhone.value.trim();
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    appStore.showError(localText("请输入有效的 11 位中国大陆手机号", "Enter a valid mainland China phone number"));
+    return;
+  }
+  testingSMSChannelID.value = channel.id;
+  try {
+    const result = await adminAPI.settings.sendTestSMS(phone, channel);
+    appStore.showSuccess(result.message || localText("测试短信发送成功", "Test SMS sent"));
+  } catch (error) {
+    appStore.showError(extractApiErrorMessage(error) || localText("测试短信发送失败", "Failed to send test SMS"));
+  } finally {
+    testingSMSChannelID.value = "";
+  }
+}
 
 // Admin API Key 状态
 const adminApiKeyLoading = ref(true);
@@ -8777,6 +9017,8 @@ type SettingsForm = Omit<
 const form = reactive<SettingsForm>({
   registration_enabled: true,
   email_verify_enabled: false,
+  registration_verification_enabled: false,
+  registration_verification_type: "email",
   registration_email_suffix_whitelist: [],
   registration_ip_limit_enabled: false,
   registration_ip_daily_limit: 0,
@@ -8871,6 +9113,14 @@ const form = reactive<SettingsForm>({
   turnstile_site_key: "",
   turnstile_secret_key: "",
   turnstile_secret_key_configured: false,
+  bot_protection_enabled: false,
+  bot_protection_provider: "turnstile",
+  graphical_captcha_type: "slide",
+  sms_code_ttl_minutes: 15,
+  sms_resend_cooldown_seconds: 60,
+  sms_daily_limit: 10,
+  sms_max_verify_attempts: 5,
+  sms_channels: [],
   api_key_acl_trust_forwarded_ip: true,
   forwarded_client_ip_headers: [],
   // LinuxDo Connect OAuth 登录
@@ -10312,7 +10562,12 @@ async function saveSettings() {
 
     const payload: UpdateSettingsRequest = {
       registration_enabled: form.registration_enabled,
-      email_verify_enabled: form.email_verify_enabled,
+      email_verify_enabled:
+        form.registration_verification_enabled &&
+        form.registration_verification_type === "email",
+      registration_verification_enabled:
+        form.registration_verification_enabled,
+      registration_verification_type: form.registration_verification_type,
       registration_email_suffix_whitelist:
         registrationEmailSuffixWhitelistTags.value.map((suffix) =>
           suffix.startsWith("*.") ? suffix : `@${suffix}`,
@@ -10372,9 +10627,25 @@ async function saveSettings() {
       smtp_from_email: form.smtp_from_email,
       smtp_from_name: form.smtp_from_name,
       smtp_use_tls: form.smtp_use_tls,
-      turnstile_enabled: form.turnstile_enabled,
+      turnstile_enabled:
+        form.bot_protection_enabled &&
+        form.bot_protection_provider === "turnstile",
       turnstile_site_key: form.turnstile_site_key,
       turnstile_secret_key: form.turnstile_secret_key || undefined,
+      bot_protection_enabled: form.bot_protection_enabled,
+      bot_protection_provider: form.bot_protection_provider,
+      graphical_captcha_type: form.graphical_captcha_type,
+      sms_code_ttl_minutes: Math.max(1, Number(form.sms_code_ttl_minutes) || 15),
+      sms_resend_cooldown_seconds: Math.max(
+        1,
+        Number(form.sms_resend_cooldown_seconds) || 60,
+      ),
+      sms_daily_limit: Math.max(1, Number(form.sms_daily_limit) || 10),
+      sms_max_verify_attempts: Math.max(
+        1,
+        Number(form.sms_max_verify_attempts) || 5,
+      ),
+      sms_channels: form.sms_channels,
       api_key_acl_trust_forwarded_ip: form.api_key_acl_trust_forwarded_ip,
       forwarded_client_ip_headers: form.forwarded_client_ip_headers,
       linuxdo_connect_enabled: form.linuxdo_connect_enabled,

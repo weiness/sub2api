@@ -1891,7 +1891,7 @@ func init() {
 	subscriptionplanDescBaseSoldCount := subscriptionplanFields[13].Descriptor()
 	// subscriptionplan.DefaultBaseSoldCount holds the default value on creation for the base_sold_count field.
 	subscriptionplan.DefaultBaseSoldCount = subscriptionplanDescBaseSoldCount.Default.(int)
-	// subscriptionplan.BaseSoldCountValidator is a validator for the base_sold_count field. It is called by the builders before save.
+	// subscriptionplan.BaseSoldCountValidator is a validator for the "base_sold_count" field. It is called by the builders before save.
 	subscriptionplan.BaseSoldCountValidator = subscriptionplanDescBaseSoldCount.Validators[0].(func(int) error)
 	// subscriptionplanDescCreatedAt is the schema descriptor for created_at field.
 	subscriptionplanDescCreatedAt := subscriptionplanFields[14].Descriptor()
@@ -2228,44 +2228,48 @@ func init() {
 	user.DefaultUsername = userDescUsername.Default.(string)
 	// user.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
 	user.UsernameValidator = userDescUsername.Validators[0].(func(string) error)
+	// userDescPhone is the schema descriptor for phone field.
+	userDescPhone := userFields[8].Descriptor()
+	// user.PhoneValidator is a validator for the "phone" field. It is called by the builders before save.
+	user.PhoneValidator = userDescPhone.Validators[0].(func(string) error)
 	// userDescNotes is the schema descriptor for notes field.
-	userDescNotes := userFields[8].Descriptor()
+	userDescNotes := userFields[9].Descriptor()
 	// user.DefaultNotes holds the default value on creation for the notes field.
 	user.DefaultNotes = userDescNotes.Default.(string)
 	// userDescTotpEnabled is the schema descriptor for totp_enabled field.
-	userDescTotpEnabled := userFields[10].Descriptor()
+	userDescTotpEnabled := userFields[11].Descriptor()
 	// user.DefaultTotpEnabled holds the default value on creation for the totp_enabled field.
 	user.DefaultTotpEnabled = userDescTotpEnabled.Default.(bool)
 	// userDescSignupSource is the schema descriptor for signup_source field.
-	userDescSignupSource := userFields[12].Descriptor()
+	userDescSignupSource := userFields[13].Descriptor()
 	// user.DefaultSignupSource holds the default value on creation for the signup_source field.
 	user.DefaultSignupSource = userDescSignupSource.Default.(string)
 	// user.SignupSourceValidator is a validator for the "signup_source" field. It is called by the builders before save.
 	user.SignupSourceValidator = userDescSignupSource.Validators[0].(func(string) error)
 	// userDescRegistrationIP is the schema descriptor for registration_ip field.
-	userDescRegistrationIP := userFields[13].Descriptor()
+	userDescRegistrationIP := userFields[14].Descriptor()
 	// user.DefaultRegistrationIP holds the default value on creation for the registration_ip field.
 	user.DefaultRegistrationIP = userDescRegistrationIP.Default.(string)
 	// user.RegistrationIPValidator is a validator for the "registration_ip" field. It is called by the builders before save.
 	user.RegistrationIPValidator = userDescRegistrationIP.Validators[0].(func(string) error)
 	// userDescBalanceNotifyEnabled is the schema descriptor for balance_notify_enabled field.
-	userDescBalanceNotifyEnabled := userFields[16].Descriptor()
+	userDescBalanceNotifyEnabled := userFields[17].Descriptor()
 	// user.DefaultBalanceNotifyEnabled holds the default value on creation for the balance_notify_enabled field.
 	user.DefaultBalanceNotifyEnabled = userDescBalanceNotifyEnabled.Default.(bool)
 	// userDescBalanceNotifyThresholdType is the schema descriptor for balance_notify_threshold_type field.
-	userDescBalanceNotifyThresholdType := userFields[17].Descriptor()
+	userDescBalanceNotifyThresholdType := userFields[18].Descriptor()
 	// user.DefaultBalanceNotifyThresholdType holds the default value on creation for the balance_notify_threshold_type field.
 	user.DefaultBalanceNotifyThresholdType = userDescBalanceNotifyThresholdType.Default.(string)
 	// userDescBalanceNotifyExtraEmails is the schema descriptor for balance_notify_extra_emails field.
-	userDescBalanceNotifyExtraEmails := userFields[19].Descriptor()
+	userDescBalanceNotifyExtraEmails := userFields[20].Descriptor()
 	// user.DefaultBalanceNotifyExtraEmails holds the default value on creation for the balance_notify_extra_emails field.
 	user.DefaultBalanceNotifyExtraEmails = userDescBalanceNotifyExtraEmails.Default.(string)
 	// userDescTotalRecharged is the schema descriptor for total_recharged field.
-	userDescTotalRecharged := userFields[20].Descriptor()
+	userDescTotalRecharged := userFields[21].Descriptor()
 	// user.DefaultTotalRecharged holds the default value on creation for the total_recharged field.
 	user.DefaultTotalRecharged = userDescTotalRecharged.Default.(float64)
 	// userDescRpmLimit is the schema descriptor for rpm_limit field.
-	userDescRpmLimit := userFields[21].Descriptor()
+	userDescRpmLimit := userFields[22].Descriptor()
 	// user.DefaultRpmLimit holds the default value on creation for the rpm_limit field.
 	user.DefaultRpmLimit = userDescRpmLimit.Default.(int)
 	userallowedgroupFields := schema.UserAllowedGroup{}.Fields()

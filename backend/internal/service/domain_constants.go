@@ -130,6 +130,8 @@ const (
 	// 注册设置
 	SettingKeyRegistrationEnabled              = "registration_enabled"                // 是否开放注册
 	SettingKeyEmailVerifyEnabled               = "email_verify_enabled"                // 是否开启邮件验证
+	SettingKeyRegistrationVerificationEnabled  = "registration_verification_enabled"   // 注册验证总开关
+	SettingKeyRegistrationVerificationType     = "registration_verification_type"      // email / sms
 	SettingKeyRegistrationEmailSuffixWhitelist = "registration_email_suffix_whitelist" // 注册邮箱后缀白名单（JSON 数组）
 	SettingKeyRegistrationIPLimitEnabled       = "registration_ip_limit_enabled"       // 是否启用单 IP 注册数量限制
 	SettingKeyRegistrationIPDailyLimit         = "registration_ip_daily_limit"         // 单 IP 每日成功注册上限（0=不限制）
@@ -164,9 +166,19 @@ const (
 	SettingKeySMTPUseTLS   = "smtp_use_tls"   // 是否使用TLS
 
 	// Cloudflare Turnstile 设置
-	SettingKeyTurnstileEnabled   = "turnstile_enabled"    // 是否启用 Turnstile 验证
-	SettingKeyTurnstileSiteKey   = "turnstile_site_key"   // Turnstile Site Key
-	SettingKeyTurnstileSecretKey = "turnstile_secret_key" // Turnstile Secret Key
+	SettingKeyTurnstileEnabled      = "turnstile_enabled"    // 是否启用 Turnstile 验证
+	SettingKeyTurnstileSiteKey      = "turnstile_site_key"   // Turnstile Site Key
+	SettingKeyTurnstileSecretKey    = "turnstile_secret_key" // Turnstile Secret Key
+	SettingKeyBotProtectionEnabled  = "bot_protection_enabled"
+	SettingKeyBotProtectionProvider = "bot_protection_provider" // turnstile / graphical
+	SettingKeyGraphicalCaptchaType  = "graphical_captcha_type"  // slide / drag / rotate / click
+
+	// 短信设置（第一版仅支持中国大陆手机号）
+	SettingKeySMSCodeTTLMinutes        = "sms_code_ttl_minutes"
+	SettingKeySMSResendCooldownSeconds = "sms_resend_cooldown_seconds"
+	SettingKeySMSDailyLimit            = "sms_daily_limit"
+	SettingKeySMSMaxVerifyAttempts     = "sms_max_verify_attempts"
+	SettingKeySMSChannels              = "sms_channels" // JSON: []SMSChannelConfig
 
 	// API Key IP 访问控制设置
 	SettingKeyAPIKeyACLTrustForwardedIP = "api_key_acl_trust_forwarded_ip" // API Key IP 白/黑名单是否信任转发 IP

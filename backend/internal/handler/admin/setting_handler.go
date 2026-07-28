@@ -61,6 +61,7 @@ type SettingHandler struct {
 	notificationEmailService *service.NotificationEmailService
 	totpService              *service.TotpService
 	userService              *service.UserService
+	smsService               *service.SMSService
 }
 
 // NewSettingHandler 创建系统设置处理器
@@ -90,6 +91,8 @@ func (h *SettingHandler) SetStepUpDeps(totpService *service.TotpService, userSer
 	h.totpService = totpService
 	h.userService = userService
 }
+
+func (h *SettingHandler) SetSMSService(smsService *service.SMSService) { h.smsService = smsService }
 
 // GetSettings 获取所有系统设置
 // GET /api/v1/admin/settings
@@ -127,6 +130,8 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 	payload := dto.SystemSettings{
 		RegistrationEnabled:                                    settings.RegistrationEnabled,
 		EmailVerifyEnabled:                                     settings.EmailVerifyEnabled,
+		RegistrationVerificationEnabled:                        settings.RegistrationVerificationEnabled,
+		RegistrationVerificationType:                           settings.RegistrationVerificationType,
 		RegistrationEmailSuffixWhitelist:                       settings.RegistrationEmailSuffixWhitelist,
 		RegistrationIPLimitEnabled:                             settings.RegistrationIPLimitEnabled,
 		RegistrationIPDailyLimit:                               settings.RegistrationIPDailyLimit,
@@ -155,6 +160,14 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		TurnstileEnabled:                                       settings.TurnstileEnabled,
 		TurnstileSiteKey:                                       settings.TurnstileSiteKey,
 		TurnstileSecretKeyConfigured:                           settings.TurnstileSecretKeyConfigured,
+		BotProtectionEnabled:                                   settings.BotProtectionEnabled,
+		BotProtectionProvider:                                  settings.BotProtectionProvider,
+		GraphicalCaptchaType:                                   settings.GraphicalCaptchaType,
+		SMSCodeTTLMinutes:                                      settings.SMSCodeTTLMinutes,
+		SMSResendCooldownSeconds:                               settings.SMSResendCooldownSeconds,
+		SMSDailyLimit:                                          settings.SMSDailyLimit,
+		SMSMaxVerifyAttempts:                                   settings.SMSMaxVerifyAttempts,
+		SMSChannels:                                            settings.SMSChannels,
 		APIKeyACLTrustForwardedIP:                              settings.APIKeyACLTrustForwardedIP,
 		ForwardedClientIPHeaders:                               settings.ForwardedClientIPHeaders,
 		LinuxDoConnectEnabled:                                  settings.LinuxDoConnectEnabled,

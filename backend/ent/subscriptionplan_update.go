@@ -253,6 +253,7 @@ func (_u *SubscriptionPlanUpdate) AddSortOrder(v int) *SubscriptionPlanUpdate {
 
 // SetBaseSoldCount sets the "base_sold_count" field.
 func (_u *SubscriptionPlanUpdate) SetBaseSoldCount(v int) *SubscriptionPlanUpdate {
+	_u.mutation.ResetBaseSoldCount()
 	_u.mutation.SetBaseSoldCount(v)
 	return _u
 }
@@ -414,14 +415,14 @@ func (_u *SubscriptionPlanUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.SortOrder(); ok {
 		_spec.SetField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.AddedSortOrder(); ok {
+		_spec.AddField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
+	}
 	if value, ok := _u.mutation.BaseSoldCount(); ok {
 		_spec.SetField(subscriptionplan.FieldBaseSoldCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedBaseSoldCount(); ok {
 		_spec.AddField(subscriptionplan.FieldBaseSoldCount, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedSortOrder(); ok {
-		_spec.AddField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(subscriptionplan.FieldUpdatedAt, field.TypeTime, value)
@@ -671,6 +672,7 @@ func (_u *SubscriptionPlanUpdateOne) AddSortOrder(v int) *SubscriptionPlanUpdate
 
 // SetBaseSoldCount sets the "base_sold_count" field.
 func (_u *SubscriptionPlanUpdateOne) SetBaseSoldCount(v int) *SubscriptionPlanUpdateOne {
+	_u.mutation.ResetBaseSoldCount()
 	_u.mutation.SetBaseSoldCount(v)
 	return _u
 }
@@ -862,14 +864,14 @@ func (_u *SubscriptionPlanUpdateOne) sqlSave(ctx context.Context) (_node *Subscr
 	if value, ok := _u.mutation.SortOrder(); ok {
 		_spec.SetField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.AddedSortOrder(); ok {
+		_spec.AddField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
+	}
 	if value, ok := _u.mutation.BaseSoldCount(); ok {
 		_spec.SetField(subscriptionplan.FieldBaseSoldCount, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedBaseSoldCount(); ok {
 		_spec.AddField(subscriptionplan.FieldBaseSoldCount, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedSortOrder(); ok {
-		_spec.AddField(subscriptionplan.FieldSortOrder, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(subscriptionplan.FieldUpdatedAt, field.TypeTime, value)

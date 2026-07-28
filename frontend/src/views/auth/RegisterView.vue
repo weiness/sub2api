@@ -87,6 +87,25 @@
           </p>
         </div>
 
+        <div v-if="smsVerificationEnabled" class="space-y-4">
+          <div>
+            <label for="phone" class="input-label">手机号</label>
+            <div class="flex">
+              <span class="flex h-11 items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-700 dark:border-dark-600 dark:bg-dark-700 dark:text-dark-200">+86</span>
+              <input id="phone" v-model="formData.phone" inputmode="numeric" maxlength="11" autocomplete="tel-national" required class="input rounded-l-none" placeholder="请输入11位手机号" :disabled="registrationActionDisabled" />
+            </div>
+          </div>
+          <div>
+            <label for="sms_code" class="input-label">手机验证码</label>
+            <div class="flex gap-2">
+              <input id="sms_code" v-model="formData.sms_code" inputmode="numeric" maxlength="6" required class="input min-w-0 flex-1" placeholder="请输入验证码" :disabled="registrationActionDisabled" />
+              <button type="button" class="btn btn-secondary w-28 shrink-0" :disabled="registrationActionDisabled || smsCountdown > 0 || sendingSMS" @click="requestSMSCode">
+                {{ smsCountdown > 0 ? `${smsCountdown}s` : (sendingSMS ? '发送中' : '获取验证码') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Invitation Code Input (Required when enabled) -->
         <div v-if="invitationCodeEnabled">
           <label for="invitation_code" class="input-label">
@@ -135,7 +154,21 @@
         </div>
 
         <!-- Affiliate Invitation Code Input (Optional) -->
-        <div v-else-if="affiliateEnabled" data-testid="affiliate-invitation-field">
+        <button
+          v-else-if="affiliateEnabled && !showOptionalInvitationCode"
+          type="button"
+          data-testid="affiliate-invitation-toggle"
+          class="mx-auto flex items-center gap-1.5 text-sm font-medium text-primary-600 transition-colors hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
+          @click="showOptionalInvitationCode = true"
+        >
+          <Icon name="key" size="sm" />
+          {{ t('auth.optionalInvitationCodeAction') }}
+          <Icon name="chevronDown" size="xs" />
+        </button>
+        <div
+          v-else-if="affiliateEnabled"
+          data-testid="affiliate-invitation-field"
+        >
           <label for="affiliate_code" class="input-label">
             {{ t('auth.invitationCodeLabel') }}
             <span class="ml-1 text-xs font-normal text-gray-400 dark:text-dark-500">({{ t('common.optional') }})</span>
@@ -149,9 +182,17 @@
               v-model="formData.aff_code"
               type="text"
               :disabled="registrationActionDisabled"
-              class="input pl-11"
+              class="input pl-11 pr-10"
               :placeholder="t('auth.invitationCodePlaceholder')"
             />
+            <button
+              type="button"
+              class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-dark-300"
+              :title="t('auth.hideInvitationCode')"
+              @click="showOptionalInvitationCode = false"
+            >
+              <Icon name="chevronUp" size="sm" />
+            </button>
           </div>
         </div>
 
@@ -229,7 +270,7 @@
         <!-- Submit Button -->
         <button
           type="submit"
-          :disabled="registrationActionDisabled || (turnstileEnabled && !turnstileToken)"
+          :disabled="registrationActionDisabled || (turnstileEnabled && !turnstileToken && !smsVerificationEnabled)"
           class="btn btn-primary w-full"
         >
           <svg
@@ -315,6 +356,14 @@
         </router-link>
       </p>
     </template>
+
+    <GraphicalCaptchaModal
+      :open="captchaOpen"
+      :action="captchaAction"
+      :target="captchaTarget"
+      @close="captchaOpen = false"
+      @verified="onGraphicalCaptchaVerified"
+    />
   </AuthLayout>
 </template>
 
@@ -330,6 +379,7 @@ import EmailOAuthButtons from '@/components/auth/EmailOAuthButtons.vue'
 import LoginAgreementPrompt from '@/components/auth/LoginAgreementPrompt.vue'
 import Icon from '@/components/icons/Icon.vue'
 import TurnstileWidget from '@/components/TurnstileWidget.vue'
+import GraphicalCaptchaModal from '@/components/GraphicalCaptchaModal.vue'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
   getPublicSettings,
@@ -337,6 +387,7 @@ import {
   validatePromoCode,
   validateInvitationCode
 } from '@/api/auth'
+import { sendSMSCode } from '@/api/auth'
 import { buildAuthErrorMessage } from '@/utils/authError'
 import {
   formatRegistrationEmailSuffixWhitelistForMessage,
@@ -372,11 +423,23 @@ const showPassword = ref<boolean>(false)
 // Public settings
 const registrationEnabled = ref<boolean>(true)
 const emailVerifyEnabled = ref<boolean>(false)
+const smsVerificationEnabled = ref<boolean>(false)
 const promoCodeEnabled = ref<boolean>(true)
 const invitationCodeEnabled = ref<boolean>(false)
 const affiliateEnabled = ref<boolean>(false)
+const showOptionalInvitationCode = ref<boolean>(false)
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
+const botProtectionEnabled = ref(false)
+const botProtectionProvider = ref<'turnstile' | 'graphical'>('turnstile')
+const captchaOpen = ref(false)
+const captchaAction = ref('registration_sms')
+const captchaTarget = ref('')
+const captchaProof = ref('')
+const pendingCaptchaAction = ref<'sms' | 'register' | null>(null)
+const sendingSMS = ref(false)
+const smsCountdown = ref(0)
+let smsCountdownTimer: ReturnType<typeof setInterval> | null = null
 const siteName = ref<string>('Sub2API')
 const linuxdoOAuthEnabled = ref<boolean>(false)
 const wechatOAuthEnabled = ref<boolean>(false)
@@ -418,6 +481,8 @@ let invitationValidateTimeout: ReturnType<typeof setTimeout> | null = null
 
 const formData = reactive({
   email: '',
+	phone: '',
+	sms_code: '',
   password: '',
   promo_code: '',
   invitation_code: '',
@@ -468,6 +533,7 @@ function syncAffiliateReferralCode(): string {
   const code = resolveAffiliateReferralCode(route.query.aff, route.query.aff_code)
   if (code) {
     formData.aff_code = code
+    showOptionalInvitationCode.value = true
   }
   return code
 }
@@ -480,11 +546,14 @@ onMounted(async () => {
   try {
     const settings = await getPublicSettings()
     registrationEnabled.value = settings.registration_enabled
-    emailVerifyEnabled.value = settings.email_verify_enabled
+    emailVerifyEnabled.value = settings.registration_verification_enabled && settings.registration_verification_type === 'email'
+    smsVerificationEnabled.value = settings.registration_verification_enabled && settings.registration_verification_type === 'sms'
     promoCodeEnabled.value = settings.promo_code_enabled
     invitationCodeEnabled.value = settings.invitation_code_enabled
     affiliateEnabled.value = settings.affiliate_enabled
-    turnstileEnabled.value = settings.turnstile_enabled
+    botProtectionEnabled.value = settings.bot_protection_enabled
+    botProtectionProvider.value = settings.bot_protection_provider || 'turnstile'
+    turnstileEnabled.value = settings.bot_protection_enabled && settings.bot_protection_provider === 'turnstile'
     turnstileSiteKey.value = settings.turnstile_site_key || ''
     siteName.value = settings.site_name || 'Sub2API'
     linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
@@ -531,6 +600,7 @@ onUnmounted(() => {
   if (invitationValidateTimeout) {
     clearTimeout(invitationValidateTimeout)
   }
+  if (smsCountdownTimer) clearInterval(smsCountdownTimer)
 })
 
 // ==================== Login Agreement ====================
@@ -749,6 +819,59 @@ function onTurnstileError(): void {
   errors.turnstile = t('auth.turnstileFailed')
 }
 
+function validMainlandPhone(value: string): boolean { return /^1[3-9]\d{9}$/.test(value.trim()) }
+
+function startSMSCountdown(seconds: number): void {
+  smsCountdown.value = seconds
+  if (smsCountdownTimer) clearInterval(smsCountdownTimer)
+  smsCountdownTimer = setInterval(() => {
+    smsCountdown.value--
+    if (smsCountdown.value <= 0 && smsCountdownTimer) { clearInterval(smsCountdownTimer); smsCountdownTimer = null }
+  }, 1000)
+}
+
+async function sendSMSWithProof(): Promise<void> {
+  sendingSMS.value = true
+  try {
+    const result = await sendSMSCode({
+      phone: formData.phone,
+      turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined,
+      captcha_proof: captchaProof.value || undefined
+    })
+    startSMSCountdown(result.countdown)
+    appStore.showSuccess('验证码已发送')
+    captchaProof.value = ''
+    if (turnstileRef.value) { turnstileRef.value.reset(); turnstileToken.value = '' }
+  } catch (error: any) {
+    const message = error?.reason === 'PHONE_EXISTS'
+      ? '该手机号已注册，请更换其他手机号'
+      : error?.response?.data?.message || error?.message || '验证码发送失败'
+    appStore.showError(message)
+  }
+  finally {
+    captchaProof.value = ''
+    sendingSMS.value = false
+  }
+}
+
+async function requestSMSCode(): Promise<void> {
+  if (!validMainlandPhone(formData.phone)) { appStore.showError('请输入正确的中国大陆手机号'); return }
+  if (botProtectionEnabled.value && botProtectionProvider.value === 'graphical') {
+    pendingCaptchaAction.value = 'sms'; captchaAction.value = 'registration_sms'; captchaTarget.value = formData.phone; captchaOpen.value = true; return
+  }
+  if (turnstileEnabled.value && !turnstileToken.value) { appStore.showError(t('auth.completeVerification')); return }
+  await sendSMSWithProof()
+}
+
+async function onGraphicalCaptchaVerified(proof: string): Promise<void> {
+  captchaOpen.value = false
+  captchaProof.value = proof
+  const action = pendingCaptchaAction.value
+  pendingCaptchaAction.value = null
+  if (action === 'sms') await sendSMSWithProof()
+  if (action === 'register') await handleRegister()
+}
+
 // ==================== Validation ====================
 
 function validateEmail(email: string): boolean {
@@ -812,6 +935,11 @@ function validateForm(): boolean {
     isValid = false
   }
 
+  if (smsVerificationEnabled.value) {
+    if (!validMainlandPhone(formData.phone)) { appStore.showError('请输入正确的中国大陆手机号'); isValid = false }
+    if (!/^\d{6}$/.test(formData.sms_code.trim())) { appStore.showError('请输入6位手机验证码'); isValid = false }
+  }
+
   // Invitation code validation (required when enabled)
   if (invitationCodeEnabled.value) {
     if (!formData.invitation_code.trim()) {
@@ -821,7 +949,7 @@ function validateForm(): boolean {
   }
 
   // Turnstile validation
-  if (turnstileEnabled.value && !turnstileToken.value) {
+  if (turnstileEnabled.value && !turnstileToken.value && !smsVerificationEnabled.value) {
     errors.turnstile = t('auth.completeVerification')
     isValid = false
   }
@@ -838,6 +966,10 @@ async function handleRegister(): Promise<void> {
   // Validate form
   if (!validateForm()) {
     return
+  }
+
+  if (botProtectionEnabled.value && botProtectionProvider.value === 'graphical' && !emailVerifyEnabled.value && !smsVerificationEnabled.value && !captchaProof.value) {
+    pendingCaptchaAction.value = 'register'; captchaAction.value = 'register'; captchaTarget.value = formData.email; captchaOpen.value = true; return
   }
 
   // Check promo code validation status
@@ -911,7 +1043,10 @@ async function handleRegister(): Promise<void> {
     await authStore.register({
       email: formData.email,
       password: formData.password,
+	  phone: smsVerificationEnabled.value ? formData.phone : undefined,
+	  sms_code: smsVerificationEnabled.value ? formData.sms_code : undefined,
       turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined,
+	  captcha_proof: captchaProof.value || undefined,
       promo_code: formData.promo_code || undefined,
       invitation_code: formData.invitation_code || undefined,
       ...(affCode ? { aff_code: affCode } : {})
@@ -924,6 +1059,8 @@ async function handleRegister(): Promise<void> {
     const redirectTo = sanitizeRedirectPath(route.query.redirect)
     await router.push(redirectTo)
   } catch (error: unknown) {
+    captchaProof.value = ''
+
     // Reset Turnstile on error
     if (turnstileRef.value) {
       turnstileRef.value.reset()

@@ -186,6 +186,37 @@ func TestUserHandlerUpdateProfileReturnsAvatarURL(t *testing.T) {
 	require.Equal(t, "handler-avatar", resp.Data.Username)
 }
 
+func TestUserHandlerUpdateProfileCannotClearPhone(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	phone := "+8613800000000"
+	repo := &userHandlerRepoStub{
+		user: &service.User{
+			ID:       12,
+			Email:    "phone-protected@example.com",
+			Username: "phone-protected",
+			Phone:    &phone,
+			Role:     service.RoleUser,
+			Status:   service.StatusActive,
+		},
+	}
+	handler := NewUserHandler(service.NewUserService(repo, nil, nil, nil), nil, nil, nil, nil, nil)
+
+	body := []byte(`{"username":"updated","phone":""}`)
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodPut, "/api/v1/user", bytes.NewReader(body))
+	c.Request.Header.Set("Content-Type", "application/json")
+	c.Set(string(middleware2.ContextKeyUser), middleware2.AuthSubject{UserID: 12})
+
+	handler.UpdateProfile(c)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.NotNil(t, repo.user.Phone)
+	require.Equal(t, phone, *repo.user.Phone)
+	require.Equal(t, "updated", repo.user.Username)
+}
+
 func TestUserHandlerGetProfileReturnsIdentitySummaries(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

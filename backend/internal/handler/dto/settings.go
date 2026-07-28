@@ -29,6 +29,8 @@ type CustomEndpoint struct {
 type SystemSettings struct {
 	RegistrationEnabled              bool                     `json:"registration_enabled"`
 	EmailVerifyEnabled               bool                     `json:"email_verify_enabled"`
+	RegistrationVerificationEnabled  bool                     `json:"registration_verification_enabled"`
+	RegistrationVerificationType     string                   `json:"registration_verification_type"`
 	RegistrationEmailSuffixWhitelist []string                 `json:"registration_email_suffix_whitelist"`
 	RegistrationIPLimitEnabled       bool                     `json:"registration_ip_limit_enabled"`
 	RegistrationIPDailyLimit         int                      `json:"registration_ip_daily_limit"`
@@ -56,11 +58,19 @@ type SystemSettings struct {
 	SMTPFromName           string `json:"smtp_from_name"`
 	SMTPUseTLS             bool   `json:"smtp_use_tls"`
 
-	TurnstileEnabled             bool     `json:"turnstile_enabled"`
-	TurnstileSiteKey             string   `json:"turnstile_site_key"`
-	TurnstileSecretKeyConfigured bool     `json:"turnstile_secret_key_configured"`
-	APIKeyACLTrustForwardedIP    bool     `json:"api_key_acl_trust_forwarded_ip"`
-	ForwardedClientIPHeaders     []string `json:"forwarded_client_ip_headers"`
+	TurnstileEnabled             bool                       `json:"turnstile_enabled"`
+	TurnstileSiteKey             string                     `json:"turnstile_site_key"`
+	TurnstileSecretKeyConfigured bool                       `json:"turnstile_secret_key_configured"`
+	BotProtectionEnabled         bool                       `json:"bot_protection_enabled"`
+	BotProtectionProvider        string                     `json:"bot_protection_provider"`
+	GraphicalCaptchaType         string                     `json:"graphical_captcha_type"`
+	SMSCodeTTLMinutes            int                        `json:"sms_code_ttl_minutes"`
+	SMSResendCooldownSeconds     int                        `json:"sms_resend_cooldown_seconds"`
+	SMSDailyLimit                int                        `json:"sms_daily_limit"`
+	SMSMaxVerifyAttempts         int                        `json:"sms_max_verify_attempts"`
+	SMSChannels                  []service.SMSChannelConfig `json:"sms_channels"`
+	APIKeyACLTrustForwardedIP    bool                       `json:"api_key_acl_trust_forwarded_ip"`
+	ForwardedClientIPHeaders     []string                   `json:"forwarded_client_ip_headers"`
 
 	LinuxDoConnectEnabled                bool   `json:"linuxdo_connect_enabled"`
 	LinuxDoConnectClientID               string `json:"linuxdo_connect_client_id"`
@@ -320,6 +330,8 @@ type DefaultSubscriptionSetting struct {
 type PublicSettings struct {
 	RegistrationEnabled              bool                     `json:"registration_enabled"`
 	EmailVerifyEnabled               bool                     `json:"email_verify_enabled"`
+	RegistrationVerificationEnabled  bool                     `json:"registration_verification_enabled"`
+	RegistrationVerificationType     string                   `json:"registration_verification_type"`
 	ForceEmailOnThirdPartySignup     bool                     `json:"force_email_on_third_party_signup"`
 	RegistrationEmailSuffixWhitelist []string                 `json:"registration_email_suffix_whitelist"`
 	PromoCodeEnabled                 bool                     `json:"promo_code_enabled"`
@@ -333,6 +345,9 @@ type PublicSettings struct {
 	LoginAgreementDocuments          []LoginAgreementDocument `json:"login_agreement_documents"`
 	TurnstileEnabled                 bool                     `json:"turnstile_enabled"`
 	TurnstileSiteKey                 string                   `json:"turnstile_site_key"`
+	BotProtectionEnabled             bool                     `json:"bot_protection_enabled"`
+	BotProtectionProvider            string                   `json:"bot_protection_provider"`
+	GraphicalCaptchaType             string                   `json:"graphical_captcha_type"`
 	SiteName                         string                   `json:"site_name"`
 	SiteLogo                         string                   `json:"site_logo"`
 	SiteSubtitle                     string                   `json:"site_subtitle"`

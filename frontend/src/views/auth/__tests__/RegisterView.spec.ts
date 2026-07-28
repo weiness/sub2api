@@ -8,12 +8,17 @@ const { getPublicSettingsMock } = vi.hoisted(() => ({
 
 const publicSettings = {
   registration_enabled: true,
+  registration_verification_enabled: false,
+  registration_verification_type: 'email',
   email_verify_enabled: false,
   promo_code_enabled: false,
   invitation_code_enabled: false,
   affiliate_enabled: true,
   turnstile_enabled: true,
   turnstile_site_key: 'site-key',
+  bot_protection_enabled: true,
+  bot_protection_provider: 'turnstile',
+  graphical_captcha_type: 'slide',
   site_name: 'Sub2API',
   registration_email_suffix_whitelist: [],
   linuxdo_oauth_enabled: false,
@@ -82,9 +87,12 @@ describe('RegisterView invitation layout', () => {
     getPublicSettingsMock.mockResolvedValue(publicSettings)
   })
 
-  it('keeps the optional affiliate invitation field before Turnstile', async () => {
+  it('collapses the optional affiliate invitation field until requested', async () => {
     const wrapper = mountRegister()
     await flushPromises()
+
+    expect(wrapper.find('[data-testid="affiliate-invitation-field"]').exists()).toBe(false)
+    await wrapper.get('[data-testid="affiliate-invitation-toggle"]').trigger('click')
 
     const invitationField = wrapper.get('[data-testid="affiliate-invitation-field"]')
     const turnstile = wrapper.get('[data-testid="registration-turnstile"]')
@@ -108,5 +116,45 @@ describe('RegisterView invitation layout', () => {
 
     expect(wrapper.find('[data-testid="affiliate-invitation-field"]').exists()).toBe(false)
     expect(wrapper.get('#invitation_code').exists()).toBe(true)
+  })
+
+  it('places phone verification after the account password in SMS mode', async () => {
+    getPublicSettingsMock.mockResolvedValueOnce({
+      ...publicSettings,
+      registration_verification_enabled: true,
+      registration_verification_type: 'sms',
+      turnstile_enabled: false,
+      bot_protection_enabled: false
+    })
+
+    const wrapper = mountRegister()
+    await flushPromises()
+
+    const email = wrapper.get('#email').element
+    const password = wrapper.get('#password').element
+    const phone = wrapper.get('#phone').element
+    const smsCode = wrapper.get('#sms_code').element
+
+    expect(wrapper.get('#phone').attributes('required')).toBeDefined()
+    expect(wrapper.get('#sms_code').attributes('required')).toBeDefined()
+    expect(email.compareDocumentPosition(password) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(password.compareDocumentPosition(phone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(phone.compareDocumentPosition(smsCode) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('keeps phone fields out of the form in email verification mode', async () => {
+    getPublicSettingsMock.mockResolvedValueOnce({
+      ...publicSettings,
+      registration_verification_enabled: true,
+      registration_verification_type: 'email'
+    })
+
+    const wrapper = mountRegister()
+    await flushPromises()
+
+    expect(wrapper.get('#email').attributes('required')).toBeDefined()
+    expect(wrapper.get('#password').attributes('required')).toBeDefined()
+    expect(wrapper.find('#phone').exists()).toBe(false)
+    expect(wrapper.find('#sms_code').exists()).toBe(false)
   })
 })

@@ -75,7 +75,7 @@ import type { UserSubscription } from '@/types'
 import Icon from '@/components/icons/Icon.vue'
 import { planValiditySuffix } from './validity'
 import { currencySymbol } from './currency'
-import { normalizeSubscriptionMultiplier, subscriptionDisplayPrice } from './subscriptionPricing'
+import { normalizeSubscriptionMultiplier, subscriptionDiscountPercent, subscriptionDisplayPrice } from './subscriptionPricing'
 import { platformBadgeLightClass, platformTextClass, platformButtonClass, platformLabel } from '@/utils/platformColors'
 
 const props = defineProps<{ plan: SubscriptionPlan; activeSubscriptions?: UserSubscription[]; subscriptionMultiplier?: number }>()
@@ -87,8 +87,8 @@ const badgeLightClass = computed(() => platformBadgeLightClass(platform.value))
 const textClass = computed(() => platformTextClass(platform.value))
 const btnClass = computed(() => platformButtonClass(platform.value))
 const pLabel = computed(() => platformLabel(platform.value))
-const discountPercent = computed(() => !props.plan.original_price || props.plan.original_price <= props.plan.price ? 0 : Math.round((1 - props.plan.price / props.plan.original_price) * 100))
 const multiplier = computed(() => normalizeSubscriptionMultiplier(props.subscriptionMultiplier))
+const discountPercent = computed(() => subscriptionDiscountPercent(props.plan.price, props.plan.original_price, multiplier.value))
 const displayCurrency = computed(() => multiplier.value > 0 ? 'CNY' : props.plan.currency || 'USD')
 const displayCurrencySymbol = computed(() => currencySymbol(displayCurrency.value))
 const displayPrice = computed(() => subscriptionDisplayPrice(props.plan.price, multiplier.value))

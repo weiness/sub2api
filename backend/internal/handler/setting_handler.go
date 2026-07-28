@@ -46,6 +46,8 @@ func (h *SettingHandler) GetPublicSettings(c *gin.Context) {
 	response.Success(c, dto.PublicSettings{
 		RegistrationEnabled:              settings.RegistrationEnabled,
 		EmailVerifyEnabled:               settings.EmailVerifyEnabled,
+		RegistrationVerificationEnabled:  settings.RegistrationVerificationEnabled,
+		RegistrationVerificationType:     settings.RegistrationVerificationType,
 		ForceEmailOnThirdPartySignup:     settings.ForceEmailOnThirdPartySignup,
 		RegistrationEmailSuffixWhitelist: settings.RegistrationEmailSuffixWhitelist,
 		PromoCodeEnabled:                 settings.PromoCodeEnabled,
@@ -59,6 +61,9 @@ func (h *SettingHandler) GetPublicSettings(c *gin.Context) {
 		LoginAgreementDocuments:          publicLoginAgreementDocumentsToDTO(settings.LoginAgreementDocuments),
 		TurnstileEnabled:                 settings.TurnstileEnabled,
 		TurnstileSiteKey:                 settings.TurnstileSiteKey,
+		BotProtectionEnabled:             settings.BotProtectionEnabled,
+		BotProtectionProvider:            settings.BotProtectionProvider,
+		GraphicalCaptchaType:             settings.GraphicalCaptchaType,
 		SiteName:                         settings.SiteName,
 		SiteLogo:                         settings.SiteLogo,
 		SiteSubtitle:                     settings.SiteSubtitle,

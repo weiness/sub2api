@@ -184,6 +184,8 @@
         </router-link>
       </p>
     </template>
+
+    <GraphicalCaptchaModal :open="captchaOpen" action="login" :target="formData.email" @close="captchaOpen = false" @verified="onCaptchaVerified" />
   </AuthLayout>
 
   <!-- 2FA Modal -->
@@ -211,6 +213,7 @@ import LoginAgreementPrompt from '@/components/auth/LoginAgreementPrompt.vue'
 import TotpLoginModal from '@/components/auth/TotpLoginModal.vue'
 import Icon from '@/components/icons/Icon.vue'
 import TurnstileWidget from '@/components/TurnstileWidget.vue'
+import GraphicalCaptchaModal from '@/components/GraphicalCaptchaModal.vue'
 import { useAuthStore, useAppStore } from '@/stores'
 import { getPublicSettings, isTotp2FARequired, isWeChatWebOAuthEnabled } from '@/api/auth'
 import type { LoginAgreementDocument, TotpLoginResponse } from '@/types'
@@ -239,6 +242,9 @@ const publicSettingsLoaded = ref<boolean>(false)
 // Public settings
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
+const graphicalCaptchaEnabled = ref(false)
+const captchaOpen = ref(false)
+const captchaProof = ref('')
 const linuxdoOAuthEnabled = ref<boolean>(false)
 const dingtalkOAuthEnabled = ref<boolean>(false)
 const wechatOAuthEnabled = ref<boolean>(false)
@@ -319,7 +325,8 @@ onMounted(async () => {
 
   try {
     const settings = await getPublicSettings()
-    turnstileEnabled.value = settings.turnstile_enabled
+    turnstileEnabled.value = settings.bot_protection_enabled && settings.bot_protection_provider === 'turnstile'
+    graphicalCaptchaEnabled.value = settings.bot_protection_enabled && settings.bot_protection_provider === 'graphical'
     turnstileSiteKey.value = settings.turnstile_site_key || ''
     linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
     dingtalkOAuthEnabled.value = settings.dingtalk_oauth_enabled ?? false
@@ -476,6 +483,8 @@ async function handleLogin(): Promise<void> {
     return
   }
 
+  if (graphicalCaptchaEnabled.value && !captchaProof.value) { captchaOpen.value = true; return }
+
   isLoading.value = true
 
   try {
@@ -483,7 +492,8 @@ async function handleLogin(): Promise<void> {
     const response = await authStore.login({
       email: formData.email,
       password: formData.password,
-      turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined
+      turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined,
+      captcha_proof: captchaProof.value || undefined
     })
 
     // Check if 2FA is required
@@ -518,8 +528,16 @@ async function handleLogin(): Promise<void> {
     // Also show error toast
     appStore.showError(errorMessage.value)
   } finally {
+    // Graphical captcha proofs are single-use, including failed or cancelled login flows.
+    captchaProof.value = ''
     isLoading.value = false
   }
+}
+
+async function onCaptchaVerified(proof: string): Promise<void> {
+  captchaOpen.value = false
+  captchaProof.value = proof
+  await handleLogin()
 }
 
 // ==================== 2FA Handlers ====================

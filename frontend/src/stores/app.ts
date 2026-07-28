@@ -334,6 +334,8 @@ export const useAppStore = defineStore('app', () => {
       return Promise.resolve({
         registration_enabled: false,
         email_verify_enabled: false,
+        registration_verification_enabled: false,
+        registration_verification_type: 'email',
         force_email_on_third_party_signup: false,
         registration_email_suffix_whitelist: [],
         promo_code_enabled: true,
@@ -341,6 +343,9 @@ export const useAppStore = defineStore('app', () => {
         invitation_code_enabled: false,
         turnstile_enabled: false,
         turnstile_site_key: '',
+        bot_protection_enabled: false,
+        bot_protection_provider: 'turnstile',
+        graphical_captcha_type: 'slide',
         site_name: siteName.value,
         site_logo: siteLogo.value,
         site_subtitle: '',

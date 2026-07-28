@@ -221,6 +221,18 @@ func (s *adminServiceImpl) UpdateUser(ctx context.Context, id int64, input *Upda
 	if input.Email != "" {
 		user.Email = input.Email
 	}
+	if input.Phone != nil {
+		phone := strings.TrimSpace(*input.Phone)
+		if phone == "" {
+			user.Phone = nil
+		} else {
+			normalized, err := NormalizeMainlandPhone(phone)
+			if err != nil {
+				return nil, err
+			}
+			user.Phone = &normalized
+		}
+	}
 	if input.Password != "" {
 		if err := user.SetPassword(input.Password); err != nil {
 			return nil, err
