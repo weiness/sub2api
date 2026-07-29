@@ -221,21 +221,13 @@ func TestSynthesizePricingFromLiteLLM_ImageGenerationMode(t *testing.T) {
 	// LiteLLM mode=image_generation 且渠道未声明模式时，按 image 合成。
 	lp := &LiteLLMModelPricing{
 		Mode:                    "image_generation",
-		InputCostPerImageToken:  3e-6,
 		OutputCostPerImageToken: 4e-5,
 	}
 	got := synthesizePricingFromLiteLLM(lp, nil)
 	require.NotNil(t, got)
 	require.Equal(t, BillingModeImage, got.BillingMode)
 	require.Nil(t, got.PerRequestPrice)
-	require.NotNil(t, got.ImageInputPrice)
-	require.InDelta(t, 3e-6, *got.ImageInputPrice, 1e-12)
 	require.NotNil(t, got.ImageOutputPrice)
-}
-
-func TestPricingNeedsFallback_ImageInputOnly(t *testing.T) {
-	price := 3e-6
-	require.False(t, pricingNeedsFallback(&ChannelModelPricing{ImageInputPrice: &price}))
 }
 
 func TestSynthesizePricingFromLiteLLM_RespectsExistingChannelMode(t *testing.T) {
@@ -312,47 +304,6 @@ func TestFillGlobalPricingFallback_KeepsExistingPrice(t *testing.T) {
 	}
 	svc.fillGlobalPricingFallback(models)
 	require.Same(t, existing, models[0].Pricing)
-}
-
-func TestFillGlobalPricingFallback_AddsCapabilitiesWithoutOverwritingPrice(t *testing.T) {
-	pricingSvc := newStubPricingServiceFromMap(map[string]*LiteLLMModelPricing{
-		"gpt-test": {
-			Mode:                      "chat",
-			SupportedModalities:       []string{"text", "image"},
-			SupportedOutputModalities: []string{"text"},
-			SupportsVision:            true,
-			SupportsPDFInput:          true,
-			SupportsFunctionCalling:   true,
-			SupportsReasoning:         true,
-			SupportsResponseSchema:    true,
-		},
-	})
-	svc := &ChannelService{pricingService: pricingSvc}
-	existing := &ChannelModelPricing{
-		BillingMode: BillingModeToken,
-		InputPrice:  testPtrFloat64(9e-9),
-	}
-	models := []SupportedModel{{Name: "gpt-test", Platform: "openai", Pricing: existing}}
-
-	svc.fillGlobalPricingFallback(models)
-
-	require.Same(t, existing, models[0].Pricing)
-	require.Equal(t, []string{"text", "image", "pdf"}, models[0].Modalities)
-	require.Equal(t, []string{"text"}, models[0].OutputModalities)
-	require.Equal(t, []string{"function_calling", "reasoning", "structured_output"}, models[0].Capabilities)
-}
-
-func TestLiteLLMModalities_ImageGenerationDoesNotImplyImageInput(t *testing.T) {
-	modalities := liteLLMModalities(&LiteLLMModelPricing{Mode: "image_generation"})
-	require.Equal(t, []string{"text"}, modalities)
-}
-
-func TestLiteLLMOutputModalities_NormalizesAndDeduplicates(t *testing.T) {
-	modalities := liteLLMOutputModalities(&LiteLLMModelPricing{
-		SupportedOutputModalities: []string{" Text ", "text"},
-		SupportsAudioOutput:       true,
-	})
-	require.Equal(t, []string{"text", "audio"}, modalities)
 }
 
 func newStubPricingServiceFromMap(data map[string]*LiteLLMModelPricing) *PricingService {

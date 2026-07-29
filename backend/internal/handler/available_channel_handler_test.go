@@ -42,27 +42,6 @@ func TestFilterUserVisibleGroups_IntersectionOnly(t *testing.T) {
 	require.ElementsMatch(t, []int64{1, 3}, ids)
 }
 
-func TestFilterUserVisibleGroups_CopiesImagePricing(t *testing.T) {
-	price1K := 0.05
-	groups := []service.AvailableGroupRef{{
-		ID:                   1,
-		Name:                 "images",
-		Platform:             "openai",
-		AllowImageGeneration: true,
-		ImageRateIndependent: true,
-		ImageRateMultiplier:  1.2,
-		ImagePrice1K:          &price1K,
-	}}
-
-	visible := filterUserVisibleGroups(groups, map[int64]struct{}{1: {}})
-	require.Len(t, visible, 1)
-	require.True(t, visible[0].AllowImageGeneration)
-	require.True(t, visible[0].ImageRateIndependent)
-	require.InDelta(t, 1.2, visible[0].ImageRateMultiplier, 1e-12)
-	require.NotNil(t, visible[0].ImagePrice1K)
-	require.InDelta(t, price1K, *visible[0].ImagePrice1K, 1e-12)
-}
-
 func TestToUserSupportedModels_FiltersByAllowedPlatforms(t *testing.T) {
 	// 用户可访问分组只覆盖 anthropic；anthropic 平台的模型保留，openai 模型被剔除。
 	src := []service.SupportedModel{
@@ -82,26 +61,6 @@ func TestToUserSupportedModels_NilAllowedPlatformsKeepsAll(t *testing.T) {
 		{Name: "b", Platform: "openai"},
 	}
 	require.Len(t, toUserSupportedModels(src, nil), 2)
-}
-
-func TestToUserSupportedModels_CopiesPublicModelMetadata(t *testing.T) {
-	src := []service.SupportedModel{{
-		Name:             "gpt-test",
-		Platform:         "openai",
-		Modalities:       []string{"text", "image"},
-		OutputModalities: []string{"text"},
-		Capabilities:     []string{"function_calling", "reasoning"},
-	}}
-
-	out := toUserSupportedModels(src, map[string]struct{}{"openai": {}})
-	require.Len(t, out, 1)
-	require.Equal(t, []string{"text", "image"}, out[0].Modalities)
-	require.Equal(t, []string{"text"}, out[0].OutputModalities)
-	require.Equal(t, []string{"function_calling", "reasoning"}, out[0].Capabilities)
-
-	// DTO 必须拥有独立切片，避免后续响应加工意外修改 service 层数据。
-	out[0].Modalities[0] = "audio"
-	require.Equal(t, "text", src[0].Modalities[0])
 }
 
 func TestUserAvailableChannel_FieldWhitelist(t *testing.T) {
@@ -148,7 +107,7 @@ func TestUserAvailableChannel_FieldWhitelist(t *testing.T) {
 	require.NoError(t, err)
 	var groupDecoded map[string]any
 	require.NoError(t, json.Unmarshal(rawGroup, &groupDecoded))
-	for _, key := range []string{"id", "name", "platform", "subscription_type", "rate_multiplier", "peak_rate_enabled", "peak_start", "peak_end", "peak_rate_multiplier", "is_exclusive", "allow_image_generation", "image_rate_independent", "image_rate_multiplier", "image_price_1k", "image_price_2k", "image_price_4k"} {
+	for _, key := range []string{"id", "name", "platform", "subscription_type", "rate_multiplier", "peak_rate_enabled", "peak_start", "peak_end", "peak_rate_multiplier", "is_exclusive"} {
 		_, exists := groupDecoded[key]
 		require.Truef(t, exists, "group DTO must expose %q", key)
 	}

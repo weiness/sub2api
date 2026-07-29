@@ -51,6 +51,7 @@
       />
 
       <ProfileTotpCard />
+      <ProfilePasskeyCard :enabled="passkeyEnabled" />
     </div>
   </AppLayout>
 </template>
@@ -65,6 +66,7 @@ import ProfileInfoCard from '@/components/user/profile/ProfileInfoCard.vue'
 import ProfilePhoneBindingCard from '@/components/user/profile/ProfilePhoneBindingCard.vue'
 import ProfilePasswordForm from '@/components/user/profile/ProfilePasswordForm.vue'
 import ProfileTotpCard from '@/components/user/profile/ProfileTotpCard.vue'
+import ProfilePasskeyCard from '@/components/user/profile/ProfilePasskeyCard.vue'
 import { isWeChatWebOAuthEnabled } from '@/api/auth'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
@@ -87,6 +89,7 @@ const oidcOAuthProviderName = ref('OIDC')
 const botProtectionEnabled = ref(false)
 const botProtectionProvider = ref<'turnstile' | 'graphical'>('turnstile')
 const turnstileSiteKey = ref('')
+const passkeyEnabled = ref(false)
 
 onMounted(async () => {
   const profileRefresh = authStore.refreshUser().catch((error) => {
@@ -115,6 +118,7 @@ onMounted(async () => {
       botProtectionEnabled.value = settings.bot_protection_enabled
       botProtectionProvider.value = settings.bot_protection_provider
       turnstileSiteKey.value = settings.turnstile_site_key || ''
+      passkeyEnabled.value = settings.passkey_enabled === true
     })
     .catch((error) => {
       console.error('Failed to load settings:', error)

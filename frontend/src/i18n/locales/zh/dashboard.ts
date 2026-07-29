@@ -519,8 +519,8 @@ export default {
       priceOverview: '价格概览',
       toolCalling: '工具调用',
       features: '模型特性',
-      channelPricing: '渠道价格',
-      channelPricingHint: '不同渠道提供同一模型，实际调用价格以所选渠道为准。',
+      channelPricing: '分组价格',
+      channelPricingHint: '同一模型在不同分组中的价格和倍率可能不同。',
       billingNote: '实际计费由渠道定价与分组倍率共同决定。以输入价格为例：渠道价 {price}/1M × 分组倍率 1 = 最终计费 {price}/1M。',
       billingNoteGeneric: '实际计费由渠道定价与分组倍率共同决定，最终价格以对应计费模式和用户所属分组为准。',
       channel: '渠道',
@@ -577,6 +577,54 @@ export default {
       unitPerRequestShort: '/次',
       unitPerImage: '/张',
       modelDefault: '模型默认价'
+    }
+  },
+
+  // Model Plaza (public group/model pricing showcase)
+  modelPlaza: {
+    title: '模型广场',
+    description: '按分组浏览可用模型与价格',
+    loading: '加载中...',
+    empty: '暂无可展示的分组',
+    loadFailed: '加载模型广场失败',
+    noSearchResult: '没有匹配的模型',
+    anonymousHint: '登录后可查看你的专属分组与专属倍率',
+    filters: {
+      platformLabel: '平台',
+      groupLabel: '分组',
+      rateLabel: '倍率',
+      modelLabel: '模型',
+      searchPlaceholder: '搜索模型名称',
+      all: '全部'
+    },
+    badges: {
+      exclusive: '专属分组',
+      subscription: '订阅'
+    },
+    detail: {
+      noModels: '该分组暂未配置模型',
+      noPricing: '未配置定价',
+      peakNote: '高峰时段 {window} 计费倍率 ×{multiplier}'
+    },
+    table: {
+      model: '模型',
+      input: '输入',
+      output: '输出',
+      cache: '缓存',
+      cacheWrite: '写入',
+      cacheRead: '读取',
+      paidPrice: '实付价格(折后)',
+      officialPrice: '官方价格',
+      rate: '折扣倍率',
+      unitPerMillion: '$ / 1M token',
+      perUnitRequest: '/ 次',
+      perUnitImage: '/ 张',
+      perRequest: '按次计费',
+      perImage: '按图片计费'
+    },
+    nav: {
+      login: '登录',
+      backToDashboard: '回到后台'
     }
   },
 
@@ -756,6 +804,31 @@ export default {
       sendCode: '发送验证码',
       codeSent: '验证码已发送到您的邮箱',
       sendCodeFailed: '发送验证码失败'
+    },
+    passkey: {
+      title: 'Passkey',
+      description: '使用面容 ID、触控 ID、Windows Hello 或安全密钥免密码登录。',
+      add: '添加 Passkey',
+      continue: '创建 Passkey',
+      name: 'Passkey 名称',
+      namePlaceholder: '例如：MacBook 触控 ID',
+      passwordPlaceholder: '输入当前登录密码以确认',
+      empty: '尚未添加任何 Passkey。',
+      synced: '已同步',
+      createdAt: '创建于 {date}',
+      lastUsed: '上次使用 {date}',
+      featureDisabled: '管理员尚未配置 Passkey 功能。',
+      unsupported: '当前浏览器或设备不支持 Passkey。',
+      loadFailed: '加载 Passkey 失败。',
+      added: 'Passkey 已添加。',
+      addFailed: '添加 Passkey 失败。',
+      renamePrompt: '请输入新的 Passkey 名称',
+      renamed: 'Passkey 已重命名。',
+      renameFailed: '重命名 Passkey 失败。',
+      deleteTitle: '删除 Passkey',
+      deleteConfirm: '删除“{name}”？删除后将无法再使用它登录。',
+      deleted: 'Passkey 已删除。',
+      deleteFailed: '删除 Passkey 失败。'
     },
     balanceNotify: {
       title: '余额不足提醒',
