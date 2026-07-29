@@ -588,7 +588,8 @@ export default {
     empty: '暂无可展示的分组',
     loadFailed: '加载模型广场失败',
     noSearchResult: '没有匹配的模型',
-    anonymousHint: '登录后可查看你的专属分组与专属倍率',
+    anonymousHint: '分组与倍率仅对登录用户可见。',
+    loginForGroupRates: '登录查看分组倍率',
     filters: {
       platformLabel: '平台',
       groupLabel: '分组',

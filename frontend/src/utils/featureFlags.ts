@@ -104,6 +104,11 @@ export const FeatureFlags = {
     mode: 'opt-in',
     label: 'Available Channels',
   }),
+  channelStatus: defineFlag({
+    key: 'channel_status_enabled',
+    mode: 'opt-in',
+    label: 'Channel Status',
+  }),
   modelPlaza: defineFlag({
     key: 'model_plaza_enabled',
     mode: 'opt-in',

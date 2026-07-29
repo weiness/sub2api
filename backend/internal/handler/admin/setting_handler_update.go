@@ -328,6 +328,7 @@ type UpdateSettingsRequest struct {
 
 	// Available Channels feature switch (user-facing)
 	AvailableChannelsEnabled *bool `json:"available_channels_enabled"`
+	ChannelStatusEnabled     *bool `json:"channel_status_enabled"`
 
 	// Model Plaza feature switches + description
 	ModelPlazaEnabled     *bool   `json:"model_plaza_enabled"`
@@ -1793,6 +1794,12 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 			}
 			return previousSettings.AvailableChannelsEnabled
 		}(),
+		ChannelStatusEnabled: func() bool {
+			if req.ChannelStatusEnabled != nil {
+				return *req.ChannelStatusEnabled
+			}
+			return previousSettings.ChannelStatusEnabled
+		}(),
 		ModelPlazaEnabled: func() bool {
 			if req.ModelPlazaEnabled != nil {
 				return *req.ModelPlazaEnabled
@@ -2221,6 +2228,7 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		ChannelMonitorDefaultIntervalSeconds: updatedSettings.ChannelMonitorDefaultIntervalSeconds,
 
 		AvailableChannelsEnabled: updatedSettings.AvailableChannelsEnabled,
+		ChannelStatusEnabled:     updatedSettings.ChannelStatusEnabled,
 
 		ModelPlazaEnabled:     updatedSettings.ModelPlazaEnabled,
 		ModelPlazaRequireAuth: updatedSettings.ModelPlazaRequireAuth,

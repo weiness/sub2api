@@ -45,11 +45,25 @@ function group(id: number, input: number, modalities: string[]): ModelPlazaGroup
 
 describe('aggregatePlazaModels', () => {
   it('按模型 ID 聚合分组路由、能力和最低价格', () => {
-    const response: ModelPlazaResponse = { description: '', groups: [group(1, 2e-6, ['text']), group(2, 1.8e-6, ['text', 'image'])] }
+    const response: ModelPlazaResponse = { description: '', authenticated: true, models: [], groups: [group(1, 2e-6, ['text']), group(2, 1.8e-6, ['text', 'image'])] }
     const [model] = aggregatePlazaModels(response)
     expect(model.routes).toHaveLength(2)
     expect(model.modalities).toEqual(['text', 'image'])
     expect(model.capabilities).toEqual(['function_calling', 'reasoning'])
     expect(model.displayPricing.input).toBe(1.8e-6)
+  })
+
+  it('匿名模型目录无需分组路由也能展示', () => {
+    const catalogGroup = group(1, 2e-6, ['text'])
+    const response: ModelPlazaResponse = {
+      description: '',
+      authenticated: false,
+      models: catalogGroup.models,
+      groups: [],
+    }
+    const [model] = aggregatePlazaModels(response)
+    expect(model.id).toBe('gpt-5')
+    expect(model.routes).toEqual([])
+    expect(model.displayPricing.input).toBe(2e-6)
   })
 })

@@ -32,6 +32,7 @@ describe('HelpTooltip', () => {
     await trigger.trigger('mouseenter')
     await nextTick()
     expect(tooltip.style.display).not.toBe('none')
+    expect(tooltip.classList.contains('z-[100000100]')).toBe(true)
 
     await trigger.trigger('mouseleave')
     await nextTick()

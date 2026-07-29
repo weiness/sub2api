@@ -24,7 +24,23 @@
 
     <!-- Right: rate pill + checkmark (vertically centered to first row) -->
     <div class="flex shrink-0 items-center gap-2 pt-0.5">
-      <div class="flex shrink-0 flex-col items-end gap-1">
+      <div
+        :class="[
+          'flex shrink-0',
+          compactPeakRate ? 'flex-row items-center gap-1.5' : 'flex-col items-end gap-1'
+        ]"
+      >
+        <HelpTooltip v-if="hasPeakRate && compactPeakRate" class="!ml-0" width-class="w-auto max-w-xs">
+          <template #trigger>
+            <Icon
+              data-test="peak-rate-indicator"
+              name="clock"
+              size="xs"
+              class="h-4 w-4 cursor-help text-amber-500 dark:text-amber-400"
+            />
+          </template>
+          <div class="whitespace-nowrap">{{ peakRateTitle }}</div>
+        </HelpTooltip>
         <!-- Rate pill (platform color) -->
         <span v-if="rateMultiplier !== undefined" :class="['inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold', ratePillClass]">
           <template v-if="hasCustomRate">
@@ -36,7 +52,7 @@
           </template>
         </span>
         <span
-          v-if="hasPeakRate"
+          v-if="hasPeakRate && !compactPeakRate"
           class="inline-flex items-center whitespace-nowrap rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
           :title="peakRateTitle"
         >
@@ -62,6 +78,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GroupBadge from './GroupBadge.vue'
+import HelpTooltip from './HelpTooltip.vue'
+import Icon from '@/components/icons/Icon.vue'
 import type { SubscriptionType, GroupPlatform } from '@/types'
 import { useAppStore } from '@/stores/app'
 import { formatPeakRateWindow, serverTimezoneLabel } from '@/utils/peak-rate'
@@ -78,6 +96,7 @@ interface Props {
   peakStart?: string
   peakEnd?: string
   peakRateMultiplier?: number
+  compactPeakRate?: boolean
   description?: string | null
   selected?: boolean
   showCheckmark?: boolean
@@ -88,7 +107,8 @@ const props = withDefaults(defineProps<Props>(), {
   selected: false,
   showCheckmark: true,
   userRateMultiplier: null,
-  peakRateEnabled: false
+  peakRateEnabled: false,
+  compactPeakRate: false
 })
 
 // Whether user has a custom rate different from default

@@ -4,7 +4,8 @@
       <!-- Filters -->
       <div class="card p-4">
         <div class="flex flex-wrap items-center gap-3">
-          <Select v-model="currentFilter" :options="statusFilters" class="w-36" @change="fetchOrders" />
+          <Select v-model="currentFilter" :options="statusFilters" class="w-36" @change="handleFilterChange" />
+          <Select v-model="currentOrderType" :options="orderTypeFilters" class="w-36" @change="handleFilterChange" />
           <div class="flex flex-1 items-center justify-end gap-2">
             <button @click="fetchOrders" :disabled="loading" class="btn btn-secondary" :title="t('common.refresh')">
               <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
@@ -104,6 +105,7 @@ const actionLoading = ref(false)
 const orders = ref<PaymentOrder[]>([])
 const refundEligibleProviders = ref<Set<string>>(new Set())
 const currentFilter = ref('')
+const currentOrderType = ref('')
 const cancelTargetId = ref<number | null>(null)
 const refundTarget = ref<PaymentOrder | null>(null)
 const refundReason = ref('')
@@ -117,6 +119,12 @@ const statusFilters = computed(() => [
   { value: 'REFUNDED', label: t('payment.status.refunded') },
 ])
 
+const orderTypeFilters = computed(() => [
+  { value: '', label: t('payment.orders.allOrderTypes') },
+  { value: 'balance', label: t('payment.orders.balanceOrder') },
+  { value: 'subscription', label: t('payment.orders.subscriptionOrder') },
+])
+
 async function fetchOrders() {
   loading.value = true
   try {
@@ -124,6 +132,7 @@ async function fetchOrders() {
       page: pagination.page,
       page_size: pagination.page_size,
       status: currentFilter.value || undefined,
+      order_type: currentOrderType.value || undefined,
     })
     orders.value = res.data.items || []
     pagination.total = res.data.total || 0
@@ -136,6 +145,7 @@ async function fetchOrders() {
 
 function handlePageChange(page: number) { pagination.page = page; fetchOrders() }
 function handlePageSizeChange(size: number) { pagination.page_size = size; pagination.page = 1; fetchOrders() }
+function handleFilterChange() { pagination.page = 1; fetchOrders() }
 
 function handleCancel(orderId: number) { cancelTargetId.value = orderId }
 

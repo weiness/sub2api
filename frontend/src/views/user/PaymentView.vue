@@ -54,6 +54,16 @@
                 <div class="min-w-0"><span class="mb-1.5 block text-xs text-[#697586]">{{ t('payment.rechargeAccount') }}</span><strong class="block break-all text-[13px] text-[#152033] dark:text-white">{{ rechargeAccountName }}</strong></div>
                 <div class="sm:text-right"><span class="mb-1 block text-xs text-[#697586]">{{ t('payment.currentBalance') }}</span><strong class="block text-[25px] font-extrabold text-[#07885b] dark:text-emerald-400">${{ user?.balance?.toFixed(2) || '0.00' }}</strong></div>
               </div>
+              <div role="note" class="mt-[18px] flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3.5 text-blue-950 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-100 sm:px-5">
+                <Icon name="infoCircle" size="lg" class="mt-0.5 shrink-0 text-blue-500 dark:text-blue-400" />
+                <div class="min-w-0">
+                  <strong class="block text-sm font-bold text-blue-700 dark:text-blue-300">{{ t('payment.creditExplanationTitle') }}</strong>
+                  <div class="mt-1 space-y-1 text-xs leading-5 text-blue-900/80 dark:text-blue-100/80">
+                    <p>{{ t('payment.creditExplanationSeparation') }}</p>
+                    <p>{{ t('payment.creditExplanationUsage') }}</p>
+                  </div>
+                </div>
+              </div>
               <div v-if="enabledMethods.length === 0" class="py-16 text-center text-gray-500">{{ t('payment.notAvailable') }}</div>
               <div v-else><AmountInput v-model="amount" :amounts="[10, 20, 50, 100, 500, 1000, 2000, 5000]" :min="effectiveMinAmount" :max="globalMaxAmount" :currency="selectedCurrency" :recharge-multiplier="balanceRechargeMultiplier" /><p v-if="displayAmountError" class="mt-2 text-xs text-amber-600">{{ displayAmountError }}</p></div>
             </div>

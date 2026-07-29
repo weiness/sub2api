@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log/slog"
+	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
@@ -13,9 +14,9 @@ import (
 // ModelPlazaHandler 处理「模型广场」查询。
 //
 // 广场路由挂 OptionalJWT 中间件：匿名可访问（除非 require_auth 开启），带 token 则
-// 识别用户。可见性规则（橱窗语义，与「可用渠道」的可绑定语义不同）：
-//   - 匿名：仅非专属分组（订阅型照常展示）；
-//   - 登录：非专属分组 + user_allowed_groups 授权的专属分组（不检查订阅有效性）。
+// 识别用户。可见性规则：
+//   - 匿名：仅返回非专属分组中的模型目录，不返回任何分组信息；
+//   - 登录：复用 API Key 可绑定分组规则，仅返回用户当前实际可用的分组。
 type ModelPlazaHandler struct {
 	channelService *service.ChannelService
 	apiKeyService  *service.APIKeyService
@@ -80,8 +81,10 @@ type modelPlazaGroup struct {
 
 // modelPlazaResponse 广场页响应。
 type modelPlazaResponse struct {
-	Description string            `json:"description"`
-	Groups      []modelPlazaGroup `json:"groups"`
+	Description   string            `json:"description"`
+	Authenticated bool              `json:"authenticated"`
+	Models        []modelPlazaModel `json:"models"`
+	Groups        []modelPlazaGroup `json:"groups"`
 }
 
 // Get 返回模型广场数据。
@@ -108,16 +111,30 @@ func (h *ModelPlazaHandler) Get(c *gin.Context) {
 		response.ErrorFrom(c, err)
 		return
 	}
+	if !authed {
+		response.Success(c, modelPlazaResponse{
+			Description:   rt.Description,
+			Authenticated: false,
+			Models:        toAnonymousModelCatalog(filterPlazaVisibleGroups(groups, nil)),
+			Groups:        []modelPlazaGroup{},
+		})
+		return
+	}
 
-	// allowedExclusive == nil 表示匿名；登录用户恒为非 nil（可能为空集合）。
-	var allowedExclusive map[int64]struct{}
+	// 复用「可用渠道」的分组口径，包含普通分组、专属授权和有效订阅判断。
+	var allowedGroups map[int64]struct{}
 	var userRates map[int64]float64
 	if authed {
-		allowedExclusive, err = h.apiKeyService.GetUserAllowedGroupIDSet(c.Request.Context(), subject.UserID)
+		availableGroups, availableErr := h.apiKeyService.GetAvailableGroups(c.Request.Context(), subject.UserID)
+		err = availableErr
 		if err != nil {
-			// 可见性数据拿不到时不能静默降级成匿名视图（会错漏专属分组），直接报错。
+			// 可见性数据拿不到时不能静默扩大范围，直接报错。
 			response.ErrorFrom(c, err)
 			return
+		}
+		allowedGroups = make(map[int64]struct{}, len(availableGroups))
+		for i := range availableGroups {
+			allowedGroups[availableGroups[i].ID] = struct{}{}
 		}
 		userRates, err = h.apiKeyService.GetUserGroupRates(c.Request.Context(), subject.UserID)
 		if err != nil {
@@ -127,33 +144,59 @@ func (h *ModelPlazaHandler) Get(c *gin.Context) {
 		}
 	}
 
-	visible := filterPlazaVisibleGroups(groups, allowedExclusive)
+	visible := filterPlazaVisibleGroups(groups, allowedGroups)
 
 	out := make([]modelPlazaGroup, 0, len(visible))
 	for i := range visible {
 		out = append(out, toModelPlazaGroupDTO(&visible[i], userRates))
 	}
 	response.Success(c, modelPlazaResponse{
-		Description: rt.Description,
-		Groups:      out,
+		Description:   rt.Description,
+		Authenticated: true,
+		Models:        []modelPlazaModel{},
+		Groups:        out,
 	})
 }
 
+// toAnonymousModelCatalog 将公开分组中的模型去重为匿名目录。返回值不包含任何
+// 分组标识或倍率；同名模型按 ListPlazaGroups 的稳定顺序取首个条目。
+func toAnonymousModelCatalog(groups []service.PlazaGroup) []modelPlazaModel {
+	models := make([]modelPlazaModel, 0)
+	seen := make(map[string]struct{})
+	for i := range groups {
+		for j := range groups[i].Models {
+			model := &groups[i].Models[j]
+			key := strings.ToLower(strings.TrimSpace(model.Name))
+			if key == "" {
+				continue
+			}
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			models = append(models, toModelPlazaModelDTO(model))
+		}
+	}
+	return models
+}
+
 // filterPlazaVisibleGroups 按登录态裁剪分组可见性。
-// allowedExclusive == nil 表示匿名（仅非专属）；非 nil 表示登录（非专属 + 授权专属）。
+// allowed == nil 表示匿名目录（仅取非专属分组作为模型来源）；非 nil 表示登录，
+// 仅保留 GetAvailableGroups 判定为用户当前可用的分组。
 func filterPlazaVisibleGroups(
 	groups []service.PlazaGroup,
-	allowedExclusive map[int64]struct{},
+	allowed map[int64]struct{},
 ) []service.PlazaGroup {
 	visible := make([]service.PlazaGroup, 0, len(groups))
 	for _, g := range groups {
-		if g.IsExclusive {
-			if allowedExclusive == nil {
-				continue
+		if allowed == nil {
+			if !g.IsExclusive {
+				visible = append(visible, g)
 			}
-			if _, ok := allowedExclusive[g.ID]; !ok {
-				continue
-			}
+			continue
+		}
+		if _, ok := allowed[g.ID]; !ok {
+			continue
 		}
 		visible = append(visible, g)
 	}
@@ -164,16 +207,7 @@ func filterPlazaVisibleGroups(
 func toModelPlazaGroupDTO(g *service.PlazaGroup, userRates map[int64]float64) modelPlazaGroup {
 	models := make([]modelPlazaModel, 0, len(g.Models))
 	for i := range g.Models {
-		m := &g.Models[i]
-		models = append(models, modelPlazaModel{
-			Name:             m.Name,
-			Platform:         m.Platform,
-			Pricing:          toUserPricing(m.Pricing),
-			OfficialPricing:  toModelPlazaOfficialPricing(m.OfficialPricing),
-			Modalities:       append([]string(nil), m.Modalities...),
-			OutputModalities: append([]string(nil), m.OutputModalities...),
-			Capabilities:     append([]string(nil), m.Capabilities...),
-		})
+		models = append(models, toModelPlazaModelDTO(&g.Models[i]))
 	}
 	dto := modelPlazaGroup{
 		ID:                   g.ID,
@@ -199,6 +233,18 @@ func toModelPlazaGroupDTO(g *service.PlazaGroup, userRates map[int64]float64) mo
 		dto.UserRateMultiplier = &rate
 	}
 	return dto
+}
+
+func toModelPlazaModelDTO(m *service.PlazaModel) modelPlazaModel {
+	return modelPlazaModel{
+		Name:             m.Name,
+		Platform:         m.Platform,
+		Pricing:          toUserPricing(m.Pricing),
+		OfficialPricing:  toModelPlazaOfficialPricing(m.OfficialPricing),
+		Modalities:       append([]string(nil), m.Modalities...),
+		OutputModalities: append([]string(nil), m.OutputModalities...),
+		Capabilities:     append([]string(nil), m.Capabilities...),
+	}
 }
 
 // toModelPlazaOfficialPricing 转换官方参考价；nil 透传（前端显示 "-"）。

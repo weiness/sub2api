@@ -76,15 +76,38 @@ function addModel(
   })
 }
 
+function addCatalogModel(models: Map<string, PlazaModelCatalogItem>, model: PlazaModel) {
+  const key = model.name.toLowerCase()
+  if (models.has(key)) return
+  models.set(key, {
+    id: model.name,
+    platform: inferPlatform(model.name, model.platform),
+    modalities: model.modalities?.length ? [...model.modalities] : ['text'],
+    outputModalities: model.output_modalities?.length ? [...model.output_modalities] : ['text'],
+    capabilities: [...(model.capabilities || [])],
+    routes: [],
+    displayPricing: {
+      input: model.pricing?.input_price ?? null,
+      output: model.pricing?.output_price ?? null,
+      cacheWrite: model.pricing?.cache_write_price ?? null,
+      cacheRead: model.pricing?.cache_read_price ?? null,
+      imageInput: model.pricing?.image_input_price ?? null,
+      imageOutput: model.pricing?.image_output_price ?? null,
+      perRequest: model.pricing?.per_request_price ?? null,
+    },
+  })
+}
+
 export function aggregatePlazaModels(response: ModelPlazaResponse | null): PlazaModelCatalogItem[] {
   const models = new Map<string, PlazaModelCatalogItem>()
+  for (const model of response?.models ?? []) addCatalogModel(models, model)
   for (const group of response?.groups ?? []) {
     for (const model of group.models) addModel(models, group, model)
   }
   return Array.from(models.values())
     .map((model) => ({
       ...model,
-      displayPricing: {
+      displayPricing: model.routes.length ? {
         input: minimum(model.routes.map((route) => route.pricing?.input_price)),
         output: minimum(model.routes.map((route) => route.pricing?.output_price)),
         cacheWrite: minimum(model.routes.map((route) => route.pricing?.cache_write_price)),
@@ -92,7 +115,7 @@ export function aggregatePlazaModels(response: ModelPlazaResponse | null): Plaza
         imageInput: minimum(model.routes.map((route) => route.pricing?.image_input_price)),
         imageOutput: minimum(model.routes.map((route) => route.pricing?.image_output_price)),
         perRequest: minimum(model.routes.map((route) => route.pricing?.per_request_price)),
-      },
+      } : model.displayPricing,
     }))
     .sort((a, b) => a.id.localeCompare(b.id, undefined, { sensitivity: 'base' }))
 }

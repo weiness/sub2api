@@ -6599,6 +6599,17 @@
               </div>
               <Toggle v-model="form.available_channels_enabled" />
             </div>
+            <div class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700">
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ t('admin.settings.features.availableChannels.channelStatusEnabled') }}
+                </label>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('admin.settings.features.availableChannels.channelStatusEnabledHint') }}
+                </p>
+              </div>
+              <Toggle v-model="form.channel_status_enabled" />
+            </div>
           </div>
         </div>
 
@@ -9380,6 +9391,7 @@ const form = reactive<SettingsForm>({
   channel_monitor_default_interval_seconds: 60,
   // Available Channels feature switch
   available_channels_enabled: false,
+  channel_status_enabled: false,
   // Model Plaza feature switches + description
   model_plaza_enabled: false,
   model_plaza_require_auth: false,
@@ -10975,6 +10987,7 @@ async function saveSettings() {
         Number(form.channel_monitor_default_interval_seconds) || 60,
       // Available Channels feature switch
       available_channels_enabled: form.available_channels_enabled,
+      channel_status_enabled: form.channel_status_enabled,
       // Model Plaza feature switches + description
       model_plaza_enabled: form.model_plaza_enabled,
       model_plaza_require_auth: form.model_plaza_require_auth,

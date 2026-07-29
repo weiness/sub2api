@@ -32,8 +32,8 @@ func TestFilterPlazaVisibleGroups_AnonymousSeesOnlyNonExclusive(t *testing.T) {
 }
 
 func TestFilterPlazaVisibleGroups_AuthedSeesGrantedExclusive(t *testing.T) {
-	// 登录:非专属 + 授权的专属;未授权的专属仍不可见。
-	allowed := map[int64]struct{}{2: {}}
+	// 登录：完全按 GetAvailableGroups 返回的可用集合裁剪。
+	allowed := map[int64]struct{}{1: {}, 2: {}, 3: {}}
 	visible := filterPlazaVisibleGroups(plazaGroups(), allowed)
 	require.Len(t, visible, 3)
 	ids := make([]int64, 0, len(visible))
@@ -44,10 +44,35 @@ func TestFilterPlazaVisibleGroups_AuthedSeesGrantedExclusive(t *testing.T) {
 }
 
 func TestFilterPlazaVisibleGroups_AuthedEmptySetSeesNoExclusive(t *testing.T) {
-	// 登录但无任何专属授权(空集合,非 nil):与匿名同样只见非专属,
-	// 但语义区分要保持——空集合不能被当作 nil 匿名分支。
+	// 登录但无可用分组时不能回退成匿名公开分组视图。
 	visible := filterPlazaVisibleGroups(plazaGroups(), map[int64]struct{}{})
-	require.Len(t, visible, 2)
+	require.Empty(t, visible)
+}
+
+func TestToAnonymousModelCatalog_DeduplicatesWithoutGroupFields(t *testing.T) {
+	groups := plazaGroups()
+	groups[0].Models = []service.PlazaModel{{Name: "gpt-5", Platform: "openai"}}
+	groups[2].Models = []service.PlazaModel{
+		{Name: "GPT-5", Platform: "openai"},
+		{Name: "gpt-5-mini", Platform: "openai"},
+	}
+
+	models := toAnonymousModelCatalog(filterPlazaVisibleGroups(groups, nil))
+	require.Len(t, models, 2)
+	require.Equal(t, "gpt-5", models[0].Name)
+	require.Equal(t, "gpt-5-mini", models[1].Name)
+
+	raw, err := json.Marshal(modelPlazaResponse{
+		Authenticated: false,
+		Models:        models,
+		Groups:        []modelPlazaGroup{},
+	})
+	require.NoError(t, err)
+	var decoded map[string]any
+	require.NoError(t, json.Unmarshal(raw, &decoded))
+	require.Empty(t, decoded["groups"])
+	require.NotContains(t, string(raw), "public-standard")
+	require.NotContains(t, string(raw), "rate_multiplier")
 }
 
 func TestModelPlazaHandler_NilSettingServiceFailsClosed404(t *testing.T) {

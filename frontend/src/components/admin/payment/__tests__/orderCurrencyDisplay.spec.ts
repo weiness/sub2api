@@ -22,11 +22,12 @@ const BaseDialogStub = {
 }
 
 const DataTableStub = {
-  props: ['data'],
+  props: ['columns', 'data'],
   template: `
     <div>
       <div v-for="row in data" :key="row.id">
         <slot name="cell-pay_amount" :value="row.pay_amount" :row="row" />
+        <slot name="cell-order_type" :value="row.order_type" :row="row" />
       </div>
     </div>
   `,
@@ -56,7 +57,7 @@ describe('admin order currency display', () => {
     const wrapper = mount(AdminOrderDetail, {
       props: {
         show: true,
-        order: orderFactory({ currency: 'CNY' }),
+        order: orderFactory({ currency: 'CNY', order_type: 'balance' }),
       },
       global: {
         stubs: {
@@ -103,8 +104,8 @@ describe('admin order currency display', () => {
     const wrapper = mount(OrderTable, {
       props: {
         orders: [
-          orderFactory({ id: 1, currency: 'USD', amount: 100, pay_amount: 108 }),
-          orderFactory({ id: 2, currency: 'CNY', amount: 100, pay_amount: 108 }),
+          orderFactory({ id: 1, currency: 'USD', amount: 100, pay_amount: 108, order_type: 'balance' }),
+          orderFactory({ id: 2, currency: 'CNY', amount: 100, pay_amount: 108, order_type: 'balance' }),
         ],
         loading: false,
         showUser: true,
@@ -123,12 +124,34 @@ describe('admin order currency display', () => {
     expect(text).toContain('$100.00')
   })
 
+  it('renders order types and hides credited amount for subscription orders', () => {
+    const wrapper = mount(OrderTable, {
+      props: {
+        orders: [orderFactory({ amount: 100, pay_amount: 108, order_type: 'subscription' })],
+        loading: false,
+      },
+      global: {
+        stubs: {
+          DataTable: DataTableStub,
+          OrderStatusBadge: true,
+        },
+      },
+    })
+
+    const dataTable = wrapper.findComponent(DataTableStub)
+    expect(dataTable.props('columns')).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: 'order_type', label: 'payment.orders.orderType' }),
+    ]))
+    expect(wrapper.text()).toContain('payment.orders.subscriptionOrder')
+    expect(wrapper.text()).not.toContain('payment.orders.creditedAmount')
+  })
+
   it('renders payment currency consistently in the admin order table', () => {
     const wrapper = mount(AdminOrderTable, {
       props: {
         orders: [
-          orderFactory({ id: 1, currency: 'USD', amount: 100, pay_amount: 108 }),
-          orderFactory({ id: 2, currency: 'CNY', amount: 100, pay_amount: 108 }),
+          orderFactory({ id: 1, currency: 'USD', amount: 100, pay_amount: 108, order_type: 'balance' }),
+          orderFactory({ id: 2, currency: 'CNY', amount: 100, pay_amount: 108, order_type: 'balance' }),
         ],
         loading: false,
         page: 1,

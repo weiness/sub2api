@@ -6,12 +6,43 @@ import { describe, expect, it } from 'vitest'
 
 const componentPath = resolve(dirname(fileURLToPath(import.meta.url)), '../AppSidebar.vue')
 const componentSource = readFileSync(componentPath, 'utf8')
+const headerPath = resolve(dirname(fileURLToPath(import.meta.url)), '../AppHeader.vue')
+const headerSource = readFileSync(headerPath, 'utf8')
 const stylePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../../style.css')
 const styleSource = readFileSync(stylePath, 'utf8')
 const adminNavSource = componentSource.slice(
   componentSource.indexOf('const adminNavItems = computed'),
   componentSource.indexOf('function toggleSidebar')
 )
+const selfNavSource = componentSource.slice(
+  componentSource.indexOf('function buildSelfNavItems'),
+  componentSource.indexOf('function finalizeNav')
+)
+
+describe('AppSidebar model plaza navigation', () => {
+  it('places model plaza first in the personal menu and uses the grid icon', () => {
+    const modelPlazaIndex = selfNavSource.indexOf("path: '/model-plaza'")
+    const keysIndex = selfNavSource.indexOf("path: '/keys'")
+
+    expect(modelPlazaIndex).toBeGreaterThan(-1)
+    expect(keysIndex).toBeGreaterThan(modelPlazaIndex)
+    expect(selfNavSource).toContain('icon: ModelPlazaIcon')
+    expect(selfNavSource).toContain('featureFlag: flagModelPlaza')
+  })
+
+  it('does not keep a duplicate model plaza entry in the header', () => {
+    expect(headerSource).not.toContain('Model Plaza Entry')
+    expect(headerSource).not.toContain('modelPlazaEnabled')
+  })
+})
+
+describe('AppSidebar channel status navigation', () => {
+  it('uses the dedicated user-facing flag while keeping the admin monitor flag separate', () => {
+    expect(componentSource).toContain('const flagChannelStatus = makeSidebarFlag(FeatureFlags.channelStatus)')
+    expect(selfNavSource).toMatch(/path: '\/monitor'[^\n]+featureFlag: flagChannelStatus/)
+    expect(componentSource).toContain('const flagChannelMonitor = makeSidebarFlag(FeatureFlags.channelMonitor)')
+  })
+})
 
 describe('AppSidebar custom SVG styles', () => {
   it('does not override uploaded SVG fill or stroke colors', () => {

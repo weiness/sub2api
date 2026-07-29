@@ -9,6 +9,17 @@
     <PlatformIcon v-if="platform" :platform="platform" size="sm" />
     <!-- Group name -->
     <span class="truncate">{{ name }}</span>
+    <HelpTooltip v-if="hasPeakRate && compactPeakRate" class="!ml-0" width-class="w-auto max-w-xs">
+      <template #trigger>
+        <Icon
+          data-test="peak-rate-indicator"
+          name="clock"
+          size="xs"
+          class="h-3 w-3 cursor-help text-amber-600 dark:text-amber-400"
+        />
+      </template>
+      <div class="whitespace-nowrap">{{ peakRateTitle }}</div>
+    </HelpTooltip>
     <!-- Right side label -->
     <span v-if="showLabel" :class="labelClass">
       <template v-if="hasCustomRate">
@@ -20,7 +31,7 @@
         {{ labelText }}
       </template>
     </span>
-    <span v-if="hasPeakRate" :class="peakRateClass" :title="peakRateTitle">
+    <span v-if="hasPeakRate && !compactPeakRate" :class="peakRateClass" :title="peakRateTitle">
       {{ peakRateText }}
     </span>
   </span>
@@ -33,6 +44,8 @@ import type { SubscriptionType, GroupPlatform } from '@/types'
 import { useAppStore } from '@/stores/app'
 import { formatPeakRateWindow, serverTimezoneLabel } from '@/utils/peak-rate'
 import PlatformIcon from './PlatformIcon.vue'
+import HelpTooltip from './HelpTooltip.vue'
+import Icon from '@/components/icons/Icon.vue'
 
 interface Props {
   name: string
@@ -44,6 +57,7 @@ interface Props {
   peakStart?: string
   peakEnd?: string
   peakRateMultiplier?: number
+  compactPeakRate?: boolean
   showRate?: boolean
   daysRemaining?: number | null // 剩余天数（订阅类型时使用）
   /**
@@ -60,7 +74,8 @@ const props = withDefaults(defineProps<Props>(), {
   daysRemaining: null,
   userRateMultiplier: null,
   peakRateEnabled: false,
-  alwaysShowRate: false
+  alwaysShowRate: false,
+  compactPeakRate: false
 })
 
 const { t } = useI18n()

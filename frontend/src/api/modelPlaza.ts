@@ -1,7 +1,7 @@
 /**
  * Model Plaza API（公开端点，可匿名访问）
  * 以分组为中心的模型价目：分组信息 + 模型渠道定价 + LiteLLM 官方参考价。
- * 带 token 请求时后端会额外返回专属分组与用户专属倍率。
+ * 匿名请求仅返回模型目录；带 token 请求时后端按用户权限返回分组与倍率。
  */
 
 import { apiClient } from './client'
@@ -55,6 +55,9 @@ export interface ModelPlazaGroup {
 export interface ModelPlazaResponse {
   /** 管理员配置的全局价格说明（Markdown）。 */
   description: string
+  authenticated: boolean
+  /** 匿名模型目录，不包含任何分组信息。 */
+  models: PlazaModel[]
   groups: ModelPlazaGroup[]
 }
 

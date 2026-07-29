@@ -583,7 +583,8 @@ export default {
     empty: 'No groups to display',
     loadFailed: 'Failed to load model plaza',
     noSearchResult: 'No matching models',
-    anonymousHint: 'Sign in to see your exclusive groups and personal rates',
+    anonymousHint: 'Groups and multipliers are only visible after signing in.',
+    loginForGroupRates: 'Sign in to view group multipliers',
     filters: {
       platformLabel: 'Platform',
       groupLabel: 'Group',
